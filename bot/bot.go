@@ -59,9 +59,9 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 			return
 		}
 
-		if memberHasRole(member, "test") {
+		/*if memberHasRole(member, "test") {
 
-		}
+		}*/
 
 		//Sends command list
 		if message.Content == "$tuuck" {
