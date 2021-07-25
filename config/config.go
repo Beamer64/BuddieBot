@@ -100,7 +100,8 @@ func ReadConfig(configFilePath string, authFilePath string, commandFilePath stri
 	return config, auth, comm, nil
 }
 
-func GrabLoadingMessage(messageFile string) string {
+func GrabLoadingMessage() string {
+	messageFile := "bot/loadingMessages.txt"
 	file, err := os.Open(messageFile)
 	if err != nil {
 		log.Fatal(err)

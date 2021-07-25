@@ -5,7 +5,7 @@
   "Gif": "$gif/{search} - Sends first searched gif",
   "Horoscope": "$horoscope/{sign} - Gives daily horoscope.",
   "Invalid": "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<",
-  "WindUp": " *starts minecraft server in silence*",
+  "WindUp": "`*starts minecraft server in silence*`",
   "WindDown": "stopping minecraft server, Alt-F4 really speeds things up 0.0",
-  "FinishOpperation": "`*beep boop* All done. Still faster than Windows update... Powered by Duracell™️`"
+  "FinishOpperation": "`*beep boop* All done. Powered by Duracell™️`"
 }

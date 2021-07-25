@@ -132,18 +132,17 @@ func ToLower(content string) string {
 func SendStartUpMessages(session *discordgo.Session, message *discordgo.MessageCreate) {
 	// sleep for 1 minute while saying funny things and to wait for instance to start up
 	m := 0
-	for i := 1; i < 6; i++ {
-		loadingMessage := config.GrabLoadingMessage("bot/loadingMessages.txt")
-		time.Sleep(10 * time.Second)
+	for i := 1; i < 5; i++ {
+		loadingMessage := config.GrabLoadingMessage()
+		time.Sleep(5 * time.Second)
 		SendMessage(session, message, loadingMessage)
 		m += i
 	}
-	time.Sleep(10 * time.Second)
+	time.Sleep(5 * time.Second)
 }
 
 func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
-	loadingMessage := config.GrabLoadingMessage("bot/loadingMessages.txt")
-	SendMessage(session, message, loadingMessage+comm.WindUp)
+	SendMessage(session, message, comm.WindUp)
 
 	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
