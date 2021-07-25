@@ -2,21 +2,37 @@ package bot
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"sort"
+	"strings"
 )
 
-func memberHasRole(member *discordgo.Member, role *discordgo.Role) bool {
-	memberRoles := make([]string, len(member.Roles))
+func memberHasRole(member *discordgo.Member, roleName string) bool {
+	//memberRoles := make([]string, len(member.Roles))
 
-	copy(memberRoles, member.Roles)
+	/*for _, role := range member.Roles {
+		if role == "@everyone" {
+			continue
+		}
 
-	sort.Slice(memberRoles, func(i, j int) bool {
-		return memberRoles[i] < memberRoles[j]
-	})
+		if strings.ToLower(role) == roleName {
+			return true
+		}
+	}*/
+	return true
+}
 
-	index := sort.Search(len(memberRoles), func(i int) bool {
-		return memberRoles[i] >= role.ID
-	})
+func roleExists(g *discordgo.Guild, name string) (bool, *discordgo.Role) {
+	name = strings.ToLower(name)
 
-	return index != len(memberRoles) && memberRoles[index] == role.ID
+	for _, role := range g.Roles {
+		if role.Name == "@everyone" {
+			continue
+		}
+
+		if strings.ToLower(role.Name) == name {
+			return true, role
+		}
+
+	}
+
+	return false, nil
 }

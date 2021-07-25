@@ -8,17 +8,12 @@ import (
 func main() {
 	defer config.Recovered()
 
-	config_f, auth, err := config.ReadConfig("config/config.json", "config/auth.json")
+	config_f, auth, comm, err := config.ReadConfig("config/config.json", "config/auth.json", "config/command.json")
 	if err != nil {
 		panic(err)
 	}
 
-	command, err := config.ReadCommands("config/command.json")
-	if err != nil {
-		panic(err)
-	}
-
-	err = bot.Start(config_f, auth, command)
+	err = bot.Start(config_f, auth, comm)
 	if err != nil {
 		panic(err)
 	}

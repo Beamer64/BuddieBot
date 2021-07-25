@@ -44,11 +44,23 @@ func Start(c *config.Config, a *config.Auth, com *config.Command) error {
 	return nil
 }
 
-func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate, member *discordgo.Member) {
+func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate) {
 	if strings.HasPrefix(message.Content, cfg.BotPrefix) {
 		if message.Author.ID == DiscordBotID {
 			return
 		}
+
+		/*var author *discordgo.Member
+		channel, err := session.State.Channel(message.ChannelID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		member, _ := session.GuildMember(channel.GuildID, message.Author.ID)
+		fmt.Println(message.MentionRoles)
+
+		if memberHasRole(member, "The Big Gays") {
+		}*/ //TODO mess with this more
 
 		//deletes Justins Messages
 		if message.Author.ID == "282722418093719556" {
@@ -57,40 +69,49 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 				log.Fatal(err)
 			}
 			return
-		}
-
-		/*if memberHasRole(member, "test") {
-
-		}*/
-
-		//Sends command list
-		if message.Content == "$tuuck" {
-			SendMessage(session, message, comm.Tuuck+"\n"+comm.Start+"\n"+comm.Stop+"\n"+comm.Horoscope)
-			return
-
 		} else
+
 		//Sends Daily Horoscope
-		if strings.Contains(message.Content, "$horoscope-") {
-			signSlices := strings.SplitAfter(message.Content, "-")
+		if strings.Contains(ToLower(message.Content), "$horoscope/") {
+			signSlices := strings.SplitAfter(message.Content, "/")
 			sign := signSlices[1]
 			horoscope := webScrape.ScrapeSign(sign)
 			SendMessage(session, message, horoscope)
 			return
 
 		} else
+		//Sends first searched gif
+		if strings.Contains(ToLower(message.Content), "$gif/") {
+			err := session.ChannelMessageDelete(message.ChannelID, message.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			signSlices := strings.SplitAfter(message.Content, "/")
+			searchStr := signSlices[1]
+			gifURL := webScrape.RequestGif(searchStr, cfg)
+			SendMessage(session, message, gifURL)
+			return
+		}
+
+		switch ToLower(message.Content) {
+		//Sends command list
+		case "$tuuck":
+			SendMessage(session, message, comm.Tuuck+"\n"+comm.Start+"\n"+comm.Stop+"\n"+comm.Horoscope+"\n"+comm.Gif)
+			return
+
 		//Starts the Minecraft Server
-		if message.Content == "$start" {
+		case "$start":
 			StartServer(session, message)
 			return
 
-		} else
 		//Stops the Minecraft Server
-		if message.Content == "$stop" {
+		case "$stop":
 			StopServer(session, message)
 			return
 
-		} else {
-			//Sends the "Invalid" command Message
+		//Sends the "Invalid" command Message
+		default:
 			SendMessage(session, message, comm.Invalid)
 			return
 		}
@@ -102,6 +123,10 @@ func SendMessage(session *discordgo.Session, message *discordgo.MessageCreate, o
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ToLower(content string) string {
+	return strings.ToLower(content)
 }
 
 func SendStartUpMessages(session *discordgo.Session, message *discordgo.MessageCreate) {

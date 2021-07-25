@@ -12,10 +12,11 @@ import (
 )
 
 type Config struct {
-	Token      string `json:"Token"`
-	BotPrefix  string `json:"BotPrefix"`
-	SSHKeyBody string `json:"SSHKeyBody"`
-	MachineIP  string `json:"MachineIP"`
+	Token       string `json:"Token"`
+	BotPrefix   string `json:"BotPrefix"`
+	SSHKeyBody  string `json:"SSHKeyBody"`
+	MachineIP   string `json:"MachineIP"`
+	TenorAPIkey string `json:"TenorAPIkey"`
 }
 
 type Auth struct {
@@ -41,58 +42,62 @@ type Command struct {
 	WindDown         string `json:"WindDown"`
 	FinishOpperation string `json:"FinishOpperation"`
 	Horoscope        string `json:"Horoscope"`
+	Gif              string `json:"Gif"`
 }
 
-func ReadConfig(configFilePath string, authFilePath string) (*Config, *Auth, error) {
+func ReadConfig(configFilePath string, authFilePath string, commandFilePath string) (*Config, *Auth, *Command, error) {
 	fmt.Println("Reading from config file...")
 	configFile, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+	//fmt.Println(string(configFile))
 
-	fmt.Println(string(configFile))
+	fmt.Println("No Errors")
 
 	fmt.Println("Reading from auth file...")
 	authFile, err := ioutil.ReadFile(authFilePath)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+	//fmt.Println(string(authFile))
 
-	fmt.Println(string(authFile))
+	fmt.Println("No Errors")
+
+	fmt.Println("Reading from command file...")
+	commandFile, err := ioutil.ReadFile(commandFilePath)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	//fmt.Println(string(authFile))
+
+	fmt.Println("No Errors")
 
 	var config *Config
 	var auth *Auth
+	var comm *Command
 
 	err = json.Unmarshal(configFile, &config)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	err = json.Unmarshal(authFile, &auth)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return config, auth, nil
-}
-
-func ReadCommands(commandFilePath string) (*Command, error) {
-	fmt.Println("Reading from command file...")
-	configFile, err := ioutil.ReadFile(commandFilePath)
+	err = json.Unmarshal(configFile, &config)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
-	fmt.Println(string(configFile))
-
-	var command *Command
-
-	err = json.Unmarshal(configFile, &command)
+	err = json.Unmarshal(commandFile, &comm)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
-	return command, nil
+	return config, auth, comm, nil
 }
 
 func GrabLoadingMessage(messageFile string) string {
