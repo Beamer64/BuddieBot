@@ -1,0 +1,2 @@
+# DiscordBot
+Homemade Discord Bot
