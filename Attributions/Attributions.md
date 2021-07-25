@@ -15,6 +15,7 @@ The ganeshaspeaks daily horoscopes are used to allow our DiscordBot to deliver a
 ---
 
 #[bwmarrin/discordgo](https://github.com/bwmarrin/discordgo)
+
 We utilize the convenience of bwmarrin's discordgo Golang package in a majority of the DiscordBot's code.
 
 >DiscordGo is a Go package that provides low level bindings to the Discord chat client API. DiscordGo has nearly complete support for all of the Discord API endpoints, websocket interface, and voice interface.
@@ -22,6 +23,7 @@ We utilize the convenience of bwmarrin's discordgo Golang package in a majority 
 ---
 
 #[gocolly/colly](https://github.com/gocolly/colly)
+
 Gocolly's colly framework is used to simplify any crawlers/scrapers in our DiscordBot.
 
 >Lightning Fast and Elegant Scraping Framework for Gophers Colly provides a clean interface to write any kind of crawler/scraper/spider. With Colly you can easily extract structured data from websites, which can be used for a wide range of applications, like data mining, data processing or archiving.
