@@ -14,7 +14,7 @@ The ganeshaspeaks daily horoscopes are used to allow our DiscordBot to deliver a
 
 ---
 
-#[bwmarrin/discordgo](https://github.com/bwmarrin/discordgo)
+# [bwmarrin/discordgo](https://github.com/bwmarrin/discordgo)
 
 We utilize the convenience of bwmarrin's discordgo Golang package in a majority of the DiscordBot's code.
 
@@ -22,7 +22,7 @@ We utilize the convenience of bwmarrin's discordgo Golang package in a majority 
 
 ---
 
-#[gocolly/colly](https://github.com/gocolly/colly)
+# [gocolly/colly](https://github.com/gocolly/colly)
 
 Gocolly's colly framework is used to simplify any crawlers/scrapers in our DiscordBot.
 
