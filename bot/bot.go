@@ -87,8 +87,8 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 				log.Fatal(err)
 			}
 
-			signSlices := strings.SplitAfter(message.Content, "/")
-			searchStr := signSlices[1]
+			searchSlices := strings.SplitAfter(message.Content, "/")
+			searchStr := searchSlices[1]
 			gifURL := webScrape.RequestGif(searchStr, cfg)
 			SendMessage(session, message, gifURL)
 			return
