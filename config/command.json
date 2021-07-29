@@ -4,8 +4,13 @@
   "Stop": "$stop - Stops Minecraft Server.",
   "Gif": "$gif/{search} - Sends first searched gif",
   "Horoscope": "$horoscope/{sign} - Gives daily horoscope.",
+  "McStatus": "$mcstatus - Gives the current status of the MC server.",
   "Invalid": "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<",
   "WindUp": "`*starts minecraft server in silence*`",
   "WindDown": "stopping minecraft server, Alt-F4 really speeds things up 0.0",
-  "FinishOpperation": "`*beep boop* All done. Powered by Duracell™️`"
+  "FinishOpperation": "`*beep boop* All done. Powered by Duracell™️`",
+  "ServerUP": "Did you even try to connect first, Ding-Dong? It's already running. ",
+  "ServerDOWN": "Someone must've beat you to it. Server isn't running. ",
+  "CheckStatusUp": "Rocking and rolling, my guy. ",
+  "CheckStatusDown": "Server is down. ¯\\_(ツ)_/¯ I just work here."
 }

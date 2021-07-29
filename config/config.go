@@ -43,6 +43,28 @@ type Command struct {
 	FinishOpperation string `json:"FinishOpperation"`
 	Horoscope        string `json:"Horoscope"`
 	Gif              string `json:"Gif"`
+	ServerUP         string `json:"ServerUP"`
+	ServerDOWN       string `json:"ServerDOWN"`
+	CheckStatusUp    string `json:"CheckStatusUp"`
+	CheckStatusDown  string `json:"CheckStatusDown"`
+	McStatus         string `json:"McStatus"`
+}
+
+type CommandOut struct {
+	Command      string `json:"Command"`
+	CreatedAt    string `json:"CreatedAt"`
+	ID           string `json:"ID"`
+	Image        string `json:"Image"`
+	Labels       string `json:"Labels"`
+	LocalVolumes string `json:"LocalVolumes"`
+	Mounts       string `json:"Mounts"`
+	Names        string `json:"Names"`
+	Networks     string `json:"Networks"`
+	Ports        string `json:"Ports"`
+	RunningFor   string `json:"RunningFor"`
+	Size         string `json:"Size"`
+	State        string `json:"State"`
+	Status       string `json:"Status"`
 }
 
 func ReadConfig(configFilePath string, authFilePath string, commandFilePath string) (*Config, *Auth, *Command, error) {

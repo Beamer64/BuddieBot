@@ -1,11 +1,13 @@
 package ssh
 
 import (
-	"io"
-	"io/ioutil"
-	"os"
-
+	"encoding/json"
+	"github.com/beamer64/discordBot/config"
 	"golang.org/x/crypto/ssh"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
 )
 
 type SSHClient struct {
@@ -61,33 +63,57 @@ func publicKey(path string) (ssh.AuthMethod, error) {
 	return ssh.PublicKeys(signer), nil
 }
 
-func (client *SSHClient) RunCommand(commandText string) error {
+func (client *SSHClient) RunCommand(commandText string) (string, error) {
 	conn, err := ssh.Dial("tcp", client.ip, client.config)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	defer conn.Close()
 
 	sess, err := conn.NewSession()
 	if err != nil {
-		return err
-	}
-	defer sess.Close()
-	sessStdOut, err := sess.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	go io.Copy(os.Stdout, sessStdOut)
-	sessStderr, err := sess.StderrPipe()
-	if err != nil {
-		return err
-	}
-	go io.Copy(os.Stderr, sessStderr)
-	err = sess.Run(commandText) // eg., /usr/bin/whoami
-	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	defer sess.Close()
+
+	outPutByte, err := sess.CombinedOutput(commandText)
+	if err != nil {
+		return "", err
+	}
+
+	outPut := string(outPutByte)
+	return outPut, nil
+}
+
+func CheckServerStatus(sshClient *SSHClient) (string, bool) {
+	serverOutput, err := sshClient.RunCommand("docker container ls --format='{{json .}}'")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	status := ParseServerStatus(serverOutput)
+
+	if strings.Contains(status, "Up") {
+		return status, true
+	}
+	return status, false
+}
+
+func ParseServerStatus(serverOut string) string {
+	var commOut *config.CommandOut
+
+	if serverOut != "" {
+		in := []byte(serverOut)
+
+		err := json.Unmarshal(in, &commOut)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return commOut.Status
+	} else {
+		return serverOut
+	}
 }

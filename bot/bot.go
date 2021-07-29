@@ -97,7 +97,8 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 		switch ToLower(message.Content) {
 		//Sends command list
 		case "$tuuck":
-			SendMessage(session, message, comm.Tuuck+"\n"+comm.Start+"\n"+comm.Stop+"\n"+comm.Horoscope+"\n"+comm.Gif)
+			SendMessage(session, message, comm.Tuuck+"\n"+comm.McStatus+"\n"+comm.Start+
+				"\n"+comm.Stop+"\n"+comm.Horoscope+"\n"+comm.Gif)
 			return
 
 		//Starts the Minecraft Server
@@ -108,6 +109,11 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 		//Stops the Minecraft Server
 		case "$stop":
 			StopServer(session, message)
+			return
+
+		//Stops the Minecraft Server
+		case "$mcstatus":
+			GetServerStatus(session, message)
 			return
 
 		//Sends the "Invalid" command Message
@@ -125,25 +131,7 @@ func SendMessage(session *discordgo.Session, message *discordgo.MessageCreate, o
 	}
 }
 
-func ToLower(content string) string {
-	return strings.ToLower(content)
-}
-
-func SendStartUpMessages(session *discordgo.Session, message *discordgo.MessageCreate) {
-	// sleep for 1 minute while saying funny things and to wait for instance to start up
-	m := 0
-	for i := 1; i < 5; i++ {
-		loadingMessage := config.GrabLoadingMessage()
-		time.Sleep(5 * time.Second)
-		SendMessage(session, message, loadingMessage)
-		m += i
-	}
-	time.Sleep(5 * time.Second)
-}
-
-func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
-	SendMessage(session, message, comm.WindUp)
-
+func GetServerStatus(session *discordgo.Session, message *discordgo.MessageCreate) {
 	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
 		log.Fatal(err)
@@ -154,43 +142,95 @@ func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 		log.Fatal(err)
 	}
 
-	SendStartUpMessages(session, message)
-
 	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = sshClient.RunCommand("docker container start 06ae729f5c2b")
-	if err != nil {
-		log.Fatal(err)
+	status, serverUp := ssh.CheckServerStatus(sshClient)
+	if serverUp {
+		SendMessage(session, message, comm.CheckStatusUp+status)
+	} else {
+		SendMessage(session, message, comm.CheckStatusDown+status)
 	}
-
-	SendMessage(session, message, comm.FinishOpperation)
 }
 
-func StopServer(session *discordgo.Session, message *discordgo.MessageCreate) {
-	SendMessage(session, message, comm.WindDown)
+func ToLower(content string) string {
+	return strings.ToLower(content)
+}
 
-	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
-	if err != nil {
-		log.Fatal(err)
+func SendStartUpMessages(session *discordgo.Session, message *discordgo.MessageCreate) {
+	// sleep for 1 minute while saying funny things and to wait for instance to start up
+	m := 0
+	for i := 1; i < 5; i++ {
+		loadingMessage := config.GrabLoadingMessage()
+		time.Sleep(3 * time.Second)
+		SendMessage(session, message, loadingMessage)
+		m += i
 	}
+	time.Sleep(3 * time.Second)
+}
 
-	err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = client.StopMachine("instance-2-minecraft")
+	err = client.StartMachine("instance-2-minecraft")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	SendMessage(session, message, comm.FinishOpperation)
+	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	status, serverUp := ssh.CheckServerStatus(sshClient)
+	if serverUp {
+		SendMessage(session, message, comm.ServerUP+status)
+
+	} else {
+		SendMessage(session, message, comm.WindUp)
+
+		_, err = sshClient.RunCommand("docker container start 06ae729f5c2b")
+		if err != nil {
+			log.Fatal(err)
+		}
+		SendStartUpMessages(session, message)
+		SendMessage(session, message, comm.FinishOpperation)
+	}
+}
+
+func StopServer(session *discordgo.Session, message *discordgo.MessageCreate) {
+	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	status, serverUp := ssh.CheckServerStatus(sshClient)
+	if serverUp {
+		SendMessage(session, message, comm.WindDown)
+
+		_, err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = client.StopMachine("instance-2-minecraft")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		SendMessage(session, message, comm.FinishOpperation)
+
+	} else {
+		SendMessage(session, message, comm.ServerDOWN+status)
+	}
 }
