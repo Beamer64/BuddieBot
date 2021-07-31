@@ -136,7 +136,7 @@ func SendMessage(session *discordgo.Session, message *discordgo.MessageCreate, o
 }
 
 func GetServerStatus(session *discordgo.Session, message *discordgo.MessageCreate) {
-	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, "us-central1-a") // hardcoding zone to fix bug, need to put in config later
+	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
 		return
@@ -179,7 +179,7 @@ func SendStartUpMessages(session *discordgo.Session, message *discordgo.MessageC
 }
 
 func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
-	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, "us-central1-a") // hardcoding zone to fix bug, need to put in config later
+	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
 		return
@@ -231,7 +231,7 @@ func StopServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 			return
 		}
 
-		client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, "us-central1-a") // hardcoding zone to fix bug, need to put in config later
+		client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 		if err != nil {
 			fmt.Printf("%+v", errors.WithStack(err))
 			return
