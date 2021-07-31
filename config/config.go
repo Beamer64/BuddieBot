@@ -73,7 +73,7 @@ func ReadConfig(configFilePath string, authFilePath string, commandFilePath stri
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	//fmt.Println(string(configFile))
+	// fmt.Println(string(configFile))
 
 	fmt.Println("No Errors")
 
@@ -82,7 +82,7 @@ func ReadConfig(configFilePath string, authFilePath string, commandFilePath stri
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	//fmt.Println(string(authFile))
+	// fmt.Println(string(authFile))
 
 	fmt.Println("No Errors")
 
@@ -91,7 +91,7 @@ func ReadConfig(configFilePath string, authFilePath string, commandFilePath stri
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	//fmt.Println(string(authFile))
+	// fmt.Println(string(authFile))
 
 	fmt.Println("No Errors")
 
