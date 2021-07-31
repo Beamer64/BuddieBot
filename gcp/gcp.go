@@ -39,7 +39,7 @@ func (gc *GCPClient) StopMachine(machine string) error {
 	defer func(c *compute.InstancesClient) {
 		err := c.Close()
 		if err != nil {
-
+			fmt.Printf("%+v", errors.WithStack(err))
 		}
 	}(c)
 
