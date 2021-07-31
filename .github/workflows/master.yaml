@@ -10,42 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: 1.16
 
     - name: Build
+      uses: actions/checkout@v2
       run: |
-        echo '==='
-        ls
-        pwd
-        echo '==='
-        cd ..
-        echo '==='
-        ls
-        pwd
-        echo '==='
-        cd ..
-        echo '==='
-        ls
-        pwd
-        echo '==='
-        cd ..
-        echo '==='
-        ls
-        pwd
-        echo '==='
-        cd ..
-        echo '==='
-        ls
-        pwd
-        echo '==='
-        
-        
-      # go env -w GO111MODULE=on
-      # go get ./...
-      # CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server main.go
+        go get ./...
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server main.go
 
     # Need to reimplement after unit test are seperated from integration tests
     # - name: Test
