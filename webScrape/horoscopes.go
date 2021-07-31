@@ -11,7 +11,7 @@ func ScrapeSign(sign string) (horoscope string) {
 
 	// On every p element which has style attribute call callback
 	c.OnHTML("p[style]", func(e *colly.HTMLElement) {
-		//link := e.Attr("font-size:16px;")
+		// link := e.Attr("font-size:16px;")
 
 		if e.Text != "" {
 			horoscope = e.Text

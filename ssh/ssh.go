@@ -15,6 +15,26 @@ type SSHClient struct {
 	ip     string
 }
 
+type ConfigStructs struct {
+	Cfg  *config.Config
+	Ath  *config.Auth
+	Comm *config.Command
+}
+
+func NewConfigStruct() *ConfigStructs {
+	cfig, auth, commd, err := config.ReadConfig("config/config.json", "config/auth.json", "config/command.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &ConfigStructs{
+		Cfg:  cfig,
+		Ath:  auth,
+		Comm: commd,
+	}
+
+}
+
 func NewSSHClient(sshKeyContents, ip string) (*SSHClient, error) {
 	sshFileName := "./minecraft_rsa"
 
@@ -87,6 +107,7 @@ func (client *SSHClient) RunCommand(commandText string) (string, error) {
 	return outPut, nil
 }
 
+// CheckServerStatus Returns any cmd output along with whether server is running as bool
 func CheckServerStatus(sshClient *SSHClient) (string, bool) {
 	serverOutput, err := sshClient.RunCommand("docker container ls --format='{{json .}}'")
 	if err != nil {
@@ -101,6 +122,7 @@ func CheckServerStatus(sshClient *SSHClient) (string, bool) {
 	return status, false
 }
 
+// ParseServerStatus Parses out the server status from the cmd output
 func ParseServerStatus(serverOut string) string {
 	var commOut *config.CommandOut
 
