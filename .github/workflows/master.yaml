@@ -1,0 +1,66 @@
+name: Deploy API
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
+    - name: Build
+      run: |
+        git_hash=$(git rev-parse --short "$GITHUB_SHA")
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server main.go 
+
+    # Need to reimplement after unit test are seperated from integration tests
+    # - name: Test
+    #   run: go test -v ./...
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+      
+      
+      
+    - name: Use gcloud CLI
+      run: gcloud info
+
+    - name: Upload new server binary
+      run: |
+        git_hash=$(git rev-parse --short "$GITHUB_SHA")
+
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@hopper-instance-1 --command="mkdir ${git_hash}"
+
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a ./discord_server colerwyats@hopper-instance-1:/home/colerwyats/${git_hash}
+
+    - name: Upload new configs from secret
+      run: |
+        git_hash=$(git rev-parse --short "$GITHUB_SHA")
+
+        echo ${{ secrets.GCP_SA_KEY }} > config/auth.json
+        echo ${{ secrets.GCP_SSH_KEY }} > config/config.json
+
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@hopper-instance-1 --command="mkdir ${git_hash}/config"
+
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/auth.json colerwyats@hopper-instance-1:/home/colerwyats/${git_hash}/config
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/config.json colerwyats@hopper-instance-1:/home/colerwyats/${git_hash}/config
+
+
+    #### TODO KILL SERVICE BEFORE STARTING NEW ONE IN BACKGROUND (need to inspect ps when deployed)
+
+    - name: Stop old service and start new
+      run: |
+        git_hash=$(git rev-parse --short "$GITHUB_SHA")
+
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@hopper-instance-1 --command="cd ${git_hash}; pkill -f "discord_server"; ./discord_server &;"
