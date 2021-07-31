@@ -25,6 +25,12 @@ jobs:
         cd ..
         ls
         pwd
+        cd ..
+        ls
+        pwd
+        cd ..
+        ls
+        pwd
         
         
       # go env -w GO111MODULE=on
