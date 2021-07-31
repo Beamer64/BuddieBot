@@ -18,6 +18,7 @@ jobs:
     - name: Build
       run: |
         ls
+        pwd
         
         
       # go env -w GO111MODULE=on
