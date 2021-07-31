@@ -1,0 +1,15 @@
+[Unit]
+Description=Service that keeps running the discord bot running from startup.
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/home/colerwyats/current/discord_server
+WorkingDirectory=/home/colerwyats/current
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=%n

@@ -2,9 +2,10 @@ package ssh
 
 import (
 	"fmt"
-	"github.com/beamer64/discordBot/gcp"
 	"log"
 	"testing"
+
+	"github.com/beamer64/discordBot/gcp"
 
 	"github.com/beamer64/discordBot/config"
 )
@@ -21,6 +22,23 @@ func TestRunCommand(t *testing.T) {
 	}
 
 	_, err = sshClient.RunCommand("sudo echo hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRunCommandStartContainer(t *testing.T) {
+	config, _, _, err := config.ReadConfig("../config/config.json", "../config/config.json", "../config/config.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sshClient, err := NewSSHClient(config.SSHKeyBody, "34.68.22.97:22")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = sshClient.RunCommand("docker container start 06ae729f5c2b")
 	if err != nil {
 		t.Fatal(err)
 	}

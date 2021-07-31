@@ -6,6 +6,7 @@ import (
 	"os"
 
 	compute "cloud.google.com/go/compute/apiv1"
+	"github.com/pkg/errors"
 	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 )
 
@@ -38,7 +39,7 @@ func (gc *GCPClient) StopMachine(machine string) error {
 	defer func(c *compute.InstancesClient) {
 		err := c.Close()
 		if err != nil {
-
+			fmt.Printf("%+v", errors.WithStack(err))
 		}
 	}(c)
 
@@ -47,6 +48,7 @@ func (gc *GCPClient) StopMachine(machine string) error {
 		Zone:     gc.zone,
 		Project:  gc.project,
 	}
+	fmt.Printf("stop machine request: %+v\n", req)
 	resp, err := c.Stop(ctx, req)
 	if err != nil {
 		return err
@@ -65,7 +67,7 @@ func (gc *GCPClient) StartMachine(machine string) error {
 	defer func(c *compute.InstancesClient) {
 		err := c.Close()
 		if err != nil {
-
+			fmt.Printf("%+v", errors.WithStack(err))
 		}
 	}(c)
 
@@ -74,6 +76,7 @@ func (gc *GCPClient) StartMachine(machine string) error {
 		Zone:     gc.zone,
 		Project:  gc.project,
 	}
+	fmt.Printf("start machine request: %+v\n", req)
 	resp, err := c.Start(ctx, req)
 	if err != nil {
 		return err
