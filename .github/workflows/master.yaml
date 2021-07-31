@@ -53,10 +53,11 @@ jobs:
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/auth.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/config.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/command.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/bot.service colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
 
     #### TODO KILL SERVICE BEFORE STARTING NEW ONE IN BACKGROUND (need to inspect ps when deployed)
 
     - name: Stop old service and start new
       run: |
-        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="pkill -f 'discord_server'"
-        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; ./discord_server > /dev/null 2>&1 & "
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; ln -sf ${GITHUB_SHA} current; ./discord_server > /dev/null 2>&1 & "
