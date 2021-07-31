@@ -17,20 +17,30 @@ jobs:
 
     - name: Build
       run: |
+        echo '==='
         ls
         pwd
+        echo '==='
         cd ..
+        echo '==='
         ls
         pwd
+        echo '==='
         cd ..
+        echo '==='
         ls
         pwd
+        echo '==='
         cd ..
+        echo '==='
         ls
         pwd
+        echo '==='
         cd ..
+        echo '==='
         ls
         pwd
+        echo '==='
         
         
       # go env -w GO111MODULE=on
