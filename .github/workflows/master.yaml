@@ -17,7 +17,7 @@ jobs:
 
     - name: Build
       run: |
-        ls
+        go env -w GO111MODULE=on
         go get ./...
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server main.go 
 
@@ -39,14 +39,12 @@ jobs:
 
     - name: Upload new server binary
       run: |
-
         gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@hopper-instance-1 --command="mkdir ${GITHUB_SHA}"
 
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a ./discord_server colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}
 
     - name: Upload new configs from secret
       run: |
-
         echo ${{ secrets.GCP_SA_KEY }} > config/auth.json
         echo ${{ secrets.GCP_SSH_KEY }} > config/config.json
 
