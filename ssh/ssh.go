@@ -32,7 +32,6 @@ func NewConfigStruct() *ConfigStructs {
 		Ath:  auth,
 		Comm: commd,
 	}
-
 }
 
 func NewSSHClient(sshKeyContents, ip string) (*SSHClient, error) {
