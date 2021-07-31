@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -53,7 +52,7 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 		/*var author *discordgo.Member
 		channel, err := session.State.Channel(message.ChannelID)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err.Error())
 		}
 
 		member, _ := session.GuildMember(channel.GuildID, message.Author.ID)
@@ -66,7 +65,7 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 		if message.Author.ID == "282722418093719556" {
 			err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err.Error())
 			}
 			return
 		} else
@@ -84,7 +83,7 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 		if strings.Contains(ToLower(message.Content), "$gif/") {
 			err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err.Error())
 			}
 
 			searchSlices := strings.SplitAfter(message.Content, "/")
@@ -127,24 +126,24 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 func SendMessage(session *discordgo.Session, message *discordgo.MessageCreate, outMessage string) {
 	_, err := session.ChannelMessageSend(message.ChannelID, outMessage)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 }
 
 func GetServerStatus(session *discordgo.Session, message *discordgo.MessageCreate) {
 	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 
 	err = client.StartMachine("instance-2-minecraft")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 
 	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 
 	status, serverUp := ssh.CheckServerStatus(sshClient)
@@ -174,17 +173,17 @@ func SendStartUpMessages(session *discordgo.Session, message *discordgo.MessageC
 func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 
 	err = client.StartMachine("instance-2-minecraft")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 
 	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 
 	status, serverUp := ssh.CheckServerStatus(sshClient)
@@ -196,7 +195,7 @@ func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 
 		_, err = sshClient.RunCommand("docker container start 06ae729f5c2b")
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err.Error())
 		}
 		SendStartUpMessages(session, message)
 		SendMessage(session, message, comm.FinishOpperation)
@@ -206,7 +205,7 @@ func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 func StopServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 
 	status, serverUp := ssh.CheckServerStatus(sshClient)
@@ -215,17 +214,17 @@ func StopServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 
 		_, err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err.Error())
 		}
 
 		client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err.Error())
 		}
 
 		err = client.StopMachine("instance-2-minecraft")
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err.Error())
 		}
 
 		SendMessage(session, message, comm.FinishOpperation)
