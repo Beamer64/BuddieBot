@@ -58,4 +58,5 @@ jobs:
 
     - name: Stop old service and start new
       run: |
-        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; pkill -f "discord_server"; ./discord_server &"
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="pkill -f 'discord_server'"
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; ./discord_server > /dev/null 2>&1 & "
