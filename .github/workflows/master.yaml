@@ -15,14 +15,14 @@ jobs:
       with:
         go-version: 1.16
 
-    # - name: Build
-    #   run: |
-    #     go env -w GO111MODULE=on
-    #     go get ./...
-    #     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server main.go 
-
     - name: Build
-      run: "ls"
+      run: |
+        ls
+        
+        
+      # go env -w GO111MODULE=on
+      # go get ./...
+      # CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server main.go
 
     # Need to reimplement after unit test are seperated from integration tests
     # - name: Test
@@ -35,23 +35,20 @@ jobs:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
       
-      
-      
     - name: Use gcloud CLI
       run: gcloud info
 
     - name: Upload new server binary
       run: |
-        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@hopper-instance-1 --command="mkdir ${GITHUB_SHA}"
-
-        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a ./discord_server colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="mkdir ${GITHUB_SHA}"
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c ./discord_server colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}
 
     - name: Upload new configs from secret
       run: |
         echo ${{ secrets.GCP_SA_KEY }} > config/auth.json
         echo ${{ secrets.GCP_SSH_KEY }} > config/config.json
 
-        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@hopper-instance-1 --command="mkdir ${GITHUB_SHA}/config"
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="mkdir ${GITHUB_SHA}/config"
 
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/auth.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/config.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
@@ -60,4 +57,4 @@ jobs:
 
     - name: Stop old service and start new
       run: |
-        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; pkill -f "discord_server"; ./discord_server &;"
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; pkill -f "discord_server"; ./discord_server &;"
