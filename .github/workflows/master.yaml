@@ -60,4 +60,5 @@ jobs:
     - name: Stop old service and start new
       run: |
         gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
-        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; ln -sf ${GITHUB_SHA} current; ./discord_server > /dev/null 2>&1 & "
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; ln -sf ${GITHUB_SHA} current"
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="sudo systemctl restart bot.service"

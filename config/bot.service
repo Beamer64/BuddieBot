@@ -6,7 +6,7 @@ WantedBy=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/home/colerwyats/current
+ExecStart=/home/colerwyats/current/discord_server
 WorkingDirectory=/home/colerwyats/current
 Restart=always
 RestartSec=5

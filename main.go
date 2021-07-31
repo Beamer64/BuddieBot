@@ -25,7 +25,7 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode("up")
+		json.NewEncoder(w).Encode("upchuck")
 	}).Methods("GET")
 	log.Fatal(http.ListenAndServe(":80", router))
 }
