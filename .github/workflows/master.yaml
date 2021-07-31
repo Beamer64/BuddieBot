@@ -45,8 +45,8 @@ jobs:
 
     - name: Upload new configs from secret
       run: |
-        echo ${{ secrets.GCP_SA_KEY }} > config/auth.json
-        echo ${{ secrets.GCP_SSH_KEY }} > config/config.json
+        echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
+        echo '${{ secrets.GCP_SSH_KEY }}'' > config/config.json
 
         gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="mkdir ${GITHUB_SHA}/config"
 
