@@ -57,8 +57,8 @@ jobs:
 
     - name: Stop old service and start new
       run: |
-      
-        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="cd ${GITHUB_SHA}; unlink current; ln -s ${GITHUB_SHA} current"
+
+        gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="unlink current; ln -s ${GITHUB_SHA} current"
         gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="sudo systemctl restart bot.service"
 
 # This line needs to be ran is service never created before
