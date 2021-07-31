@@ -10,6 +10,7 @@ import (
 	"github.com/beamer64/discordBot/ssh"
 	"github.com/beamer64/discordBot/webScrape"
 	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/errors"
 )
 
 var DiscordBotID string
@@ -52,7 +53,7 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 		/*var author *discordgo.Member
 		channel, err := session.State.Channel(message.ChannelID)
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 		}
 
 		member, _ := session.GuildMember(channel.GuildID, message.Author.ID)
@@ -65,7 +66,7 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 		if message.Author.ID == "282722418093719556" {
 			err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 			if err != nil {
-				fmt.Println(err.Error())
+				fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 		} else
@@ -83,7 +84,7 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 		if strings.Contains(ToLower(message.Content), "$gif/") {
 			err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 			if err != nil {
-				fmt.Println(err.Error())
+				fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 
 			searchSlices := strings.SplitAfter(message.Content, "/")
@@ -126,24 +127,24 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 func SendMessage(session *discordgo.Session, message *discordgo.MessageCreate, outMessage string) {
 	_, err := session.ChannelMessageSend(message.ChannelID, outMessage)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 	}
 }
 
 func GetServerStatus(session *discordgo.Session, message *discordgo.MessageCreate) {
 	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 	}
 
 	err = client.StartMachine("instance-2-minecraft")
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 	}
 
 	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 	}
 
 	status, serverUp := ssh.CheckServerStatus(sshClient)
@@ -173,17 +174,17 @@ func SendStartUpMessages(session *discordgo.Session, message *discordgo.MessageC
 func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 	client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 	}
 
 	err = client.StartMachine("instance-2-minecraft")
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 	}
 
 	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 	}
 
 	status, serverUp := ssh.CheckServerStatus(sshClient)
@@ -195,7 +196,7 @@ func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 
 		_, err = sshClient.RunCommand("docker container start 06ae729f5c2b")
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 		}
 		SendStartUpMessages(session, message)
 		SendMessage(session, message, comm.FinishOpperation)
@@ -205,7 +206,7 @@ func StartServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 func StopServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 	sshClient, err := ssh.NewSSHClient(cfg.SSHKeyBody, cfg.MachineIP)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 	}
 
 	status, serverUp := ssh.CheckServerStatus(sshClient)
@@ -214,17 +215,17 @@ func StopServer(session *discordgo.Session, message *discordgo.MessageCreate) {
 
 		_, err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 		}
 
 		client, err := gcp.NewGCPClient("config/auth.json", ath.Project_id, ath.Zone)
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 		}
 
 		err = client.StopMachine("instance-2-minecraft")
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + ": " + fmt.Sprintf("%+v", errors.WithStack(err)))
 		}
 
 		SendMessage(session, message, comm.FinishOpperation)
