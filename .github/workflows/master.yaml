@@ -52,6 +52,7 @@ jobs:
 
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/auth.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/config.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/command.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
 
     #### TODO KILL SERVICE BEFORE STARTING NEW ONE IN BACKGROUND (need to inspect ps when deployed)
 
