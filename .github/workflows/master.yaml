@@ -20,7 +20,6 @@ jobs:
         go-version: 1.16
 
     - name: Build
-      uses: actions/checkout@v2
       run: |
         go get ./...
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server main.go
@@ -41,9 +40,6 @@ jobs:
 
     - name: Upload new server binary
       run: |
-        echo '==='
-        ls
-        echo '==='
         gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="mkdir ${GITHUB_SHA}"
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c ./discord_server colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}
 
