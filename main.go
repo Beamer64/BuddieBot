@@ -27,5 +27,5 @@ func main() {
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode("upchuck")
 	}).Methods("GET")
-	log.Fatal(http.ListenAndServe(":80", router))
+	log.Fatal(http.ListenAndServe(":9001", router))
 }
