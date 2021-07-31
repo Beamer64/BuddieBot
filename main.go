@@ -1,8 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"log"
+	"net/http"
+
 	"github.com/beamer64/discordBot/bot"
 	"github.com/beamer64/discordBot/config"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -18,6 +23,9 @@ func main() {
 		panic(err)
 	}
 
-	<-make(chan struct{})
-	return
+	router := mux.NewRouter()
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode("up")
+	}).Methods("GET")
+	log.Fatal(http.ListenAndServe(":80", router))
 }
