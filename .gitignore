@@ -139,3 +139,6 @@ discord_server
 
 # vscode stuff
 launch.json
+
+# version file
+version.txt

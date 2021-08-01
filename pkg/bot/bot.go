@@ -97,8 +97,11 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 		// Sends command list
 		case "$tuuck":
 			d.sendMessage(session, message, d.cfg.Command.Tuuck+"\n"+d.cfg.Command.McStatus+"\n"+d.cfg.Command.Start+
-				"\n"+d.cfg.Command.Stop+"\n"+d.cfg.Command.Horoscope+"\n"+d.cfg.Command.Gif)
+				"\n"+d.cfg.Command.Stop+"\n"+d.cfg.Command.Horoscope+"\n"+d.cfg.Command.Gif+"\n"+d.cfg.Command.Version)
 			return
+
+		case "$version":
+			d.sendMessage(session, message, "We're running version "+d.cfg.Version+" right now")
 
 		// Starts the Minecraft Server
 		case "$start":

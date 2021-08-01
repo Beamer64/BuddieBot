@@ -5,6 +5,7 @@
   "Gif": "$gif/{search} - Sends first searched gif",
   "Horoscope": "$horoscope/{sign} - Gives daily horoscope.",
   "McStatus": "$mcstatus - Gives the current status of the MC server.",
+  "Version": "$version - Gives the Git SHA of the current bot version running",
   "Invalid": "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<",
   "WindUp": "`*starts minecraft server in silence*`",
   "WindDown": "stopping minecraft server, Alt-F4 really speeds things up 0.0",

@@ -57,6 +57,7 @@ jobs:
       run: |
         echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
         echo '${{ secrets.GCP_SSH_KEY }}' > config/config.json
+        echo '${GITHUB_SHA} > config/version.txt
 
         gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-c colerwyats@hopper-instance-1 --command="mkdir ${GITHUB_SHA}/config"
 
@@ -65,6 +66,7 @@ jobs:
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/command.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/bot.service colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/loadingMessages.txt colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/version.txt colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
 
     - name: Stop old service and start new
       run: |

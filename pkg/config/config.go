@@ -15,6 +15,7 @@ type Config struct {
 	GCPAuth                *GCPAuth
 	Command                *Command
 	LoadingMessages        []string
+	Version                string
 }
 
 type ExternalServicesConfig struct {
@@ -57,6 +58,7 @@ type Command struct {
 	CheckStatusUp    string `json:"CheckStatusUp"`
 	CheckStatusDown  string `json:"CheckStatusDown"`
 	McStatus         string `json:"McStatus"`
+	Version          string `json:"Version"`
 }
 
 type CommandOut struct {
@@ -167,11 +169,22 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 		return nil, err
 	}
 
+	fmt.Println("Looking for version.txt")
+	file, err := os.Open(configDir + "version.txt")
+	if err != nil {
+		fmt.Println("WARNING didn't find version.txt if directory")
+	}
+	contents, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Println("WARNING couldn't read version.txt")
+	}
+
 	return &Config{
 		ExternalServicesConfig: escfg,
 		GCPAuth:                gcpauth,
 		Command:                comm,
 		LoadingMessages:        msgs,
+		Version:                string(contents),
 	}, nil
 }
 
