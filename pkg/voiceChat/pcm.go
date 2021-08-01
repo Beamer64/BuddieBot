@@ -2,9 +2,10 @@ package voiceChat
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/bwmarrin/discordgo"
 	"layeh.com/gopus"
-	"sync"
 )
 
 // Borrowed from https://github.com/bwmarrin/dgvoice
