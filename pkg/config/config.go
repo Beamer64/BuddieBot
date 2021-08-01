@@ -184,7 +184,7 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 		GCPAuth:                gcpauth,
 		Command:                comm,
 		LoadingMessages:        msgs,
-		Version:                string(contents),
+		Version:                strings.Replace(string(contents), "\n", "", -1),
 	}, nil
 }
 

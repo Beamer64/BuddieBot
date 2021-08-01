@@ -101,7 +101,7 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 			return
 
 		case "$version":
-			d.sendMessage(session, message, "We're running version "+d.cfg.Version+" right now")
+			d.sendMessage(session, message, "We'we wunnying vewsion ```"+d.cfg.Version+"``` wight nyow")
 
 		// Starts the Minecraft Server
 		case "$start":

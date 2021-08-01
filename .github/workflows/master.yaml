@@ -61,7 +61,7 @@ jobs:
       run: |
         echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
         echo '${{ secrets.GCP_SSH_KEY }}' > config/config.json
-        echo '${GITHUB_SHA}' > config/version.txt
+        echo "${GITHUB_SHA}" > config/version.txt
 
         gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config"
 
