@@ -2,36 +2,18 @@ package ssh
 
 import (
 	"encoding/json"
-	"github.com/beamer64/discordBot/config"
-	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/beamer64/discordBot/pkg/config"
+	"golang.org/x/crypto/ssh"
 )
 
 type SSHClient struct {
 	config *ssh.ClientConfig
 	ip     string
-}
-
-type ConfigStructs struct {
-	Cfg  *config.Config
-	Ath  *config.Auth
-	Comm *config.Command
-}
-
-func NewConfigStruct() *ConfigStructs {
-	cfig, auth, commd, err := config.ReadConfig("config/config.json", "config/auth.json", "config/command.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &ConfigStructs{
-		Cfg:  cfig,
-		Ath:  auth,
-		Comm: commd,
-	}
 }
 
 func NewSSHClient(sshKeyContents, ip string) (*SSHClient, error) {
@@ -107,13 +89,13 @@ func (client *SSHClient) RunCommand(commandText string) (string, error) {
 }
 
 // CheckServerStatus Returns any cmd output along with whether server is running as bool
-func CheckServerStatus(sshClient *SSHClient) (string, bool) {
+func (client *SSHClient) CheckServerStatus(sshClient *SSHClient) (string, bool) {
 	serverOutput, err := sshClient.RunCommand("docker container ls --format='{{json .}}'")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	status := ParseServerStatus(serverOutput)
+	status := client.ParseServerStatus(serverOutput)
 
 	if strings.Contains(status, "Up") {
 		return status, true
@@ -122,7 +104,7 @@ func CheckServerStatus(sshClient *SSHClient) (string, bool) {
 }
 
 // ParseServerStatus Parses out the server status from the cmd output
-func ParseServerStatus(serverOut string) string {
+func (client *SSHClient) ParseServerStatus(serverOut string) string {
 	var commOut *config.CommandOut
 
 	if serverOut != "" {

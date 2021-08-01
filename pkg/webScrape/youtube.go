@@ -3,13 +3,13 @@ package webScrape
 import (
 	"errors"
 	"fmt"
-	"github.com/Jeffail/gabs"
-	"github.com/beamer64/discordBot/config"
-	"github.com/parnurzeal/gorequest"
 	"log"
 	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/Jeffail/gabs"
+	"github.com/parnurzeal/gorequest"
 )
 
 type stream map[string]string
@@ -21,11 +21,11 @@ type youtube struct {
 
 // GetYoutubeURL converts a standard Youtube URL or ID to an mp4 download link,
 // or searches Youtube and picks the first result.
-func GetYoutubeURL(query string) (string, string, error) {
+func GetYoutubeURL(query, apiKey string) (string, string, error) {
 	y := new(youtube)
 
 	if len(query) < 4 || query[:4] != "http" {
-		link, err := searchYoutube(query)
+		link, err := searchYoutube(query, apiKey)
 		if err != nil {
 			return "", "", err
 		}
@@ -52,17 +52,13 @@ func GetYoutubeURL(query string) (string, string, error) {
 	return downloadURL, targetStream["title"], nil
 }
 
-func searchYoutube(text string) (string, error) {
-	configFile, _, _, err := config.ReadConfig("config/config.json", "config/auth.json", "config/command.json")
-	if err != nil {
-		panic(err)
-	}
+func searchYoutube(text, apiKey string) (string, error) {
 
-	formattedURL := fmt.Sprintf("https://www.googleapis.com/youtube/v3/search?part=snippet&q=%s&key=%s", url.QueryEscape(text), configFile.YoutubeAPIKey)
+	formattedURL := fmt.Sprintf("https://www.googleapis.com/youtube/v3/search?part=snippet&q=%s&key=%s", url.QueryEscape(text), apiKey)
 
-	_, body, errr := gorequest.New().Get(formattedURL).EndBytes()
-	if errr != nil {
-		fmt.Println(err)
+	_, body, err := gorequest.New().Get(formattedURL).EndBytes()
+	if len(err) > 0 { // ??? never seen an []err before
+		return "", err[0]
 	}
 
 	jsonParsed, _ := gabs.ParseJSON(body)

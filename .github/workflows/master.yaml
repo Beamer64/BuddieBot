@@ -19,10 +19,19 @@ jobs:
       with:
         go-version: 1.16
 
+    - name: Pull secrets
+      run: |
+        echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
+        echo '${{ secrets.GCP_SSH_KEY }}' > config/config.json
+
+    - name: Test
+      run: |
+        go get -v ./...
+
     - name: Build
       run: |
         go get ./...
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server main.go
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o discord_server cmd/discord-bot/main.go
 
     # Need to reimplement after unit test are seperated from integration tests
     # - name: Test
@@ -54,6 +63,7 @@ jobs:
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/config.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/command.json colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/bot.service colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-c config/loadingMessages.txt colerwyats@hopper-instance-1:/home/colerwyats/${GITHUB_SHA}/config
 
     - name: Stop old service and start new
       run: |

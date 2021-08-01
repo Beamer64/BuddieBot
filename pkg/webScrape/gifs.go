@@ -3,14 +3,13 @@ package webScrape
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/beamer64/discordBot/config"
 	"io"
 	"log"
 	"net/http"
 )
 
-func RequestGif(searchStr string, com *config.Config) string {
-	URL := "https://g.tenor.com/v1/search?q=" + searchStr + "&key=" + com.TenorAPIkey + "&limit=1"
+func RequestGif(searchStr, tenorAPIkey string) string {
+	URL := "https://g.tenor.com/v1/search?q=" + searchStr + "&key=" + tenorAPIkey + "&limit=1"
 
 	responseResults := GetResponseResults(URL)
 

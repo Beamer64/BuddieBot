@@ -3,9 +3,6 @@ package voiceChat
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/beamer64/discordBot/config"
-	"github.com/bwmarrin/discordgo"
-	"github.com/oleiade/lane"
 	"io"
 	"log"
 	"net/http"
@@ -13,6 +10,10 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/bwmarrin/discordgo"
+	"github.com/oleiade/lane"
 )
 
 var (
@@ -35,6 +36,8 @@ type VoiceInstance struct {
 	skip         bool
 	stop         bool
 	trackPlaying bool
+
+	cfg *config.Config
 }
 
 // QueueVideo places a Youtube link in a queue
@@ -44,9 +47,11 @@ func (vi *VoiceInstance) QueueVideo(youtubeLink string) {
 }
 
 // CreateVoiceInstance accepts both a youtube query and a server id, boots up the voice connection, and plays the track.
-func CreateVoiceInstance(youtubeLink string, serverID string) {
+func CreateVoiceInstance(youtubeLink, serverID string, cfg *config.Config) {
 	vi := new(VoiceInstance)
 	VoiceInstances[serverID] = vi
+
+	vi.cfg = cfg
 
 	fmt.Println("Connecting Voice...")
 	vi.serverID = serverID
@@ -60,18 +65,17 @@ func CreateVoiceInstance(youtubeLink string, serverID string) {
 	vi.processQueue()
 }
 
-func (vi *VoiceInstance) connectVoice() {
-	config_f, _, _, err := config.ReadConfig("config/config.json", "config/auth.json", "config/command.json")
+func (vi *VoiceInstance) connectVoice() error {
+	var err error
+	vi.discord, err = discordgo.New(vi.cfg.ExternalServicesConfig.DiscordEmail, vi.cfg.ExternalServicesConfig.DiscordPassword)
 	if err != nil {
-		panic(err)
+		return err
 	}
-
-	vi.discord, _ = discordgo.New(config_f.DiscordEmail, config_f.DiscordPassword)
 
 	// Open the websocket and begin listening.
 	err = vi.discord.Open()
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	channels, err := vi.discord.GuildChannels(vi.serverID)
@@ -94,8 +98,7 @@ func (vi *VoiceInstance) connectVoice() {
 
 	_, err = vi.discord.ChannelVoiceJoin(vi.serverID, voiceChannel, false, true)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	// Hacky loop to prevent returning when voice isn't ready
@@ -103,6 +106,8 @@ func (vi *VoiceInstance) connectVoice() {
 	for vi.discordVoice.Ready == false {
 		runtime.Gosched()
 	}
+
+	return nil
 }
 
 func (vi *VoiceInstance) processQueue() {
