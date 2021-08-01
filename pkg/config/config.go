@@ -179,12 +179,17 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 		fmt.Println("WARNING couldn't read version.txt")
 	}
 
+	fv := strings.Replace(string(contents), "\n", "", -1)
+	if len(fv) > 8 {
+		fv = fv[0:7]
+	}
+
 	return &Config{
 		ExternalServicesConfig: escfg,
 		GCPAuth:                gcpauth,
 		Command:                comm,
 		LoadingMessages:        msgs,
-		Version:                strings.Replace(string(contents), "\n", "", -1)[0:7],
+		Version:                fv,
 	}, nil
 }
 
