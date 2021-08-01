@@ -12,11 +12,14 @@ import (
 )
 
 type Config struct {
-	Token       string `json:"Token"`
-	BotPrefix   string `json:"BotPrefix"`
-	SSHKeyBody  string `json:"SSHKeyBody"`
-	MachineIP   string `json:"MachineIP"`
-	TenorAPIkey string `json:"TenorAPIkey"`
+	Token           string `json:"Token"`
+	BotPrefix       string `json:"BotPrefix"`
+	SSHKeyBody      string `json:"SSHKeyBody"`
+	MachineIP       string `json:"MachineIP"`
+	TenorAPIkey     string `json:"TenorAPIkey"`
+	YoutubeAPIKey   string `json:"YoutubeAPIKey"`
+	DiscordEmail    string `json:"DiscordEmail"`
+	DiscordPassword string `json:"DiscordPassword"`
 }
 
 type Auth struct {

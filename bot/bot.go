@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"github.com/beamer64/discordBot/gcp"
+	"github.com/beamer64/discordBot/voiceChat"
 	"log"
 	"strings"
 	"time"
@@ -72,7 +73,9 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 				return
 			}
 			return
-		} else
+		}
+
+		method := strings.Split(message.Content, " ")[0][0:]
 
 		// Sends Daily Horoscope
 		if strings.Contains(ToLower(message.Content), "$horoscope/") {
@@ -96,9 +99,10 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 			gifURL := webScrape.RequestGif(searchStr, cfg)
 			SendMessage(session, message, gifURL)
 			return
+
 		}
 
-		switch ToLower(message.Content) {
+		switch ToLower(method) {
 		// Sends command list
 		case "$tuuck":
 			SendMessage(session, message, comm.Tuuck+"\n"+comm.McStatus+"\n"+comm.Start+
@@ -120,6 +124,9 @@ func messageHandler(session *discordgo.Session, message *discordgo.MessageCreate
 			SendServerStatusAsMessage(session, message)
 			return
 
+		case "$play":
+			PlayYoutubeLink(session, message)
+
 		// Sends the "Invalid" command Message
 		default:
 			SendMessage(session, message, comm.Invalid)
@@ -138,6 +145,26 @@ func SendMessage(session *discordgo.Session, message *discordgo.MessageCreate, o
 
 func ToLower(content string) string {
 	return strings.ToLower(content)
+}
+
+func PlayYoutubeLink(session *discordgo.Session, message *discordgo.MessageCreate) {
+	channel, _ := session.Channel(message.ChannelID)
+	serverID := channel.GuildID
+
+	youtubeLink, youtubeTitle, err := webScrape.GetYoutubeURL(strings.Split(message.Content, " ")[1])
+	if err != nil {
+		fmt.Println(err)
+		SendMessage(session, message, "No vidya dood.")
+		return
+	}
+
+	if voiceChat.VoiceInstances[serverID] != nil {
+		voiceChat.VoiceInstances[serverID].QueueVideo(youtubeLink)
+		SendMessage(session, message, fmt.Sprintf("Queued: %s", youtubeTitle))
+	} else {
+		SendMessage(session, message, fmt.Sprintf("Playing: %s", youtubeTitle))
+		go voiceChat.CreateVoiceInstance(youtubeLink, serverID)
+	}
 }
 
 func SendStartUpMessages(session *discordgo.Session, message *discordgo.MessageCreate) {
