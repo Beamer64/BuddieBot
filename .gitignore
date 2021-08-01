@@ -133,3 +133,9 @@ fabric.properties
 # CodeStream plugin
 # https://plugins.jetbrains.com/plugin/12206-codestream
 .idea/codestream.xml
+
+# what we name the output binary
+discord_server
+
+# vscode stuff
+launch.json
