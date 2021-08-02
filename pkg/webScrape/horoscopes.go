@@ -3,10 +3,10 @@ package webScrape
 import (
 	"fmt"
 	"github.com/gocolly/colly/v2"
-	"log"
 )
 
-func ScrapeSign(sign string) (horoscope string) {
+func ScrapeSign(sign string) (string, error) {
+	horoscope := ""
 	c := colly.NewCollector()
 
 	// On every p element which has style attribute call callback
@@ -26,8 +26,8 @@ func ScrapeSign(sign string) (horoscope string) {
 	// Start scraping on https://www.ganeshaspeaks.com
 	err := c.Visit("https://www.ganeshaspeaks.com/horoscopes/daily-horoscope/" + sign + "/")
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	return horoscope
+	return horoscope, nil
 }

@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -68,205 +67,288 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 
 		method := strings.Split(message.Content, " ")[0][0:]
 
-		// Sends Daily Horoscope
-		if strings.Contains(strings.ToLower(message.Content), "$horoscope/") {
-			signSlices := strings.SplitAfter(message.Content, "/")
-			sign := signSlices[1]
-			horoscope := webScrape.ScrapeSign(sign)
-			d.sendMessage(session, message, horoscope)
-			return
-
-		} else
-		// Sends first searched gif
-		if strings.Contains(strings.ToLower(message.Content), "$gif/") {
-			err := session.ChannelMessageDelete(message.ChannelID, message.ID)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				return
-			}
-
-			searchSlices := strings.SplitAfter(message.Content, "/")
-			searchStr := searchSlices[1]
-			gifURL := webScrape.RequestGif(searchStr, d.cfg.ExternalServicesConfig.TenorAPIkey)
-			d.sendMessage(session, message, gifURL)
-			return
-
-		}
-
 		switch strings.ToLower(method) {
 		// Sends command list
 		case "$tuuck":
-			d.sendMessage(session, message, d.cfg.Command.Tuuck+"\n"+d.cfg.Command.McStatus+"\n"+d.cfg.Command.Start+
+			err := d.sendMessage(session, message, d.cfg.Command.Tuuck+"\n"+d.cfg.Command.McStatus+"\n"+d.cfg.Command.Start+
 				"\n"+d.cfg.Command.Stop+"\n"+d.cfg.Command.Horoscope+"\n"+d.cfg.Command.Gif+"\n"+d.cfg.Command.Version)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
 			return
 
 		case "$version":
-			d.sendMessage(session, message, "We'we wunnying vewsion `"+d.cfg.Version+"` wight nyow")
+			err := d.sendMessage(session, message, "We'we wunnying vewsion `"+d.cfg.Version+"` wight nyow")
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
 
 		// Starts the Minecraft Server
 		case "$start":
-			d.startServer(session, message)
+			err := d.startServer(session, message)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
 			return
 
 		// Stops the Minecraft Server
 		case "$stop":
-			d.stopServer(session, message)
+			err := d.stopServer(session, message)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
 			return
 
 		// Stops the Minecraft Server
 		case "$mcstatus":
-			d.sendServerStatusAsMessage(session, message)
+			err := d.sendServerStatusAsMessage(session, message)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
 			return
 
+		// TODO make this work
+		// Plays youtube link in voice chat
 		case "$play":
-			d.playYoutubeLink(session, message)
+			err := d.playYoutubeLink(session, message)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_ = d.sendMessage(session, message, "No vidya dood.")
+			}
+			return
+
+		// Sends daily horoscope
+		case "$horoscope":
+			err := d.displayHoroscope(session, message)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
+			return
+
+		// Sends gif response
+		case "$gif":
+			err := d.sendGif(session, message)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
+			return
 
 		// Sends the "Invalid" command Message
 		default:
-			d.sendMessage(session, message, d.cfg.Command.Invalid)
+			err := d.sendMessage(session, message, d.cfg.Command.Invalid)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
 			return
 		}
 	}
 }
 
-func (d *DiscordBot) sendMessage(session *discordgo.Session, message *discordgo.MessageCreate, outMessage string) {
+func (d *DiscordBot) sendMessage(session *discordgo.Session, message *discordgo.MessageCreate, outMessage string) error {
 	_, err := session.ChannelMessageSend(message.ChannelID, outMessage)
 	if err != nil {
-		fmt.Printf("%+v", errors.WithStack(err))
-		return
+		return err
 	}
+	return nil
 }
 
-func (d *DiscordBot) playYoutubeLink(session *discordgo.Session, message *discordgo.MessageCreate) {
+func (d *DiscordBot) sendGif(session *discordgo.Session, message *discordgo.MessageCreate) error {
+	err := session.ChannelMessageDelete(message.ChannelID, message.ID)
+	if err != nil {
+		return err
+	}
+
+	searchStr := strings.Split(message.Content, " ")[1]
+	gifURL, err := webScrape.RequestGif(searchStr, d.cfg.ExternalServicesConfig.TenorAPIkey)
+	if err != nil {
+		return err
+	}
+
+	err = d.sendMessage(session, message, gifURL)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *DiscordBot) displayHoroscope(session *discordgo.Session, message *discordgo.MessageCreate) error {
+	sign := strings.Split(message.Content, " ")[1]
+	horoscope, err := webScrape.ScrapeSign(sign)
+	if err != nil {
+		return err
+	}
+
+	err = d.sendMessage(session, message, horoscope)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *DiscordBot) playYoutubeLink(session *discordgo.Session, message *discordgo.MessageCreate) error {
 	channel, _ := session.Channel(message.ChannelID)
 	serverID := channel.GuildID
 
 	youtubeLink, youtubeTitle, err := webScrape.GetYoutubeURL(strings.Split(message.Content, " ")[1], d.cfg.ExternalServicesConfig.YoutubeAPIKey)
 	if err != nil {
-		fmt.Println(err)
-		d.sendMessage(session, message, "No vidya dood.")
-		return
+		return err
 	}
 
 	if voiceChat.VoiceInstances[serverID] != nil {
 		voiceChat.VoiceInstances[serverID].QueueVideo(youtubeLink)
-		d.sendMessage(session, message, fmt.Sprintf("Queued: %s", youtubeTitle))
+		err = d.sendMessage(session, message, fmt.Sprintf("Queued: %s", youtubeTitle))
+		if err != nil {
+			return err
+		}
 	} else {
-		d.sendMessage(session, message, fmt.Sprintf("Playing: %s", youtubeTitle))
+		err = d.sendMessage(session, message, fmt.Sprintf("Playing: %s", youtubeTitle))
+		if err != nil {
+			return err
+		}
 		go voiceChat.CreateVoiceInstance(youtubeLink, serverID, d.cfg)
 	}
+	return nil
 }
 
-func (d *DiscordBot) sendStartUpMessages(session *discordgo.Session, message *discordgo.MessageCreate) {
+func (d *DiscordBot) sendStartUpMessages(session *discordgo.Session, message *discordgo.MessageCreate) error {
 	// sleep for 1 minute while saying funny things and to wait for instance to start up
 	m := 0
 	for i := 1; i < 5; i++ {
 		loadingMessage := getRandomLoadingMessage(d.cfg.LoadingMessages)
 		time.Sleep(3 * time.Second)
-		d.sendMessage(session, message, loadingMessage)
+
+		err := d.sendMessage(session, message, loadingMessage)
+		if err != nil {
+			return err
+		}
+
 		m += i
 	}
 	time.Sleep(3 * time.Second)
+	return nil
 }
 
-func (d *DiscordBot) startServer(session *discordgo.Session, message *discordgo.MessageCreate) {
+func (d *DiscordBot) startServer(session *discordgo.Session, message *discordgo.MessageCreate) error {
 
 	client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
 	if err != nil {
-		fmt.Printf("%+v", errors.WithStack(err))
-		return
+		return err
 	}
 
 	err = client.StartMachine("instance-2-minecraft")
 	if err != nil {
-		fmt.Printf("%+v", errors.WithStack(err))
-		return
+		return err
 	}
 
 	sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
 	if err != nil {
-		fmt.Printf("%+v", errors.WithStack(err))
-		return
+		return err
 	}
 
 	status, serverUp := sshClient.CheckServerStatus(sshClient)
 	if serverUp {
-		d.sendMessage(session, message, d.cfg.Command.ServerUP+status)
+		err = d.sendMessage(session, message, d.cfg.Command.ServerUP+status)
+		if err != nil {
+			return err
+		}
 
 	} else {
-		d.sendMessage(session, message, d.cfg.Command.WindUp)
+		err = d.sendMessage(session, message, d.cfg.Command.WindUp)
+		if err != nil {
+			return err
+		}
 
 		_, err = sshClient.RunCommand("docker container start 06ae729f5c2b")
 		if err != nil {
-			fmt.Printf("%+v", errors.WithStack(err))
-			return
+			return err
 		}
-		d.sendStartUpMessages(session, message)
-		d.sendMessage(session, message, d.cfg.Command.FinishOpperation)
+
+		err = d.sendStartUpMessages(session, message)
+		if err != nil {
+			return err
+		}
+
+		err = d.sendMessage(session, message, d.cfg.Command.FinishOpperation)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (d *DiscordBot) stopServer(session *discordgo.Session, message *discordgo.MessageCreate) {
+func (d *DiscordBot) stopServer(session *discordgo.Session, message *discordgo.MessageCreate) error {
 
 	sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
 	if err != nil {
-		fmt.Printf("%+v", errors.WithStack(err))
-		return
+		return err
 	}
 
 	status, serverUp := sshClient.CheckServerStatus(sshClient)
 	if serverUp {
-		d.sendMessage(session, message, d.cfg.Command.WindDown)
+		err = d.sendMessage(session, message, d.cfg.Command.WindDown)
 
 		_, err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
 		if err != nil {
-			fmt.Printf("%+v", errors.WithStack(err))
-			return
+			return err
 		}
 
-		client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
-		if err != nil {
-			fmt.Printf("%+v", errors.WithStack(err))
-			return
+		client, errr := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
+		if errr != nil {
+			return err
 		}
 
 		err = client.StopMachine("instance-2-minecraft")
 		if err != nil {
-			fmt.Printf("%+v", errors.WithStack(err))
-			return
+			return err
 		}
 
-		d.sendMessage(session, message, d.cfg.Command.FinishOpperation)
+		err = d.sendMessage(session, message, d.cfg.Command.FinishOpperation)
+		if err != nil {
+			return err
+		}
 
 	} else {
-		d.sendMessage(session, message, d.cfg.Command.ServerDOWN+status)
+		err = d.sendMessage(session, message, d.cfg.Command.ServerDOWN+status)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // d.sendServerStatusAsMessage Sends the current server status as a message in discord
-func (d *DiscordBot) sendServerStatusAsMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
+func (d *DiscordBot) sendServerStatusAsMessage(session *discordgo.Session, message *discordgo.MessageCreate) error {
 
 	client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	err = client.StartMachine("instance-2-minecraft")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	status, serverUp := sshClient.CheckServerStatus(sshClient)
 	if serverUp {
-		d.sendMessage(session, message, d.cfg.Command.CheckStatusUp+status)
+		err = d.sendMessage(session, message, d.cfg.Command.CheckStatusUp+status)
+		if err != nil {
+			return err
+		}
 	} else {
-		d.sendMessage(session, message, d.cfg.Command.CheckStatusDown+status)
+		err = d.sendMessage(session, message, d.cfg.Command.CheckStatusDown+status)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func getRandomLoadingMessage(possibleMessages []string) string {

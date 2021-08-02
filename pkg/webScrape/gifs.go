@@ -8,26 +8,28 @@ import (
 	"net/http"
 )
 
-func RequestGif(searchStr, tenorAPIkey string) string {
+func RequestGif(searchStr, tenorAPIkey string) (string, error) {
 	URL := "https://g.tenor.com/v1/search?q=" + searchStr + "&key=" + tenorAPIkey + "&limit=1"
 
-	responseResults := GetResponseResults(URL)
+	responseResults, err := GetResponseResults(URL)
+	if err != nil {
+		return "", err
+	}
 
 	gifURL := ParseGifResponseForGifURL(responseResults)
-
-	return gifURL
+	return gifURL, nil
 }
 
-func GetResponseResults(url string) map[string]interface{} {
+func GetResponseResults(url string) (map[string]interface{}, error) {
 	var responseResults map[string]interface{}
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	defer func(Body io.ReadCloser) {
-		err := Body.Close()
+		err = Body.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -35,10 +37,10 @@ func GetResponseResults(url string) map[string]interface{} {
 
 	err = json.NewDecoder(resp.Body).Decode(&responseResults)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return responseResults
+	return responseResults, nil
 }
 
 func ParseGifResponseForGifURL(responseResults map[string]interface{}) string {
