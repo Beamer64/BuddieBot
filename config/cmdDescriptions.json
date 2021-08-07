@@ -1,0 +1,10 @@
+{
+  "Tuuck": "$tuuck - Lists available commands.",
+  "Start": "$start - Starts Minecraft Server.",
+  "Stop": "$stop - Stops Minecraft Server.",
+  "Gif": "$gif {search} - Sends first searched gif",
+  "Horoscope": "$horoscope {sign} - Gives daily horoscope.",
+  "McStatus": "$mcstatus - Gives the current status of the MC server.",
+  "Version": "$version - Gives the Git SHA of the current bot version running",
+  "CoinFlip": "$coinflip - Flips a coin, sends gif for results"
+}

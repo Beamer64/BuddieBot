@@ -13,7 +13,8 @@ import (
 type Config struct {
 	ExternalServicesConfig *ExternalServicesConfig
 	GCPAuth                *GCPAuth
-	Command                *Command
+	CommandMessages        *CommandMessages
+	CommandDescriptions    *CommandDescriptions
 	LoadingMessages        []string
 	Version                string
 }
@@ -43,26 +44,30 @@ type GCPAuth struct {
 	Zone                        string `json:"zone"`
 }
 
-type Command struct {
-	Tuuck            string `json:"Tuuck"`
-	Start            string `json:"Start"`
-	Stop             string `json:"Stop"`
+type CommandMessages struct {
 	Invalid          string `json:"Invalid"`
 	WindUp           string `json:"WindUp"`
 	WindDown         string `json:"WindDown"`
 	FinishOpperation string `json:"FinishOpperation"`
-	Horoscope        string `json:"Horoscope"`
-	Gif              string `json:"Gif"`
 	ServerUP         string `json:"ServerUP"`
 	ServerDOWN       string `json:"ServerDOWN"`
 	CheckStatusUp    string `json:"CheckStatusUp"`
 	CheckStatusDown  string `json:"CheckStatusDown"`
-	McStatus         string `json:"McStatus"`
-	Version          string `json:"Version"`
 }
 
-type CommandOut struct {
-	Command      string `json:"Command"`
+type CommandDescriptions struct {
+	Tuuck     string `json:"Tuuck"`
+	Start     string `json:"Start"`
+	Stop      string `json:"Stop"`
+	CoinFlip  string `json:"CoinFlip"`
+	Horoscope string `json:"Horoscope"`
+	Gif       string `json:"Gif"`
+	McStatus  string `json:"McStatus"`
+	Version   string `json:"Version"`
+}
+
+type ServerCommandOut struct {
+	Command      string `json:"CommandMessages"`
 	CreatedAt    string `json:"CreatedAt"`
 	ID           string `json:"ID"`
 	Image        string `json:"Image"`
@@ -97,7 +102,8 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 		fmap := make(map[string]bool)
 		fmap["auth.json"] = false
 		fmap["config.json"] = false
-		fmap["command.json"] = false
+		fmap["cmdMessages.json"] = false
+		fmap["cmdDescriptions.json"] = false
 		fmap["loadingMessages.txt"] = false
 
 		// loops thru all files in dir, check if any of them are required
@@ -139,15 +145,22 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 		return nil, err
 	}
 
-	fmt.Println("Reading from command file...")
-	commandFile, err := ioutil.ReadFile(configDir + "command.json")
+	fmt.Println("Reading from cmdMsg file...")
+	commandMsgFile, err := ioutil.ReadFile(configDir + "cmdMessages.json")
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Reading from cmdMsg file...")
+	commandDescFile, err := ioutil.ReadFile(configDir + "cmdDescriptions.json")
 	if err != nil {
 		return nil, err
 	}
 
 	var escfg *ExternalServicesConfig
 	var gcpauth *GCPAuth
-	var comm *Command
+	var comMsg *CommandMessages
+	var comDesc *CommandDescriptions
 
 	err = json.Unmarshal(configFile, &escfg)
 	if err != nil {
@@ -158,7 +171,13 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = json.Unmarshal(commandFile, &comm)
+
+	err = json.Unmarshal(commandMsgFile, &comMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(commandDescFile, &comDesc)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +206,8 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 	return &Config{
 		ExternalServicesConfig: escfg,
 		GCPAuth:                gcpauth,
-		Command:                comm,
+		CommandMessages:        comMsg,
+		CommandDescriptions:    comDesc,
 		LoadingMessages:        msgs,
 		Version:                fv,
 	}, nil

@@ -19,8 +19,8 @@ func TestReadConfig(t *testing.T) {
 		t.Fatal("cfg.GCPAuth is empty")
 	}
 
-	if reflect.DeepEqual(cfg.Command, &Command{}) {
-		t.Fatal("cfg.Command is empty")
+	if reflect.DeepEqual(cfg.CommandMessages, &CommandMessages{}) {
+		t.Fatal("cfg.CommandMessages is empty")
 	}
 
 	if len(cfg.LoadingMessages) == 0 {

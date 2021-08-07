@@ -105,7 +105,7 @@ func (client *SSHClient) CheckServerStatus(sshClient *SSHClient) (string, bool) 
 
 // ParseServerStatus Parses out the server status from the cmd output
 func (client *SSHClient) ParseServerStatus(serverOut string) string {
-	var commOut *config.CommandOut
+	var commOut *config.ServerCommandOut
 
 	if serverOut != "" {
 		in := []byte(serverOut)

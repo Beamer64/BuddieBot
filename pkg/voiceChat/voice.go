@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -67,7 +66,8 @@ func CreateVoiceInstance(youtubeLink, serverID string, cfg *config.Config) {
 
 func (vi *VoiceInstance) connectVoice() error {
 	var err error
-	vi.discord, err = discordgo.New(vi.cfg.ExternalServicesConfig.DiscordEmail, vi.cfg.ExternalServicesConfig.DiscordPassword)
+	vi.discord, err = discordgo.New("Bot " + vi.cfg.ExternalServicesConfig.Token)
+	// vi.discord, err = discordgo.New(vi.cfg.ExternalServicesConfig.DiscordEmail, vi.cfg.ExternalServicesConfig.DiscordPassword)
 	if err != nil {
 		return err
 	}
@@ -81,11 +81,12 @@ func (vi *VoiceInstance) connectVoice() error {
 	channels, err := vi.discord.GuildChannels(vi.serverID)
 
 	var voiceChannel string
-	voiceChannels := []string{}
+	var voiceChannels []string
 	for _, channel := range channels {
-		if fmt.Sprintf("%b", channel.Type) == "voice" {
+		channelType := fmt.Sprintf("%b", channel.Type)
+		if channelType == "10" {
 			voiceChannels = append(voiceChannels, channel.ID)
-			if strings.Contains(strings.ToLower(channel.Name), "music") && voiceChannel == "" {
+			if strings.Contains(strings.ToLower(channel.Name), "wtf we doing? room") && voiceChannel == "" {
 				voiceChannel = channel.ID
 			}
 		}
@@ -103,9 +104,9 @@ func (vi *VoiceInstance) connectVoice() error {
 
 	// Hacky loop to prevent returning when voice isn't ready
 	// TODO: Find a better way.
-	for vi.discordVoice.Ready == false {
+	/*for vi.discord.VoiceReady == false {
 		runtime.Gosched()
-	}
+	}*/
 
 	return nil
 }
@@ -162,7 +163,11 @@ func (vi *VoiceInstance) playVideo(url string) {
 	// buffer used during loop below
 	audiobuf := make([]int16, frameSize*channels)
 
-	vi.discordVoice.Speaking(true)
+	err = vi.discordVoice.Speaking(true)
+	if err != nil {
+		return
+	}
+
 	defer vi.discordVoice.Speaking(false)
 
 	for {

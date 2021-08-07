@@ -1,9 +1,10 @@
 package webScrape
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -16,7 +17,7 @@ type stream map[string]string
 type youtube struct {
 	streamList []stream
 	videoID    string
-	videoInfo  string
+	videoInfo  *http.Response
 }
 
 // GetYoutubeURL converts a standard Youtube URL or ID to an mp4 download link,
@@ -37,7 +38,7 @@ func GetYoutubeURL(query, apiKey string) (string, string, error) {
 		return "", "", fmt.Errorf("findVideoID error=%s", err)
 	}
 
-	err = y.getVideoInfo()
+	err = y.getVideoInfo(apiKey)
 	if err != nil {
 		return "", "", fmt.Errorf("getVideoInfo error=%s", err)
 	}
@@ -48,7 +49,7 @@ func GetYoutubeURL(query, apiKey string) (string, string, error) {
 	}
 
 	targetStream := y.streamList[0]
-	downloadURL := targetStream["url"] + "&signature=" + targetStream["sig"]
+	downloadURL := targetStream["url"] // + "&signature=" + targetStream["sig"]
 	return downloadURL, targetStream["title"], nil
 }
 
@@ -97,69 +98,74 @@ func (y *youtube) findVideoID(videoID string) error {
 	return nil
 }
 
-func (y *youtube) getVideoInfo() error {
-	url := "http://youtube.com/get_video_info?video_id=" + y.videoID
-	_, body, err := gorequest.New().Get(url).End()
+func (y *youtube) getVideoInfo(apiKey string) error {
+	URL := "https://www.googleapis.com/youtube/v3/videos?id=" + y.videoID + "&key=" + apiKey + "&part=snippet,status,player"
+
+	resp, err := http.Get(URL)
 	if err != nil {
-		return err[0]
+		return err
 	}
-	y.videoInfo = body
+	y.videoInfo = resp
 	return nil
 }
 
 func (y *youtube) parseVideoInfo() error {
-	answer, err := url.ParseQuery(y.videoInfo)
+	var responseResults map[string]interface{}
+	videoTitle := ""
+	videoURL := ""
+
+	// answer, err := url.ParseQuery(y.videoInfo)
+	err := json.NewDecoder(y.videoInfo.Body).Decode(&responseResults)
 	if err != nil {
 		return err
 	}
 
-	status, ok := answer["status"]
-	if !ok {
-		err = fmt.Errorf("no response status found in the server's answer")
-		return err
-	}
-	if status[0] == "fail" {
-		reason, ok := answer["reason"]
-		if ok {
-			err = fmt.Errorf("'fail' response status found in the server's answer, reason: '%s'", reason[0])
-		} else {
-			err = errors.New(fmt.Sprint("'fail' response status found in the server's answer, no reason given"))
+	for key, responseValue := range responseResults {
+		if key == "items" {
+			for key, itemsValue := range responseValue.([]interface{})[0].(map[string]interface{}) {
+				if key == "status" {
+					for key, statusValue := range itemsValue.(map[string]interface{}) {
+						if key == "uploadStatus" {
+							if statusValue != "processed" {
+								err = fmt.Errorf("no response status found in the server's answer")
+								return err
+							}
+							break
+						}
+					}
+				}
+			}
 		}
-		return err
 	}
-	if status[0] != "ok" {
-		err = fmt.Errorf("non-success response status found in the server's answer (status: '%s')", status)
-		return err
+	for key, responseValue := range responseResults {
+		if key == "items" {
+			for key, itemsValue := range responseValue.([]interface{})[0].(map[string]interface{}) {
+				if key == "player" {
+					for key, playerValue := range itemsValue.(map[string]interface{}) {
+						if key == "embedHtml" {
+							rawURLValue := fmt.Sprintf("%v", playerValue)
+							rawURLString := strings.SplitAfterN(rawURLValue, "\"", 7)[5]
+							URL := strings.Replace(rawURLString, "/", "", -1)
+							URL = strings.Replace(URL, "\"", "", -1)
+							videoURL = URL
+						}
+						break
+					}
+					break
+				}
+			}
+		}
 	}
 
-	// read the streams map
-	streamMap, ok := answer["url_encoded_fmt_stream_map"]
-	if !ok {
-		err = errors.New(fmt.Sprint("no stream map found in the server's answer"))
-		return err
+	stream := stream{
+		"quality": "",
+		"type":    "",
+		"url":     videoURL,
+		"sig":     "",
+		"title":   videoTitle,
+		"author":  "",
 	}
 
-	// read each stream
-	for streamPos, streamRaw := range strings.Split(streamMap[0], ",") {
-		streamQry, err := url.ParseQuery(streamRaw)
-		if err != nil {
-			log.Println(fmt.Sprintf("An error occured while decoding one of the video's stream's information: stream %d: %s\n", streamPos, err))
-			continue
-		}
-
-		stream := stream{
-			"quality": streamQry["quality"][0],
-			"type":    streamQry["type"][0],
-			"url":     streamQry["url"][0],
-			"sig":     "",
-			"title":   answer["title"][0],
-			"author":  answer["author"][0],
-		}
-		if _, exist := streamQry["sig"]; exist {
-			stream["sig"] = streamQry["sig"][0]
-		}
-
-		y.streamList = append(y.streamList, stream)
-	}
+	y.streamList = append(y.streamList, stream)
 	return nil
 }
