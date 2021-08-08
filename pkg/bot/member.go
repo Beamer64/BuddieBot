@@ -1,23 +1,31 @@
 package bot
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/errors"
 	"strings"
 )
 
-func memberHasRole(member *discordgo.Member, roleName string) bool {
-	//memberRoles := make([]string, len(member.Roles))
+func (d *DiscordBot) memberHasRole(session *discordgo.Session, message *discordgo.MessageCreate, roleName string) bool {
+	guildID := message.GuildID
+	roleName = strings.ToLower(roleName)
 
-	/*for _, role := range member.Roles {
-		if role == "@everyone" {
+	for _, roleID := range message.Member.Roles {
+		role, err := session.State.Role(guildID, roleID)
+		if err != nil {
+			fmt.Printf("%+v", errors.WithStack(err))
+		}
+
+		if role.Name == "@everyone" {
 			continue
 		}
 
-		if strings.ToLower(role) == roleName {
+		if strings.ToLower(role.Name) == roleName {
 			return true
 		}
-	}*/
-	return true
+	}
+	return false
 }
 
 func roleExists(g *discordgo.Guild, name string) (bool, *discordgo.Role) {

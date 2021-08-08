@@ -85,6 +85,9 @@ func (vi *VoiceInstance) connectVoice() error {
 	for _, channel := range channels {
 		channelType := fmt.Sprintf("%b", channel.Type)
 		if channelType == "10" {
+			// TODO This shows AFK channel
+			// The ID of the AFK voice channel.
+			// AfkChannelID string `json:"afk_channel_id"`
 			voiceChannels = append(voiceChannels, channel.ID)
 			if strings.Contains(strings.ToLower(channel.Name), "wtf we doing? room") && voiceChannel == "" {
 				voiceChannel = channel.ID

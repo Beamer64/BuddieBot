@@ -28,6 +28,7 @@ type ExternalServicesConfig struct {
 	YoutubeAPIKey   string `json:"YoutubeAPIKey"`
 	DiscordEmail    string `json:"DiscordEmail"`
 	DiscordPassword string `json:"DiscordPassword"`
+	BotAdminRole    string `json:"BotAdminRole"`
 }
 
 type GCPAuth struct {
@@ -53,6 +54,7 @@ type CommandMessages struct {
 	ServerDOWN       string `json:"ServerDOWN"`
 	CheckStatusUp    string `json:"CheckStatusUp"`
 	CheckStatusDown  string `json:"CheckStatusDown"`
+	NotBotAdmin      string `json:"NotBotAdmin"`
 }
 
 type CommandDescriptions struct {

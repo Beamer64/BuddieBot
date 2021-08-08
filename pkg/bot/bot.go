@@ -92,19 +92,33 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 
 		// Starts the Minecraft Server
 		case "$start":
-			err := d.startServer(session, message)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
+			if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
+				err := d.startServer(session, message)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
+				return
+			} else {
+				err := d.sendMessage(session, message, d.cfg.CommandMessages.NotBotAdmin)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
 			}
-			return
 
 		// Stops the Minecraft Server
 		case "$stop":
-			err := d.stopServer(session, message)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
+			if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
+				err := d.stopServer(session, message)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
+				return
+			} else {
+				err := d.sendMessage(session, message, d.cfg.CommandMessages.NotBotAdmin)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
 			}
-			return
 
 		// Stops the Minecraft Server
 		case "$mcstatus":
