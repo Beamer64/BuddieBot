@@ -163,6 +163,7 @@ func (d *DiscordBot) sendMessage(session *discordgo.Session, message *discordgo.
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
