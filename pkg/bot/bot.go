@@ -260,6 +260,7 @@ func (d *DiscordBot) playYoutubeLink(session *discordgo.Session, message *discor
 		}
 		go voiceChat.CreateVoiceInstance(youtubeLink, serverID, d.cfg)
 	}
+
 	return nil
 }
 
