@@ -67,7 +67,8 @@ jobs:
 
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/auth.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/config.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/command.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmdDescriptions.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+        gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmdMessages.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
         gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/version.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
