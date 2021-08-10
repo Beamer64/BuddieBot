@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -31,6 +32,9 @@ func TestCoinFlip(t *testing.T) {
 }
 
 func TestMemberHasRole(t *testing.T) {
+	if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}
 	roleName := "test"
 	s := discordgo.NewState()
 
