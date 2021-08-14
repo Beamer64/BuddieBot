@@ -49,7 +49,8 @@ func GetYoutubeURL(query, apiKey string) (string, string, error) {
 	}
 
 	targetStream := y.streamList[0]
-	downloadURL := targetStream["url"] // + "&signature=" + targetStream["sig"]
+	// downloadURL := targetStream["url"] // + "&signature=" + targetStream["sig"]
+	downloadURL := "https://r5---sn-8vap5-ig3e.googlevideo.com/videoplayback?expire=1628847584&ei=gOkVYZDXA9rAsALfpbnIDA&ip=77.120.162.238&id=o-AICdw3FfnCt2zRHyaKFSLTU1jYIhXwq_ETyFXzhVoTJZ&itag=22&source=youtube&requiressl=yes&mh=xB&mm=31%2C29&mn=sn-8vap5-ig3e%2Csn-8vap5-3c2k&ms=au%2Crdu&mv=m&mvi=5&pl=20&initcwndbps=1455000&vprv=1&mime=video%2Fmp4&ns=cWnZqnBlGeQufnNSCewjzB8G&cnr=14&ratebypass=yes&dur=13015.666&lmt=1628721465342371&mt=1628825562&fvip=2&fexp=24001373%2C24007246&c=WEB&txp=7316222&n=FaUCC17TfXyDde2nbLL&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cvprv%2Cmime%2Cns%2Ccnr%2Cratebypass%2Cdur%2Clmt&sig=AOq0QJ8wRQIhALuniCICt5AV6v9ijiASrxyEpwS8NKEUIpYlyUtFSQuMAiAl0EgfwpCP0rDtRuTPtPDMHOddaGIdW13qUBm25R0W_g%3D%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRQIgPFGMDz-u-Gvj8i-iH-NsqUBRFI2xSVM76ar4xNqGaIICIQCzacneKFNaj0hD6HhMZ71NNjWFcwmvvKNV88KTQwobqQ%3D%3D&title=Rimworld%20IS%20A%20PERFECTLY%20BALANCED%20GAME%20WITH%20NO%20EXPLOITS%20-%20Organ%20Harvesting%20Live%20(BIRTHDAY%20STREAM)"
 	return downloadURL, targetStream["title"], nil
 }
 

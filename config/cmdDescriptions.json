@@ -6,5 +6,6 @@
   "Horoscope": "$horoscope {sign} - Gives daily horoscope.",
   "McStatus": "$mcstatus - Gives the current status of the MC server.",
   "Version": "$version - Gives the Git SHA of the current bot version running",
-  "CoinFlip": "$coinflip - Flips a coin, sends gif for results"
+  "CoinFlip": "$coinflip - Flips a coin, sends gif for results",
+  "LMGTFY": "$lmgtfy - Finds most recent ASK msg and sends LMGTFY link"
 }

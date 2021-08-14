@@ -66,6 +66,7 @@ type CommandDescriptions struct {
 	Gif       string `json:"Gif"`
 	McStatus  string `json:"McStatus"`
 	Version   string `json:"Version"`
+	LMGTFY    string `json:"LMGTFY"`
 }
 
 type ServerCommandOut struct {

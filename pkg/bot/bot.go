@@ -55,16 +55,6 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 			return
 		}
 
-		// deletes Justins Messages
-		if message.Author.ID == "282722418093719556" {
-			err := session.ChannelMessageDelete(message.ChannelID, message.ID)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				return
-			}
-			return
-		}
-
 		messageSlices := strings.Split(message.Content, " ")
 		command := messageSlices[0]
 
@@ -73,12 +63,22 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 			param = messageSlices[1]
 		}
 
+		// deletes Justins Messages
+		/*if message.Author.ID == "282722418093719556" {
+			err := session.ChannelMessageDelete(message.ChannelID, message.ID)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				return
+			}
+			return
+		}*/
+
 		switch strings.ToLower(command) {
 		// Sends command list
 		case "$tuuck":
 			err := d.sendMessage(session, message, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.McStatus+"\n"+d.cfg.CommandDescriptions.Start+
 				"\n"+d.cfg.CommandDescriptions.Stop+"\n"+d.cfg.CommandDescriptions.Horoscope+"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.Version+
-				"\n"+d.cfg.CommandDescriptions.CoinFlip)
+				"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 			}
@@ -161,6 +161,13 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 			}
 			return
 
+		case "$lmgtfy":
+			err := d.sendLmgtfy(session, message)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
+			return
+
 		// Sends the "Invalid" command Message
 		default:
 			err := d.sendMessage(session, message, d.cfg.CommandMessages.Invalid)
@@ -174,6 +181,33 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 
 func (d *DiscordBot) sendMessage(session *discordgo.Session, message *discordgo.MessageCreate, outMessage string) error {
 	_, err := session.ChannelMessageSend(message.ChannelID, outMessage)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *DiscordBot) sendLmgtfy(session *discordgo.Session, message *discordgo.MessageCreate) error {
+	err := session.ChannelMessageDelete(message.ChannelID, message.ID)
+	if err != nil {
+		return err
+	}
+
+	provider := "tinyurl"
+	lmgtfyMsg, err := webScrape.FindLMGTFY(session, message, d.botID)
+	if err != nil {
+		return err
+	}
+
+	lmgtfyURL := webScrape.LmgtfyURL(lmgtfyMsg.Content)
+
+	lmgtfyShortURL, err := webScrape.ShortenURL(lmgtfyURL, provider)
+	if err != nil {
+		return err
+	}
+
+	err = d.sendMessage(session, message, "\""+lmgtfyMsg.Content+"\""+"\n"+lmgtfyShortURL)
 	if err != nil {
 		return err
 	}
