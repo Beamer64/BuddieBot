@@ -17,10 +17,6 @@ func (d *DiscordBot) memberHasRole(session *discordgo.Session, message *discordg
 			fmt.Printf("%+v", errors.WithStack(err))
 		}
 
-		if role.Name == "@everyone" {
-			continue
-		}
-
 		if strings.ToLower(role.Name) == roleName {
 			return true
 		}
@@ -39,7 +35,6 @@ func roleExists(g *discordgo.Guild, name string) (bool, *discordgo.Role) {
 		if strings.ToLower(role.Name) == name {
 			return true, role
 		}
-
 	}
 
 	return false, nil
