@@ -11,6 +11,26 @@ import (
 	"time"
 )
 
+func (d *DiscordBot) sendHelpMessage(session *discordgo.Session, message *discordgo.MessageCreate) error {
+	if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
+		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.McStatus+"\n"+d.cfg.CommandDescriptions.Start+
+			"\n"+d.cfg.CommandDescriptions.Stop+"\n"+d.cfg.CommandDescriptions.Horoscope+"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.Version+
+			"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY+"\n"+d.cfg.CommandDescriptions.Insult)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.Horoscope+
+			"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY+"\n"+d.cfg.CommandDescriptions.Insult)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (d *DiscordBot) sendLmgtfy(session *discordgo.Session, message *discordgo.MessageCreate) error {
 	err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 	if err != nil {

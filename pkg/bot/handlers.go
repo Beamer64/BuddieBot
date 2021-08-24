@@ -31,9 +31,7 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 
 		// Sends command list
 		case "$tuuck":
-			_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.McStatus+"\n"+d.cfg.CommandDescriptions.Start+
-				"\n"+d.cfg.CommandDescriptions.Stop+"\n"+d.cfg.CommandDescriptions.Horoscope+"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.Version+
-				"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY)
+			err := d.sendHelpMessage(session, message)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 			}

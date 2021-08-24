@@ -11,6 +11,10 @@ import (
 )
 
 func TestRunCommand(t *testing.T) {
+	if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}
+
 	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
 	if err != nil {
 		t.Fatal(err)
