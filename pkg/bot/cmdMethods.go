@@ -12,7 +12,7 @@ import (
 )
 
 func (d *DiscordBot) sendHelpMessage(session *discordgo.Session, message *discordgo.MessageCreate) error {
-	if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
+	if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) { // bot mod
 		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.McStatus+"\n"+d.cfg.CommandDescriptions.Start+
 			"\n"+d.cfg.CommandDescriptions.Stop+"\n"+d.cfg.CommandDescriptions.Horoscope+"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.Version+
 			"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY+"\n"+d.cfg.CommandDescriptions.Insult)
@@ -22,7 +22,8 @@ func (d *DiscordBot) sendHelpMessage(session *discordgo.Session, message *discor
 
 	} else {
 		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.Horoscope+
-			"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY+"\n"+d.cfg.CommandDescriptions.Insult)
+			"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY+"\n"+d.cfg.CommandDescriptions.Insult+
+			"\n"+d.cfg.CommandDescriptions.McStatus)
 		if err != nil {
 			return err
 		}

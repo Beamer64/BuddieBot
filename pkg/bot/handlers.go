@@ -27,7 +27,14 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 		case "$test":
 			if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
 				_, _ = session.ChannelMessageSend(message.ChannelID, "@Beamer64")
+
+			} else {
+				_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
 			}
+			return
 
 		// Sends command list
 		case "$tuuck":
@@ -38,10 +45,18 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 			return
 
 		case "$version":
-			_, err := session.ChannelMessageSend(message.ChannelID, "We'we wunnying vewsion `"+d.cfg.Version+"` wight nyow")
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
+			if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
+				_, err := session.ChannelMessageSend(message.ChannelID, "We'we wunnying vewsion `"+d.cfg.Version+"` wight nyow")
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
+			} else {
+				_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
 			}
+			return
 
 		// Starts the Minecraft Server
 		case "$start":
@@ -86,24 +101,31 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 		// TODO make this work
 		// Plays youtube link in voice chat
 		case "$play":
-			/*// get the video object (with metdata)
-			video, err := youtube.Get("FTl0tl9BGdc")
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-			}
+			if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
+				/*// get the video object (with metdata)
+				video, err := youtube.Get("FTl0tl9BGdc")
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
 
-			// download the video and write to file
-			option := &youtube.Option{
-				Rename: true,  // rename file using video title
-				Resume: true,  // resume cancelled download
-				Mp3:    true,  // extract audio to MP3
-			}
-			video.Download(0, "video.mp4", option)*/
+				// download the video and write to file
+				option := &youtube.Option{
+					Rename: true,  // rename file using video title
+					Resume: true,  // resume cancelled download
+					Mp3:    true,  // extract audio to MP3
+				}
+				video.Download(0, "video.mp4", option)*/
 
-			err := d.playYoutubeLink(session, message, param)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = session.ChannelMessageSend(message.ChannelID, "No vidya dood.")
+				err := d.playYoutubeLink(session, message, param)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = session.ChannelMessageSend(message.ChannelID, "No vidya dood.")
+				}
+			} else {
+				_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
 			}
 			return
 
