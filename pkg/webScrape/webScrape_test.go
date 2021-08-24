@@ -50,6 +50,10 @@ func TestGetYoutubeURL(t *testing.T) {
 }
 
 func TestPostInsult(t *testing.T) {
+	/*if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}*/
+
 	var err error
 	var session *discordgo.Session
 
