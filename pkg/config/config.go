@@ -29,6 +29,7 @@ type ExternalServicesConfig struct {
 	DiscordEmail    string `json:"DiscordEmail"`
 	DiscordPassword string `json:"DiscordPassword"`
 	BotAdminRole    string `json:"BotAdminRole"`
+	InsultAPI       string `json:"InsultAPI"`
 }
 
 type GCPAuth struct {
@@ -67,6 +68,7 @@ type CommandDescriptions struct {
 	McStatus  string `json:"McStatus"`
 	Version   string `json:"Version"`
 	LMGTFY    string `json:"LMGTFY"`
+	Insult    string `json:"Insult"`
 }
 
 type ServerCommandOut struct {
@@ -216,6 +218,7 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 	}, nil
 }
 
+// dont move this into bot folder (circular dependency)
 func grabLoadingMessages(loadingMessagesPath string) ([]string, error) {
 	file, err := os.Open(loadingMessagesPath)
 	if err != nil {

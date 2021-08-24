@@ -3,6 +3,7 @@ package voiceChat
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"log"
 	"net/http"
@@ -46,7 +47,7 @@ func (vi *VoiceInstance) QueueVideo(youtubeLink string) {
 }
 
 // CreateVoiceInstance accepts both a youtube query and a server id, boots up the voice connection, and plays the track.
-func CreateVoiceInstance(youtubeLink, serverID string, cfg *config.Config) {
+func CreateVoiceInstance(youtubeLink, serverID string, guild *discordgo.Guild, channelID string, cfg *config.Config) {
 	vi := new(VoiceInstance)
 	VoiceInstances[serverID] = vi
 
@@ -55,7 +56,12 @@ func CreateVoiceInstance(youtubeLink, serverID string, cfg *config.Config) {
 	fmt.Println("Connecting Voice...")
 	vi.serverID = serverID
 	vi.queue = lane.NewQueue()
-	vi.connectVoice()
+
+	err := vi.connectVoice(guild, channelID)
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+		return
+	}
 
 	vi.pcmChannel = make(chan []int16, 2)
 	go SendPCM(vi.discordVoice, vi.pcmChannel)
@@ -64,7 +70,7 @@ func CreateVoiceInstance(youtubeLink, serverID string, cfg *config.Config) {
 	vi.processQueue()
 }
 
-func (vi *VoiceInstance) connectVoice() error {
+func (vi *VoiceInstance) connectVoice(guild *discordgo.Guild, channelID string) error {
 	var err error
 	vi.discord, err = discordgo.New("Bot " + vi.cfg.ExternalServicesConfig.Token)
 	// vi.discord, err = discordgo.New(vi.cfg.ExternalServicesConfig.DiscordEmail, vi.cfg.ExternalServicesConfig.DiscordPassword)
@@ -79,18 +85,23 @@ func (vi *VoiceInstance) connectVoice() error {
 	}
 
 	channels, err := vi.discord.GuildChannels(vi.serverID)
+	if err != nil {
+		return err
+	}
 
 	var voiceChannel string
 	var voiceChannels []string
 	for _, channel := range channels {
 		channelType := fmt.Sprintf("%b", channel.Type)
-		if channelType == "10" {
-			// TODO This shows AFK channel
-			// The ID of the AFK voice channel.
-			// AfkChannelID string `json:"afk_channel_id"`
-			voiceChannels = append(voiceChannels, channel.ID)
-			if strings.Contains(strings.ToLower(channel.Name), "wtf we doing? room") && voiceChannel == "" {
-				voiceChannel = channel.ID
+		if channelType == "10" { // 10 = voice channels
+			if channel.ID != guild.AfkChannelID {
+				if channel.ID == channelID {
+					voiceChannel = channel.ID
+				}
+				voiceChannels = append(voiceChannels, channel.ID)
+				/*if strings.Contains(strings.ToLower(channel.Name), "wtf we doing? room") && voiceChannel == "" {
+					voiceChannel = channel.ID
+				}*/
 			}
 		}
 	}
@@ -129,7 +140,13 @@ func (vi *VoiceInstance) processQueue() {
 		fmt.Println("Closing connections")
 		close(vi.pcmChannel)
 		vi.discordVoice.Close()
-		vi.discord.Close()
+
+		err := vi.discord.Close()
+		if err != nil {
+			fmt.Printf("%+v", errors.WithStack(err))
+			return
+		}
+
 		delete(VoiceInstances, vi.serverID)
 		fmt.Println("Done")
 	}
@@ -138,18 +155,27 @@ func (vi *VoiceInstance) processQueue() {
 func (vi *VoiceInstance) playVideo(url string) {
 	vi.trackPlaying = true
 
+	url = strings.Replace(url, "\"", "", -1)
+	url = "https://" + url
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("Http.Get\nerror: %s\ntarget: %s\n", err, url)
 		return
 	}
-	defer resp.Body.Close()
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			fmt.Printf("%+v", errors.WithStack(err))
+			return
+		}
+	}(resp.Body)
 
 	if resp.StatusCode != 200 {
 		log.Printf("reading answer: non 200 status code received: '%s'", err)
 	}
 
-	run := exec.Command("ffmpeg", "-i", "-", "-f", "s16le", "-ar", strconv.Itoa(frameRate), "-ac", strconv.Itoa(channels), "pipe:1")
+	run := exec.Command("ffmpeg.exe", "-i", "-", "-f", "s16le", "-ar", strconv.Itoa(frameRate), "-ac", strconv.Itoa(channels), "pipe:1")
 	run.Stdin = resp.Body
 	stdout, err := run.StdoutPipe()
 	if err != nil {
@@ -168,10 +194,17 @@ func (vi *VoiceInstance) playVideo(url string) {
 
 	err = vi.discordVoice.Speaking(true)
 	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
 		return
 	}
 
-	defer vi.discordVoice.Speaking(false)
+	defer func(discordVoice *discordgo.VoiceConnection, b bool) {
+		err = discordVoice.Speaking(b)
+		if err != nil {
+			fmt.Printf("%+v", errors.WithStack(err))
+			return
+		}
+	}(vi.discordVoice, false)
 
 	for {
 		// read data from ffmpeg stdout
@@ -184,7 +217,10 @@ func (vi *VoiceInstance) playVideo(url string) {
 			break
 		}
 		if vi.stop == true || vi.skip == true {
-			run.Process.Kill()
+			err = run.Process.Kill()
+			if err != nil {
+				return
+			}
 			break
 		}
 		vi.pcmChannel <- audiobuf

@@ -6,9 +6,11 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 func RequestGif(searchStr, tenorAPIkey string) (string, error) {
+	searchStr = url.QueryEscape(searchStr)
 	URL := "https://g.tenor.com/v1/search?q=" + searchStr + "&key=" + tenorAPIkey + "&limit=1"
 
 	responseResults, err := GetResponseResults(URL)

@@ -11,15 +11,6 @@ import (
 	"time"
 )
 
-func (d *DiscordBot) sendMessage(session *discordgo.Session, message *discordgo.MessageCreate, outMessage string) error {
-	_, err := session.ChannelMessageSend(message.ChannelID, outMessage)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (d *DiscordBot) sendLmgtfy(session *discordgo.Session, message *discordgo.MessageCreate) error {
 	err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 	if err != nil {
@@ -34,12 +25,12 @@ func (d *DiscordBot) sendLmgtfy(session *discordgo.Session, message *discordgo.M
 
 	lmgtfyURL := webScrape.LmgtfyURL(lmgtfyMsg.Content)
 
-	lmgtfyShortURL, err := webScrape.ShortenURL(lmgtfyURL, provider)
+	lmgtfyShortURL, err := ShortenURL(lmgtfyURL, provider)
 	if err != nil {
 		return err
 	}
 
-	err = d.sendMessage(session, message, "\""+lmgtfyMsg.Content+"\""+"\n"+lmgtfyShortURL)
+	_, err = session.ChannelMessageSend(message.ChannelID, "\""+lmgtfyMsg.Content+"\""+"\n"+lmgtfyShortURL)
 	if err != nil {
 		return err
 	}
@@ -48,13 +39,13 @@ func (d *DiscordBot) sendLmgtfy(session *discordgo.Session, message *discordgo.M
 }
 
 func (d *DiscordBot) coinFlip(session *discordgo.Session, message *discordgo.MessageCreate) error {
-	err := d.sendMessage(session, message, "Flipping...")
+	_, err := session.ChannelMessageSend(message.ChannelID, "Flipping...")
 	if err != nil {
 		return err
 	}
 
 	time.Sleep(3 * time.Second)
-	err = d.sendMessage(session, message, "...")
+	_, err = session.ChannelMessageSend(message.ChannelID, "...")
 	if err != nil {
 		return err
 	}
@@ -91,12 +82,12 @@ func (d *DiscordBot) sendGif(session *discordgo.Session, message *discordgo.Mess
 		return err
 	}
 
-	err = d.sendMessage(session, message, param)
+	_, err = session.ChannelMessageSend(message.ChannelID, param)
 	if err != nil {
 		return err
 	}
 
-	err = d.sendMessage(session, message, gifURL)
+	_, err = session.ChannelMessageSend(message.ChannelID, gifURL)
 	if err != nil {
 		return err
 	}
@@ -110,7 +101,7 @@ func (d *DiscordBot) displayHoroscope(session *discordgo.Session, message *disco
 		return err
 	}
 
-	err = d.sendMessage(session, message, horoscope)
+	_, err = session.ChannelMessageSend(message.ChannelID, horoscope)
 	if err != nil {
 		return err
 	}
@@ -119,6 +110,11 @@ func (d *DiscordBot) displayHoroscope(session *discordgo.Session, message *disco
 }
 
 func (d *DiscordBot) playYoutubeLink(session *discordgo.Session, message *discordgo.MessageCreate, param string) error {
+	guild, err := session.State.Guild(message.GuildID)
+	if err != nil {
+		return err
+	}
+
 	channel, _ := session.Channel(message.ChannelID)
 	serverID := channel.GuildID
 
@@ -134,17 +130,18 @@ func (d *DiscordBot) playYoutubeLink(session *discordgo.Session, message *discor
 
 	if voiceChat.VoiceInstances[serverID] != nil {
 		voiceChat.VoiceInstances[serverID].QueueVideo(youtubeLink)
-		err = d.sendMessage(session, message, fmt.Sprintf("Queued: %s", youtubeTitle))
+		_, err = session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Queued: %s", youtubeTitle))
 		if err != nil {
 			return err
 		}
 
 	} else {
-		err = d.sendMessage(session, message, fmt.Sprintf("Playing: %s", youtubeTitle))
+		_, err = session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Playing: %s", youtubeTitle))
 		if err != nil {
 			return err
 		}
-		go voiceChat.CreateVoiceInstance(youtubeLink, serverID, d.cfg)
+
+		go voiceChat.CreateVoiceInstance(youtubeLink, serverID, guild, channel.ID, d.cfg)
 	}
 
 	return nil
@@ -157,7 +154,7 @@ func (d *DiscordBot) sendStartUpMessages(session *discordgo.Session, message *di
 		loadingMessage := getRandomLoadingMessage(d.cfg.LoadingMessages)
 		time.Sleep(3 * time.Second)
 
-		err := d.sendMessage(session, message, loadingMessage)
+		_, err := session.ChannelMessageSend(message.ChannelID, loadingMessage)
 		if err != nil {
 			return err
 		}
@@ -187,13 +184,13 @@ func (d *DiscordBot) startServer(session *discordgo.Session, message *discordgo.
 
 	status, serverUp := sshClient.CheckServerStatus(sshClient)
 	if serverUp {
-		err = d.sendMessage(session, message, d.cfg.CommandMessages.ServerUP+status)
+		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.ServerUP+status)
 		if err != nil {
 			return err
 		}
 
 	} else {
-		err = d.sendMessage(session, message, d.cfg.CommandMessages.WindUp)
+		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.WindUp)
 		if err != nil {
 			return err
 		}
@@ -208,7 +205,7 @@ func (d *DiscordBot) startServer(session *discordgo.Session, message *discordgo.
 			return err
 		}
 
-		err = d.sendMessage(session, message, d.cfg.CommandMessages.FinishOpperation)
+		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.FinishOpperation)
 		if err != nil {
 			return err
 		}
@@ -225,7 +222,7 @@ func (d *DiscordBot) stopServer(session *discordgo.Session, message *discordgo.M
 
 	status, serverUp := sshClient.CheckServerStatus(sshClient)
 	if serverUp {
-		err = d.sendMessage(session, message, d.cfg.CommandMessages.WindDown)
+		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.WindDown)
 
 		_, err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
 		if err != nil {
@@ -242,13 +239,13 @@ func (d *DiscordBot) stopServer(session *discordgo.Session, message *discordgo.M
 			return err
 		}
 
-		err = d.sendMessage(session, message, d.cfg.CommandMessages.FinishOpperation)
+		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.FinishOpperation)
 		if err != nil {
 			return err
 		}
 
 	} else {
-		err = d.sendMessage(session, message, d.cfg.CommandMessages.ServerDOWN+status)
+		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.ServerDOWN+status)
 		if err != nil {
 			return err
 		}
@@ -276,13 +273,13 @@ func (d *DiscordBot) sendServerStatusAsMessage(session *discordgo.Session, messa
 
 	status, serverUp := sshClient.CheckServerStatus(sshClient)
 	if serverUp {
-		err = d.sendMessage(session, message, d.cfg.CommandMessages.CheckStatusUp+status)
+		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.CheckStatusUp+status)
 		if err != nil {
 			return err
 		}
 
 	} else {
-		err = d.sendMessage(session, message, d.cfg.CommandMessages.CheckStatusDown+status)
+		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.CheckStatusDown+status)
 		if err != nil {
 			return err
 		}
@@ -290,7 +287,40 @@ func (d *DiscordBot) sendServerStatusAsMessage(session *discordgo.Session, messa
 	return nil
 }
 
-func getRandomLoadingMessage(possibleMessages []string) string {
-	rand.Seed(time.Now().Unix())
-	return possibleMessages[rand.Intn(len(possibleMessages))]
+func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.MessageCreate, memberName string) error {
+	err := session.ChannelMessageDelete(message.ChannelID, message.ID)
+	if err != nil {
+		return err
+	}
+
+	insult, err := webScrape.GetInsult(d.cfg.ExternalServicesConfig.InsultAPI)
+	if err != nil {
+		return err
+	}
+
+	members, err := GetGuildMembers(session, message.GuildID)
+	if err != nil {
+		return err
+	}
+
+	atMember := GetMentionedMemberFromList(memberName, members)
+
+	if atMember != "" {
+		_, err = session.ChannelMessageSend(message.ChannelID, atMember)
+		if err != nil {
+			return err
+		}
+
+		_, err = session.ChannelMessageSend(message.ChannelID, insult)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		_, err = session.ChannelMessageSend(message.ChannelID, "UwUser must be wost ~.~")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
