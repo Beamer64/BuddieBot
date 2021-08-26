@@ -315,18 +315,17 @@ func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.M
 		return err
 	}
 
-	/*members, err := GetGuildMembers(session, message.GuildID)
+	// get some info before deleting msg
+	msgChannelID := message.ChannelID
+	msgAuthorID := message.Author.ID
+
+	err = session.ChannelMessageDelete(msgChannelID, message.ID)
 	if err != nil {
 		return err
-	}*/
+	}
 
 	if !strings.HasPrefix(memberName, "<@") {
-		channel, err := session.UserChannelCreate(message.Author.ID)
-		if err != nil {
-			return err
-		}
-
-		err = session.ChannelMessageDelete(message.ChannelID, message.ID)
+		channel, err := session.UserChannelCreate(msgAuthorID)
 		if err != nil {
 			return err
 		}
@@ -337,17 +336,12 @@ func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.M
 		}
 
 	} else {
-		err = session.ChannelMessageDelete(message.ChannelID, message.ID)
+		_, err = session.ChannelMessageSend(msgChannelID, memberName)
 		if err != nil {
 			return err
 		}
 
-		_, err = session.ChannelMessageSend(message.ChannelID, memberName)
-		if err != nil {
-			return err
-		}
-
-		_, err = session.ChannelMessageSend(message.ChannelID, insult)
+		_, err = session.ChannelMessageSend(msgChannelID, insult)
 		if err != nil {
 			return err
 		}
