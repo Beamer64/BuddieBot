@@ -26,7 +26,10 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 		switch strings.ToLower(command) {
 		case "$test":
 			if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
-				_, _ = session.ChannelMessageSend(message.ChannelID, "@Beamer64")
+				channel, _ := session.Channel(message.ChannelID)
+				for _, rec := range channel.Recipients {
+					fmt.Println(rec.Username)
+				}
 
 			} else {
 				_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.NotBotAdmin)

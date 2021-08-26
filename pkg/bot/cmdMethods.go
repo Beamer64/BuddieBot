@@ -8,6 +8,7 @@ import (
 	"github.com/beamer64/discordBot/pkg/webScrape"
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -309,25 +310,39 @@ func (d *DiscordBot) sendServerStatusAsMessage(session *discordgo.Session, messa
 }
 
 func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.MessageCreate, memberName string) error {
-	err := session.ChannelMessageDelete(message.ChannelID, message.ID)
-	if err != nil {
-		return err
-	}
-
 	insult, err := webScrape.GetInsult(d.cfg.ExternalServicesConfig.InsultAPI)
 	if err != nil {
 		return err
 	}
 
-	members, err := GetGuildMembers(session, message.GuildID)
+	/*members, err := GetGuildMembers(session, message.GuildID)
 	if err != nil {
 		return err
-	}
+	}*/
 
-	atMember := GetMentionedMemberFromList(memberName, members)
+	if !strings.HasPrefix(memberName, "<@") {
+		channel, err := session.UserChannelCreate(message.Member.User.ID)
+		if err != nil {
+			return err
+		}
 
-	if atMember != "" {
-		_, err = session.ChannelMessageSend(message.ChannelID, atMember)
+		err = session.ChannelMessageDelete(message.ChannelID, message.ID)
+		if err != nil {
+			return err
+		}
+
+		_, err = session.ChannelMessageSend(channel.ID, "You need to '@Mention' the user for insults. eg: @UserName")
+		if err != nil {
+			return err
+		}
+
+	} else {
+		err = session.ChannelMessageDelete(message.ChannelID, message.ID)
+		if err != nil {
+			return err
+		}
+
+		_, err = session.ChannelMessageSend(message.ChannelID, memberName)
 		if err != nil {
 			return err
 		}
@@ -336,12 +351,7 @@ func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.M
 		if err != nil {
 			return err
 		}
-
-	} else {
-		_, err = session.ChannelMessageSend(message.ChannelID, "UwUser must be wost ~.~")
-		if err != nil {
-			return err
-		}
 	}
+
 	return nil
 }

@@ -1,9 +1,12 @@
 package webScrape
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
+	"io"
+	"net/http"
 	"testing"
 )
 
@@ -83,10 +86,8 @@ func TestPostInsult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	members := guild.Members
-
 	atMember := ""
-	for _, memb := range members {
+	for _, memb := range guild.Members {
 		if memb.User.Username == "Beamer64" {
 			atMember = "<@" + memb.User.ID + ">"
 		}
@@ -108,5 +109,87 @@ func TestPostInsult(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestGetInsult(t *testing.T) {
+	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	insultURL := cfg.ExternalServicesConfig.InsultAPI
+	res, err := http.Get(insultURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var insultObj insult
+
+	err = json.NewDecoder(res.Body).Decode(&insultObj)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+
+	fmt.Println(insultObj.Insult)
+}
+
+func TestGetMembers(t *testing.T) {
+	/*if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}*/
+
+	var err error
+	var session *discordgo.Session
+
+	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	session, err = discordgo.New("Bot " + cfg.ExternalServicesConfig.Token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Open the websocket and begin listening.
+	err = session.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", "https://discord.com/api/guilds/293416960237240320/members", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Add("Authorization", "Bot "+cfg.ExternalServicesConfig.Token)
+	req.Header.Add("User-Agent", "DiscordBot")
+	res, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	/*res, err := http.Get("https://discord.com/api/guilds/293416960237240320/members")
+	if err != nil {
+		t.Fatal(err)
+	}*/
+
+	var member []*discordgo.Member
+
+	err = json.NewDecoder(res.Body).Decode(&member)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(member)
+	for _, mem := range member {
+		fmt.Println(mem.User.Username)
 	}
 }

@@ -27,7 +27,7 @@ func (d *DiscordBot) memberHasRole(session *discordgo.Session, message *discordg
 func GetMentionedMemberFromList(memberName string, members []*discordgo.Member) string {
 	memberName = strings.ToLower(memberName)
 
-	if strings.HasPrefix(memberName, "<@") {
+	if strings.HasPrefix(memberName, "<") {
 		for _, memb := range members {
 			if memberName == "<@!"+memb.User.ID+">" {
 				return memberName
