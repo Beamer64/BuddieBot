@@ -7,7 +7,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 )
@@ -55,9 +54,9 @@ func TestGetYoutubeURL(t *testing.T) {
 }
 
 func TestPostInsult(t *testing.T) {
-	if os.Getenv("INTEGRATION") != "true" {
+	/*if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}
+	}*/
 
 	var err error
 	var session *discordgo.Session
@@ -83,7 +82,7 @@ func TestPostInsult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	memberName := "beam"
+	memberName := "me"
 	if !strings.HasPrefix(memberName, "<@") {
 		channel, err := session.UserChannelCreate("289217573004902400")
 		if err != nil {
@@ -96,9 +95,11 @@ func TestPostInsult(t *testing.T) {
 		}
 
 	} else {
-		fmt.Println(memberName)
+		if strings.ToLower(memberName) == "me" || strings.ToLower(memberName) == "@me" {
+			fmt.Println(memberName)
 
-		fmt.Println(insult)
+			fmt.Println(insult)
+		}
 	}
 }
 
