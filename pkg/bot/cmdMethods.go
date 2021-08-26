@@ -321,7 +321,7 @@ func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.M
 	}*/
 
 	if !strings.HasPrefix(memberName, "<@") {
-		channel, err := session.UserChannelCreate(message.Member.User.ID)
+		channel, err := session.UserChannelCreate(message.Author.ID)
 		if err != nil {
 			return err
 		}

@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -81,34 +82,22 @@ func TestPostInsult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	guild, err := session.State.Guild("293416960237240320")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	atMember := ""
-	for _, memb := range guild.Members {
-		if memb.User.Username == "Beamer64" {
-			atMember = "<@" + memb.User.ID + ">"
-		}
-	}
-
-	if atMember != "" {
-		fmt.Println("Member: ", atMember)
+	memberName := "beam"
+	if !strings.HasPrefix(memberName, "<@") {
+		channel, err := session.UserChannelCreate("289217573004902400")
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		fmt.Println("Insult: ", insult)
+		_, err = session.ChannelMessageSend(channel.ID, "You need to '@Mention' the user for insults. eg: @UserName")
 		if err != nil {
 			t.Fatal(err)
 		}
 
 	} else {
-		fmt.Println("Couldn't find User.")
-		if err != nil {
-			t.Fatal(err)
-		}
+		fmt.Println(memberName)
+
+		fmt.Println(insult)
 	}
 }
 
