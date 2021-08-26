@@ -336,14 +336,27 @@ func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.M
 		}
 
 	} else {
-		_, err = session.ChannelMessageSend(msgChannelID, memberName)
-		if err != nil {
-			return err
-		}
+		if strings.ToLower(memberName) == "me" || strings.ToLower(memberName) == "@me" {
+			_, err = session.ChannelMessageSend(msgChannelID, "<@!"+msgAuthorID+">")
+			if err != nil {
+				return err
+			}
 
-		_, err = session.ChannelMessageSend(msgChannelID, insult)
-		if err != nil {
-			return err
+			_, err = session.ChannelMessageSend(msgChannelID, insult)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			_, err = session.ChannelMessageSend(msgChannelID, memberName)
+			if err != nil {
+				return err
+			}
+
+			_, err = session.ChannelMessageSend(msgChannelID, insult)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
