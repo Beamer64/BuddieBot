@@ -12,6 +12,10 @@ import (
 	"time"
 )
 
+func (d *DiscordBot) testMethod(session *discordgo.Session, message *discordgo.MessageCreate) {
+	_, _ = session.ChannelMessageSend(message.ChannelID, "<@!"+message.Author.ID+">"+"\n"+"test")
+}
+
 func (d *DiscordBot) sendHelpMessage(session *discordgo.Session, message *discordgo.MessageCreate) error {
 	if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) { // bot mod
 		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.McStatus+"\n"+d.cfg.CommandDescriptions.Start+
@@ -326,12 +330,7 @@ func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.M
 
 	if !strings.HasPrefix(memberName, "<@") {
 		if strings.ToLower(memberName) == "me" || strings.ToLower(memberName) == "@me" {
-			_, err = session.ChannelMessageSend(msgChannelID, "<@!"+msgAuthorID+">")
-			if err != nil {
-				return err
-			}
-
-			_, err = session.ChannelMessageSend(msgChannelID, insult)
+			_, err = session.ChannelMessageSend(msgChannelID, "<@!"+msgAuthorID+">"+"\n"+insult)
 			if err != nil {
 				return err
 			}
@@ -349,12 +348,7 @@ func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.M
 		}
 
 	} else {
-		_, err = session.ChannelMessageSend(msgChannelID, memberName)
-		if err != nil {
-			return err
-		}
-
-		_, err = session.ChannelMessageSend(msgChannelID, insult)
+		_, err = session.ChannelMessageSend(msgChannelID, memberName+"\n"+insult)
 		if err != nil {
 			return err
 		}
