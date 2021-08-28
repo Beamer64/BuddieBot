@@ -62,7 +62,7 @@ After cloning, run an
 go get ./...
 ```
 
-to snag all of the dependencies.
+to snag all the dependencies.
 
 ---
 
@@ -75,10 +75,11 @@ You have to create a `config.json` file in order to run the bot (you can use the
   "Token": "your_token_here",
   "BotPrefix": "your_prefix_here",
   "BotAdminRole": "BotAdminRole_Name_here",
-  "APIKEYS": {
-    "TenorAPIkey": "your_API_key_here",
-    "YoutubeAPIKey": "your_API_key_here",
-    "InsultAPI": "your_API_key_here"
+  "SSHKeyBody": "GCP_SSHKey_here",
+  "MachineIP": "Minecraft_MachineIP_here",
+  "TenorAPIkey": "your_API_key_here",
+  "YoutubeAPIKey": "your_API_key_here",
+  "InsultAPI": "your_API_key_here"
   }
 }
 ```

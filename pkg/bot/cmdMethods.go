@@ -7,31 +7,55 @@ import (
 	"github.com/beamer64/discordBot/pkg/voiceChat"
 	"github.com/beamer64/discordBot/pkg/webScrape"
 	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/errors"
 	"math/rand"
 	"strings"
 	"time"
 )
 
 func (d *DiscordBot) testMethod(session *discordgo.Session, message *discordgo.MessageCreate) {
-	_, _ = session.ChannelMessageSend(message.ChannelID, "<@!"+message.Author.ID+">"+"\n"+"test")
+	err := d.playYoutubeLink(session, message, "https://www.youtube.com/watch?v=7tC6DUaPqfM")
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+	}
 }
 
 func (d *DiscordBot) sendHelpMessage(session *discordgo.Session, message *discordgo.MessageCreate) error {
+	var cmds []string
 	if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) { // bot mod
-		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.McStatus+"\n"+d.cfg.CommandDescriptions.Start+
-			"\n"+d.cfg.CommandDescriptions.Stop+"\n"+d.cfg.CommandDescriptions.Horoscope+"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.Version+
-			"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY+"\n"+d.cfg.CommandDescriptions.Insult)
-		if err != nil {
-			return err
+		cmds = append(cmds, d.cfg.CommandDescriptions.Tuuck, d.cfg.CommandDescriptions.Horoscope, d.cfg.CommandDescriptions.Version,
+			d.cfg.CommandDescriptions.CoinFlip, d.cfg.CommandDescriptions.LMGTFY)
+
+		if d.cfg.ExternalServicesConfig.TenorAPIkey != "" {
+			cmds = append(cmds, d.cfg.CommandDescriptions.Gif)
+		}
+		if d.cfg.ExternalServicesConfig.MachineIP != "" {
+			cmds = append(cmds, d.cfg.CommandDescriptions.McStatus, d.cfg.CommandDescriptions.Start, d.cfg.CommandDescriptions.Stop)
+		}
+		if d.cfg.ExternalServicesConfig.InsultAPI != "" {
+			cmds = append(cmds, d.cfg.CommandDescriptions.Insult)
 		}
 
 	} else {
-		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandDescriptions.Tuuck+"\n"+d.cfg.CommandDescriptions.Horoscope+
-			"\n"+d.cfg.CommandDescriptions.Gif+"\n"+d.cfg.CommandDescriptions.CoinFlip+"\n"+d.cfg.CommandDescriptions.LMGTFY+"\n"+d.cfg.CommandDescriptions.Insult+
-			"\n"+d.cfg.CommandDescriptions.McStatus)
-		if err != nil {
-			return err
+		cmds = append(cmds, d.cfg.CommandDescriptions.Tuuck, d.cfg.CommandDescriptions.Horoscope,
+			d.cfg.CommandDescriptions.CoinFlip, d.cfg.CommandDescriptions.LMGTFY)
+
+		if d.cfg.ExternalServicesConfig.TenorAPIkey != "" {
+			cmds = append(cmds, d.cfg.CommandDescriptions.Gif)
 		}
+		if d.cfg.ExternalServicesConfig.InsultAPI != "" {
+			cmds = append(cmds, d.cfg.CommandDescriptions.Insult)
+		}
+	}
+
+	cmdDesc := ""
+	for _, command := range cmds {
+		cmdDesc = cmdDesc + "\n" + command
+	}
+
+	_, err := session.ChannelMessageSend(message.ChannelID, cmdDesc)
+	if err != nil {
+		return err
 	}
 
 	return nil
