@@ -1,0 +1,43 @@
+```fix
+YELLOW
+```
+
+```arm
+ORANGE
+```
+
+```yaml
+CYAN
+```
+
+```md
+# BLUE
+```
+
+```
+GREY
+```
+
+```diff
+- RED
+```
+
+```css
+RED-ORANGE
+```
+
+```tex
+$ White with black bg
+```
+
+```diff
++ LIGHT-GREEN
+```
+
+```bash
+"DARK-GREEN"
+```
+
+```elm
+Colors capital Words yellow
+```
