@@ -11,7 +11,7 @@
 <div align=center>
 
   <a href="http://harleyroper.com/" target="_blank">
-    <img src="https://img.shields.io/badge/Check%20out-My%20Website!-green" alt="shield.png">
+    <img src="https://img.shields.io/badge/Check%20out-My%20Website!-brightgreen" alt="shield.png">
   </a>
   <a href="http://golang.org" target="_blank">
     <img src="https://img.shields.io/badge/Made%20with-%20GO-blue" alt="shield.png">
