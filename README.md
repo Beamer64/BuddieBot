@@ -67,7 +67,7 @@ BuddieBot also comes packed with a variety of features, such as:
 ## Installation
 
 **You can invite BuddieBot to your server with
-the** [Invite to Server](https://discord.com/api/oauth2/authorize?client_id=866151939472883762&permissions=8&redirect_uri=https%3A%2F%2Fgithub.com%2FBeamer64%2FDiscordBot&response_type=code&scope=bot%20identify%20email%20connections%20guilds%20guilds.join%20gdm.join%20activities.write%20activities.read)
+the** [Invite to Server](https://discord.com/api/oauth2/authorize?client_id=866151939472883762&permissions=8&redirect_uri=https%3A%2F%2Fgithub.com%2FBeamer64%2FDiscordBot&response_type=code&scope=bot%20identify%20email%20connections%20applications.commands%20guilds%20guilds.join%20gdm.join%20messages.read)
 link. 🤖😁 Alternatively, you can clone this repo and host the bot yourself.
 
 ```
