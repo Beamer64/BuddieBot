@@ -11,10 +11,10 @@
 <div align=center>
 
   <a href="http://harleyroper.com/" target="_blank">
-    <img src="https://img.shields.io/badge/Check%20out-My%20Website!-blue" alt="shield.png">
+    <img src="https://img.shields.io/badge/Check%20out-My%20Website!-green" alt="shield.png">
   </a>
-  <a>
-    <img src="https://img.shields.io/github/last-commit/beamer64/DiscordBot" alt="shield.png">
+  <a href="http://golang.org" target="_blank">
+    <img src="https://img.shields.io/badge/Made%20with-%20GO-blue" alt="shield.png">
   </a>
   <a href="https://github.com/Beamer64/DiscordBot/blob/master/LICENSE" target="_blank">
     <img src="https://img.shields.io/github/license/beamer64/DiscordBot" alt="shield.png">
