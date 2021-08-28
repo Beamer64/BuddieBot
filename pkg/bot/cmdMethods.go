@@ -122,24 +122,32 @@ func (d *DiscordBot) coinFlip(session *discordgo.Session, message *discordgo.Mes
 }
 
 func (d *DiscordBot) sendGif(session *discordgo.Session, message *discordgo.MessageCreate, param string) error {
-	err := session.ChannelMessageDelete(message.ChannelID, message.ID)
-	if err != nil {
-		return err
-	}
+	if d.cfg.ExternalServicesConfig.TenorAPIkey != "" { // check if Tenor API set up
+		err := session.ChannelMessageDelete(message.ChannelID, message.ID)
+		if err != nil {
+			return err
+		}
 
-	gifURL, err := webScrape.RequestGif(param, d.cfg.ExternalServicesConfig.TenorAPIkey)
-	if err != nil {
-		return err
-	}
+		gifURL, err := webScrape.RequestGif(param, d.cfg.ExternalServicesConfig.TenorAPIkey)
+		if err != nil {
+			return err
+		}
 
-	_, err = session.ChannelMessageSend(message.ChannelID, param)
-	if err != nil {
-		return err
-	}
+		_, err = session.ChannelMessageSend(message.ChannelID, param)
+		if err != nil {
+			return err
+		}
 
-	_, err = session.ChannelMessageSend(message.ChannelID, gifURL)
-	if err != nil {
-		return err
+		_, err = session.ChannelMessageSend(message.ChannelID, gifURL)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.TenorAPIError)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -160,38 +168,46 @@ func (d *DiscordBot) displayHoroscope(session *discordgo.Session, message *disco
 }
 
 func (d *DiscordBot) playYoutubeLink(session *discordgo.Session, message *discordgo.MessageCreate, param string) error {
-	guild, err := session.State.Guild(message.GuildID)
-	if err != nil {
-		return err
-	}
-
-	channel, _ := session.Channel(message.ChannelID)
-	serverID := channel.GuildID
-
-	youtubeLink, youtubeTitle, err := webScrape.GetYoutubeURL(param, d.cfg.ExternalServicesConfig.YoutubeAPIKey)
-	if err != nil {
-		return err
-	}
-
-	/*youtubeLink, youtubeTitle, err := webScrape.GetYoutubeURL("https://www.youtube.com/watch?v=72hjeHtSEfg&pp=sAQA", d.cfg.ExternalServicesConfig.YoutubeAPIKey)
-	if err != nil {
-		return err
-	}*/
-
-	if voiceChat.VoiceInstances[serverID] != nil {
-		voiceChat.VoiceInstances[serverID].QueueVideo(youtubeLink)
-		_, err = session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Queued: %s", youtubeTitle))
+	if d.cfg.ExternalServicesConfig.TenorAPIkey != "" { // check if YouTube API set up
+		guild, err := session.State.Guild(message.GuildID)
 		if err != nil {
 			return err
+		}
+
+		channel, _ := session.Channel(message.ChannelID)
+		serverID := channel.GuildID
+
+		youtubeLink, youtubeTitle, err := webScrape.GetYoutubeURL(param, d.cfg.ExternalServicesConfig.YoutubeAPIKey)
+		if err != nil {
+			return err
+		}
+
+		/*youtubeLink, youtubeTitle, err := webScrape.GetYoutubeURL("https://www.youtube.com/watch?v=72hjeHtSEfg&pp=sAQA", d.cfg.ExternalServicesConfig.YoutubeAPIKey)
+		if err != nil {
+			return err
+		}*/
+
+		if voiceChat.VoiceInstances[serverID] != nil {
+			voiceChat.VoiceInstances[serverID].QueueVideo(youtubeLink)
+			_, err = session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Queued: %s", youtubeTitle))
+			if err != nil {
+				return err
+			}
+
+		} else {
+			_, err = session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Playing: %s", youtubeTitle))
+			if err != nil {
+				return err
+			}
+
+			go voiceChat.CreateVoiceInstance(youtubeLink, serverID, guild, channel.ID, d.cfg)
 		}
 
 	} else {
-		_, err = session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Playing: %s", youtubeTitle))
+		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.YoutubeAPIError)
 		if err != nil {
 			return err
 		}
-
-		go voiceChat.CreateVoiceInstance(youtubeLink, serverID, guild, channel.ID, d.cfg)
 	}
 
 	return nil
@@ -216,46 +232,53 @@ func (d *DiscordBot) sendStartUpMessages(session *discordgo.Session, message *di
 }
 
 func (d *DiscordBot) startServer(session *discordgo.Session, message *discordgo.MessageCreate) error {
-
-	client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
-	if err != nil {
-		return err
-	}
-
-	err = client.StartMachine("instance-2-minecraft")
-	if err != nil {
-		return err
-	}
-
-	sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
-	if err != nil {
-		return err
-	}
-
-	status, serverUp := sshClient.CheckServerStatus(sshClient)
-	if serverUp {
-		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.ServerUP+status)
+	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if Minecraft server is set up
+		client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
 		if err != nil {
 			return err
+		}
+
+		err = client.StartMachine("instance-2-minecraft")
+		if err != nil {
+			return err
+		}
+
+		sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
+		if err != nil {
+			return err
+		}
+
+		status, serverUp := sshClient.CheckServerStatus(sshClient)
+		if serverUp {
+			_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.ServerUP+status)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.WindUp)
+			if err != nil {
+				return err
+			}
+
+			_, err = sshClient.RunCommand("docker container start 06ae729f5c2b")
+			if err != nil {
+				return err
+			}
+
+			err = d.sendStartUpMessages(session, message)
+			if err != nil {
+				return err
+			}
+
+			_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.FinishOpperation)
+			if err != nil {
+				return err
+			}
 		}
 
 	} else {
-		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.WindUp)
-		if err != nil {
-			return err
-		}
-
-		_, err = sshClient.RunCommand("docker container start 06ae729f5c2b")
-		if err != nil {
-			return err
-		}
-
-		err = d.sendStartUpMessages(session, message)
-		if err != nil {
-			return err
-		}
-
-		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.FinishOpperation)
+		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.MCServerError)
 		if err != nil {
 			return err
 		}
@@ -264,38 +287,45 @@ func (d *DiscordBot) startServer(session *discordgo.Session, message *discordgo.
 }
 
 func (d *DiscordBot) stopServer(session *discordgo.Session, message *discordgo.MessageCreate) error {
-
-	sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
-	if err != nil {
-		return err
-	}
-
-	status, serverUp := sshClient.CheckServerStatus(sshClient)
-	if serverUp {
-		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.WindDown)
-
-		_, err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
+	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if Minecraft server is set up
+		sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
 		if err != nil {
 			return err
 		}
 
-		client, errr := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
-		if errr != nil {
-			return err
-		}
+		status, serverUp := sshClient.CheckServerStatus(sshClient)
+		if serverUp {
+			_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.WindDown)
 
-		err = client.StopMachine("instance-2-minecraft")
-		if err != nil {
-			return err
-		}
+			_, err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
+			if err != nil {
+				return err
+			}
 
-		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.FinishOpperation)
-		if err != nil {
-			return err
+			client, errr := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
+			if errr != nil {
+				return err
+			}
+
+			err = client.StopMachine("instance-2-minecraft")
+			if err != nil {
+				return err
+			}
+
+			_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.FinishOpperation)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.ServerDOWN+status)
+			if err != nil {
+				return err
+			}
 		}
 
 	} else {
-		_, err = session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.ServerDOWN+status)
+		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.MCServerError)
 		if err != nil {
 			return err
 		}
@@ -305,7 +335,6 @@ func (d *DiscordBot) stopServer(session *discordgo.Session, message *discordgo.M
 
 // d.sendServerStatusAsMessage Sends the current server status as a message in discord
 func (d *DiscordBot) sendServerStatusAsMessage(session *discordgo.Session, message *discordgo.MessageCreate) error {
-
 	client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
 	if err != nil {
 		return err
@@ -338,41 +367,49 @@ func (d *DiscordBot) sendServerStatusAsMessage(session *discordgo.Session, messa
 }
 
 func (d *DiscordBot) postInsult(session *discordgo.Session, message *discordgo.MessageCreate, memberName string) error {
-	insult, err := webScrape.GetInsult(d.cfg.ExternalServicesConfig.InsultAPI)
-	if err != nil {
-		return err
-	}
+	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if insult API is set up
+		insult, err := webScrape.GetInsult(d.cfg.ExternalServicesConfig.InsultAPI)
+		if err != nil {
+			return err
+		}
 
-	// get some info before deleting msg
-	msgChannelID := message.ChannelID
-	msgAuthorID := message.Author.ID
+		// get some info before deleting msg
+		msgChannelID := message.ChannelID
+		msgAuthorID := message.Author.ID
 
-	err = session.ChannelMessageDelete(msgChannelID, message.ID)
-	if err != nil {
-		return err
-	}
+		err = session.ChannelMessageDelete(msgChannelID, message.ID)
+		if err != nil {
+			return err
+		}
 
-	if !strings.HasPrefix(memberName, "<@") {
-		if strings.ToLower(memberName) == "me" || strings.ToLower(memberName) == "@me" {
-			_, err = session.ChannelMessageSend(msgChannelID, "<@!"+msgAuthorID+">"+"\n"+insult)
-			if err != nil {
-				return err
+		if !strings.HasPrefix(memberName, "<@") {
+			if strings.ToLower(memberName) == "me" || strings.ToLower(memberName) == "@me" {
+				_, err = session.ChannelMessageSend(msgChannelID, "<@!"+msgAuthorID+">"+"\n"+insult)
+				if err != nil {
+					return err
+				}
+
+			} else {
+				channel, err := session.UserChannelCreate(msgAuthorID)
+				if err != nil {
+					return err
+				}
+
+				_, err = session.ChannelMessageSend(channel.ID, "You need to '@Mention' the user for insults. eg: @UserName")
+				if err != nil {
+					return err
+				}
 			}
 
 		} else {
-			channel, err := session.UserChannelCreate(msgAuthorID)
-			if err != nil {
-				return err
-			}
-
-			_, err = session.ChannelMessageSend(channel.ID, "You need to '@Mention' the user for insults. eg: @UserName")
+			_, err = session.ChannelMessageSend(msgChannelID, memberName+"\n"+insult)
 			if err != nil {
 				return err
 			}
 		}
 
 	} else {
-		_, err = session.ChannelMessageSend(msgChannelID, memberName+"\n"+insult)
+		_, err := session.ChannelMessageSend(message.ChannelID, d.cfg.CommandMessages.InsultAPIError)
 		if err != nil {
 			return err
 		}

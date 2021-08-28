@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/webScrape"
 	"github.com/bwmarrin/discordgo"
-	_ "github.com/knadh/go-get-youtube/youtube"
 	"github.com/pkg/errors"
 	"strings"
 )
@@ -96,20 +95,6 @@ func (d *DiscordBot) messageHandler(session *discordgo.Session, message *discord
 		// Plays youtube link in voice chat
 		case "$play":
 			if d.memberHasRole(session, message, d.cfg.ExternalServicesConfig.BotAdminRole) {
-				/*// get the video object (with metdata)
-				video, err := youtube.Get("FTl0tl9BGdc")
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-				}
-
-				// download the video and write to file
-				option := &youtube.Option{
-					Rename: true,  // rename file using video title
-					Resume: true,  // resume cancelled download
-					Mp3:    true,  // extract audio to MP3
-				}
-				video.Download(0, "video.mp4", option)*/
-
 				err := d.playYoutubeLink(session, message, param)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))

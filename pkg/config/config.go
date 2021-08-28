@@ -56,6 +56,10 @@ type CommandMessages struct {
 	CheckStatusUp    string `json:"CheckStatusUp"`
 	CheckStatusDown  string `json:"CheckStatusDown"`
 	NotBotAdmin      string `json:"NotBotAdmin"`
+	MCServerError    string `json:"MCServerError"`
+	TenorAPIError    string `json:"TenorAPIError"`
+	YoutubeAPIError  string `json:"YoutubeAPIError"`
+	InsultAPIError   string `json:"InsultAPIError"`
 }
 
 type CommandDescriptions struct {

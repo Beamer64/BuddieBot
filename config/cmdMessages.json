@@ -7,5 +7,9 @@
   "CheckStatusUp": "Rocking and rolling, my guy. ",
   "CheckStatusDown": "Server is down. ¯\\_(ツ)_/¯ I just work here.",
   "Invalid": "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<",
-  "NotBotAdmin": "XD sowwy, you need spwecial pewrmission to dew dat."
+  "NotBotAdmin": "XD sowwy, you need spwecial pewrmission to dew dat.",
+  "TenorAPIError": "UwU dere was a prawblum with the Tenor API :(",
+  "YoutubeAPIError": "UwU dere was a prawblum with the Youtube API :(",
+  "InsultAPIError": "UwU dere was a prawblum with the Insult API :(",
+  "MCServerError": "UwU dere was a prawblum with the Insult API :("
 }
