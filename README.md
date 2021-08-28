@@ -6,7 +6,24 @@
   <br>
 </h1>
 
+---
+
 <h3 align=center>A Homemade Discord Bot for Golang practice and development...also for funsies.</a></h3>
+
+<div align=center>
+
+  <a href="http://harleyroper.com/">
+    <img src="https://img.shields.io/badge/Check%20out-My%20Website!-blue" alt="shield.png">
+  </a>
+  <a>
+    <img src="https://img.shields.io/github/last-commit/beamer64/DiscordBot" alt="shield.png">
+  </a>
+  <a href="https://github.com/Beamer64/DiscordBot/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/beamer64/DiscordBot" alt="shield.png">
+  </a>
+
+</div>
+
 
 ---
 
@@ -25,6 +42,10 @@
 </p>
 
 ## About
+
+BuddieBot is an open source Discord bot created by two people that wanted to practice their Golang skills and develop something fun and useful for them. We enjoy growing and
+developing BuddieBot every day and play to do so for the foreseeable future! The goal of this project is to incorporate as many cool and fun features as we can find. We use
+BuddieBot in out personal servers every day!
 
 If you liked this repository, feel free to leave a star ⭐ to help promote BuddieBot!
 
@@ -84,7 +105,12 @@ You have to create a `config.json` file in order to run the bot (you can use the
 }
 ```
 
-Visit the Discord [developer portal](https://discordapp.com/developers/applications/) to create an app and use the client token you are given for the `token` option.
+Visit the Discord [developer portal](https://discordapp.com/developers/applications/) to create an app and use the client token you are given for the `token` option. To get keys
+for supported APIs, visit:
+
+* [Tenor API](https://tenor.com/gifapi/documentation)
+* [Google APIs](https://console.developers.google.com/apis/)
+* [Insult API](https://evilinsult.com/api/)
 
 After your `config.json` file is built, you have to enable `Privileged Intents` on your Discord [developer portal](https://discordapp.com/developers/applications/). You can find
 these intents under the "Bot" section, and there are two ticks you have to switch on. For more information on Gateway Intents, check
@@ -117,6 +143,10 @@ Released under the [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html) li
 This is just a list of various credits to any person(s) whose work are contributed to this open source project.
 
 ### To give credit where credit is due 😁
+
+* **Wyatt Shuler** - *Co-contributor* - [Github](https://github.com/Saberr43), [Website](http://www.shuler.io/)
+
+---
 
 <img src="https://www.gstatic.com/tenor/web/attribution/PB_tenor_logo_blue_horizontal.png" width="600" height="100"  alt=""/>
 
