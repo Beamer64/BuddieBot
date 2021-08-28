@@ -5,12 +5,75 @@ import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
+	"github.com/gocolly/colly/v2"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 )
+
+func TestScrapeHoroscope(t *testing.T) {
+	found := false
+	signNum := ""
+	horoscope := ""
+	sign := "Gemini"
+
+	switch strings.ToLower(sign) {
+	case "aries":
+		signNum = "1"
+	case "taurus":
+		signNum = "2"
+	case "gemini":
+		signNum = "3"
+	case "cancer":
+		signNum = "4"
+	case "leo":
+		signNum = "5"
+	case "virgo":
+		signNum = "6"
+	case "libra":
+		signNum = "7"
+	case "scorpio":
+		signNum = "8"
+	case "sagittarius":
+		signNum = "9"
+	case "capricorn":
+		signNum = "10"
+	case "aquarius":
+		signNum = "11"
+	case "pisces":
+		signNum = "12"
+	}
+
+	c := colly.NewCollector()
+
+	// On every p element which has style attribute call callback
+	c.OnHTML("p", func(e *colly.HTMLElement) {
+		// link := e.Attr("font-size:16px;")
+
+		if !found {
+			if e.Text != "" {
+				horoscope = e.Text
+				found = true
+			}
+		}
+	})
+
+	// Before making a request print "Visiting ..."
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting", r.URL.String())
+	})
+
+	// Start scraping on https://www.ganeshaspeaks.com
+	err := c.Visit("https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-today.aspx?sign=" + signNum)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Println(horoscope)
+	fmt.Println(found)
+}
 
 func TestGetYoutubeURL(t *testing.T) {
 	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
