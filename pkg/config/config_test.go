@@ -1,11 +1,16 @@
 package config
 
 import (
+	"os"
 	"reflect"
 	"testing"
 )
 
 func TestReadConfig(t *testing.T) {
+	if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}
+
 	cfg, err := ReadConfig("config/", "../config/", "../../config/")
 	if err != nil {
 		t.Fatal(err)

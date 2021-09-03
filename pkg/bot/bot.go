@@ -7,7 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func Start(cfg *config.Config) error {
+func Init(cfg *config.Config) error {
 	botSession, err := discordgo.New("Bot " + cfg.ExternalServicesConfig.Token)
 	if err != nil {
 		return err

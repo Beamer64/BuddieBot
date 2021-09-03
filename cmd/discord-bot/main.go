@@ -11,7 +11,7 @@ func main() {
 		panic(err)
 	}
 
-	err = bot.Start(cfg)
+	err = bot.Init(cfg)
 	if err != nil {
 		panic(err)
 	}
