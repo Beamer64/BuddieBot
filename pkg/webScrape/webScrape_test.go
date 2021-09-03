@@ -49,23 +49,25 @@ func TestScrapeHoroscope(t *testing.T) {
 	c := colly.NewCollector()
 
 	// On every p element which has style attribute call callback
-	c.OnHTML("p", func(e *colly.HTMLElement) {
-		// link := e.Attr("font-size:16px;")
+	c.OnHTML(
+		"p", func(e *colly.HTMLElement) {
+			// link := e.Attr("font-size:16px;")
 
-		if !found {
-			if e.Text != "" {
-				horoscope = e.Text
-				found = true
+			if !found {
+				if e.Text != "" {
+					horoscope = e.Text
+					found = true
+				}
 			}
-		}
-	})
+		})
 
 	// Before making a request print "Visiting ..."
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
+	c.OnRequest(
+		func(r *colly.Request) {
+			fmt.Println("Visiting", r.URL.String())
+		})
 
-	// Start scraping on https://www.ganeshaspeaks.com
+	// Start scraping on https://www.horoscope.com
 	err := c.Visit("https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-today.aspx?sign=" + signNum)
 	if err != nil {
 		t.Fatal(err)

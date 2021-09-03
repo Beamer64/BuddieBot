@@ -1,19 +1,17 @@
 package voiceChat
 
 import (
-	"encoding/binary"
 	"fmt"
-	"github.com/pkg/errors"
-	"io"
-	"log"
-	"net/http"
-	"os/exec"
-	"strconv"
-	"strings"
-
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
+	"github.com/faiface/beep"
+	"github.com/faiface/beep/mp3"
+	"github.com/faiface/beep/speaker"
 	"github.com/oleiade/lane"
+	"github.com/pkg/errors"
+	"log"
+	"os"
+	"time"
 )
 
 var (
@@ -155,7 +153,7 @@ func (vi *VoiceInstance) processQueue() {
 func (vi *VoiceInstance) playVideo(url string) {
 	vi.trackPlaying = true
 
-	url = strings.Replace(url, "\"", "", -1)
+	/*url = strings.Replace(url, "\"", "", -1)
 	url = "https://" + url
 	resp, err := http.Get(url)
 	if err != nil {
@@ -187,10 +185,31 @@ func (vi *VoiceInstance) playVideo(url string) {
 	if err != nil {
 		fmt.Println("RunStart Error:", err)
 		return
+	}*/
+
+	f, err := os.Open("../../res/Lame_Drivers_-_01_-_Frozen_Egg.mp3")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	streamer, format, err := mp3.Decode(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(streamer beep.StreamSeekCloser) {
+		err := streamer.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(streamer)
+
+	err = speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// buffer used during loop below
-	audiobuf := make([]int16, frameSize*channels)
+	//audiobuf := make([]int16, frameSize*channels)
 
 	err = vi.discordVoice.Speaking(true)
 	if err != nil {
@@ -206,7 +225,7 @@ func (vi *VoiceInstance) playVideo(url string) {
 		}
 	}(vi.discordVoice, false)
 
-	for {
+	/*for {
 		// read data from ffmpeg stdout
 		err = binary.Read(stdout, binary.LittleEndian, &audiobuf)
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
@@ -224,7 +243,10 @@ func (vi *VoiceInstance) playVideo(url string) {
 			break
 		}
 		vi.pcmChannel <- audiobuf
-	}
+	}*/
 
 	vi.trackPlaying = false
+
+	speaker.Play(streamer)
+	select {}
 }

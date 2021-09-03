@@ -20,16 +20,19 @@ type Config struct {
 }
 
 type ExternalServicesConfig struct {
-	Token           string `json:"Token"`
-	BotPrefix       string `json:"BotPrefix"`
-	SSHKeyBody      string `json:"SSHKeyBody"`
-	MachineIP       string `json:"MachineIP"`
-	TenorAPIkey     string `json:"TenorAPIkey"`
-	YoutubeAPIKey   string `json:"YoutubeAPIKey"`
-	DiscordEmail    string `json:"DiscordEmail"`
-	DiscordPassword string `json:"DiscordPassword"`
-	BotAdminRole    string `json:"BotAdminRole"`
-	InsultAPI       string `json:"InsultAPI"`
+	Token            string `json:"Token"`
+	BotPrefix        string `json:"BotPrefix"`
+	SSHKeyBody       string `json:"SSHKeyBody"`
+	MachineIP        string `json:"MachineIP"`
+	TenorAPIkey      string `json:"TenorAPIkey"`
+	YoutubeAPIKey    string `json:"YoutubeAPIKey"`
+	DiscordEmail     string `json:"DiscordEmail"`
+	DiscordPassword  string `json:"DiscordPassword"`
+	BotAdminRole     string `json:"BotAdminRole"`
+	InsultAPI        string `json:"InsultAPI"`
+	GuildID          string `json:"GuildID"`
+	BotPublicKey     string `json:"BotPublicKey"`
+	BotApplicationID string `json:"BotApplicationID"`
 }
 
 type GCPAuth struct {

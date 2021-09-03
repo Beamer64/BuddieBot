@@ -11,9 +11,7 @@ func main() {
 		panic(err)
 	}
 
-	disbot := bot.NewDiscordBot(cfg)
-
-	err = disbot.Start()
+	err = bot.Start(cfg)
 	if err != nil {
 		panic(err)
 	}

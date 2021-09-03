@@ -3,39 +3,37 @@ package bot
 import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/discordBot/pkg/events"
 	"github.com/bwmarrin/discordgo"
 )
 
-type DiscordBot struct {
-	cfg   *config.Config
-	botID string
-}
-
-func NewDiscordBot(cfg *config.Config) *DiscordBot {
-	return &DiscordBot{
-		cfg: cfg,
-	}
-}
-
-func (d *DiscordBot) Start() error {
-	goBot, err := discordgo.New("Bot " + d.cfg.ExternalServicesConfig.Token)
+func Start(cfg *config.Config) error {
+	botSession, err := discordgo.New("Bot " + cfg.ExternalServicesConfig.Token)
 	if err != nil {
 		return err
 	}
 
-	user, err := goBot.User("@me")
+	user, err := botSession.User("@me")
 	if err != nil {
 		return err
 	}
-	d.botID = user.ID
 
-	goBot.AddHandler(d.messageHandler)
-	goBot.AddHandler(d.guildCreateHandler)
-	err = goBot.Open()
-	if err != nil {
+	registerEvents(botSession, cfg, user)
+
+	if err = botSession.Open(); err != nil {
 		return err
 	}
 
 	fmt.Println("DiscordBot is running!")
 	return nil
+}
+
+func registerEvents(s *discordgo.Session, cfg *config.Config, u *discordgo.User) {
+	joinLeaveHandler := events.NewJoinLeaveHandler()
+
+	s.AddHandler(joinLeaveHandler.HandlerJoin)
+	s.AddHandler(joinLeaveHandler.HandlerLeave)
+
+	s.AddHandler(events.NewMessageHandler(cfg, u).Handler)
+	s.AddHandler(events.NewReadyHandler().Handler)
 }

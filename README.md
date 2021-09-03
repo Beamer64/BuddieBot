@@ -122,7 +122,7 @@ Once done, feel free to launch BuddieBot using the command `go run cmd/discord-b
 BuddieBot is in a continuous state of development. New features/updates may come at any time. Some pending ideas are:
 
 * Music
-* Warning Limits
+* Slash Commands
 * Games
 * Custom tag/reaction system
 * Better insult API
