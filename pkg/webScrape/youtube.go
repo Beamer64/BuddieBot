@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Jeffail/gabs"
+	_ "github.com/kkdai/youtube/v2"
+	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
-
-	"github.com/Jeffail/gabs"
-	"github.com/parnurzeal/gorequest"
+	"time"
 )
 
 type stream map[string]string
@@ -19,6 +20,27 @@ type youtube struct {
 	videoID    string
 	videoInfo  *http.Response
 }
+
+// Client offers methods to download video metadata and video streams.
+type Client struct {
+	// Debug enables debugging output through log package
+	Debug bool
+
+	// HTTPClient can be used to set a custom HTTP client.
+	// If not set, http.DefaultClient will be used
+	HTTPClient *http.Client
+
+	// playerCache caches the JavaScript code of a player response
+	playerCache playerCache
+}
+
+type playerCache struct {
+	key       string
+	expiredAt time.Time
+	config    playerConfig
+}
+
+type playerConfig []byte
 
 // GetYoutubeURL converts a standard Youtube URL or ID to an mp4 download link,
 // or searches Youtube and picks the first result.
@@ -54,7 +76,6 @@ func GetYoutubeURL(query, apiKey string) (string, string, error) {
 }
 
 func searchYoutube(text, apiKey string) (string, error) {
-
 	formattedURL := fmt.Sprintf("https://www.googleapis.com/youtube/v3/search?part=snippet&q=%s&key=%s", url.QueryEscape(text), apiKey)
 
 	_, body, err := gorequest.New().Get(formattedURL).EndBytes()
@@ -168,5 +189,9 @@ func (y *youtube) parseVideoInfo() error {
 	}
 
 	y.streamList = append(y.streamList, stream)
+	return nil
+}
+
+func (y *youtube) downloadAudio(apiKey string) error {
 	return nil
 }

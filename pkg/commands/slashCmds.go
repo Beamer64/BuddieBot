@@ -8,8 +8,8 @@ type ApplicationCommandOptionType uint8
 
 type ApplicationCommand struct {
 	ID            string                 `json:"id,omitempty"`
-	ApplicationID string                 `json:"application_id,omitempty"`
 	Type          ApplicationCommandType `json:"type,omitempty"`
+	ApplicationID string                 `json:"application_id,omitempty"`
 	Name          string                 `json:"name"`
 	// NOTE: Chat commands only. Otherwise it mustn't be set.
 	Description string `json:"description,omitempty"`
@@ -47,16 +47,30 @@ const (
 	ApplicationCommandOptionChannel         ApplicationCommandOptionType = 7
 	ApplicationCommandOptionRole            ApplicationCommandOptionType = 8
 	ApplicationCommandOptionMentionable     ApplicationCommandOptionType = 9
+	ApplicationCommandOptionNumber          ApplicationCommandOptionType = 10
+)
+
+// Application Command Types
+const (
+	CHAT_INPUT ApplicationCommandType = 1
+	USER       ApplicationCommandType = 2
+	MESSAGE    ApplicationCommandType = 3
 )
 
 var (
 	commands = []*ApplicationCommand{
 		{
-			Name: "basic-command",
-			// All commands and options must have a description
-			// Commands/options without description will fail the registration
-			// of the command.
-			Description: "Basic command",
+			Name:        "Flip-Coin",
+			Type:        CHAT_INPUT,
+			Description: "Flips a coin. Pretty simple.",
+		},
+
+		/*{
+				Name: "basic-command",
+				// All commands and options must have a description
+				// Commands/options without description will fail the registration
+				// of the command.
+				Description: "Basic command",
 		},
 		{
 			Name:        "basic-command-with-files",
@@ -172,6 +186,7 @@ var (
 		{
 			Name:        "followups",
 			Description: "Followup messages",
-		},
+		},*/
+
 	}
 )

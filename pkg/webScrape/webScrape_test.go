@@ -59,13 +59,15 @@ func TestScrapeHoroscope(t *testing.T) {
 					found = true
 				}
 			}
-		})
+		},
+	)
 
 	// Before making a request print "Visiting ..."
 	c.OnRequest(
 		func(r *colly.Request) {
 			fmt.Println("Visiting", r.URL.String())
-		})
+		},
+	)
 
 	// Start scraping on https://www.horoscope.com
 	err := c.Visit("https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-today.aspx?sign=" + signNum)
@@ -198,6 +200,46 @@ func TestGetInsult(t *testing.T) {
 	fmt.Println(insultObj.Insult)
 }
 
+func TestGroupChat(t *testing.T) {
+	/*if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}*/
+
+	var err error
+	var session *discordgo.Session
+
+	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	session, err = discordgo.New("Bot " + cfg.ExternalServicesConfig.Token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Open the websocket and begin listening.
+	err = session.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	/*channel, err := session.UserChannelCreate("289217573004902400")
+	if err != nil {
+		t.Fatal(err)
+	}*/
+
+	chn, err := session.GuildChannelCreate(cfg.ExternalServicesConfig.GuildID, "Test", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = session.ChannelMessageSend(chn.ID, "test test")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestGetMembers(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
@@ -223,7 +265,7 @@ func TestGetMembers(t *testing.T) {
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://discord.com/api/guilds/293416960237240320/members", nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://discord.com/api/guilds/%s/members", cfg.ExternalServicesConfig.GuildID), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,6 +276,7 @@ func TestGetMembers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	/*res, err := http.Get("https://discord.com/api/guilds/293416960237240320/members")
 	if err != nil {
 		t.Fatal(err)

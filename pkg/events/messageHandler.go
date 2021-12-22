@@ -160,6 +160,14 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			}
 			return
 
+		// Play Nim game
+		case "$nim":
+			err := d.playNIM(s, m, param)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
+			return
+
 		// Sends the "Invalid" command Message
 		default:
 			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.Invalid)

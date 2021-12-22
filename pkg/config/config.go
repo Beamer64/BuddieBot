@@ -21,6 +21,7 @@ type Config struct {
 
 type ExternalServicesConfig struct {
 	Token            string `json:"Token"`
+	WebHookToken     string `json:"WebHookToken"`
 	BotPrefix        string `json:"BotPrefix"`
 	SSHKeyBody       string `json:"SSHKeyBody"`
 	MachineIP        string `json:"MachineIP"`

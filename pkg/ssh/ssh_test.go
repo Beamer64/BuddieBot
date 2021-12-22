@@ -20,7 +20,7 @@ func TestRunCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sshClient, err := NewSSHClient(cfg.ExternalServicesConfig.SSHKeyBody, "34.68.22.97:22")
+	sshClient, err := NewSSHClient(cfg.ExternalServicesConfig.SSHKeyBody, cfg.ExternalServicesConfig.MachineIP)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestRunCommandStartContainer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sshClient, err := NewSSHClient(cfg.ExternalServicesConfig.SSHKeyBody, "34.68.22.97:22")
+	sshClient, err := NewSSHClient(cfg.ExternalServicesConfig.SSHKeyBody, cfg.ExternalServicesConfig.MachineIP)
 	if err != nil {
 		t.Fatal(err)
 	}

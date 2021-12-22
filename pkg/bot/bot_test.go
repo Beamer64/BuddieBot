@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
 	"os"
@@ -35,10 +36,16 @@ func TestMemberHasRole(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
+
+	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	roleName := "test"
 	s := discordgo.NewState()
 
-	member, err := s.Member("293416960237240320", "289217573004902400")
+	member, err := s.Member(cfg.ExternalServicesConfig.GuildID, "289217573004902400")
 	if err != nil {
 		t.Fatal(err)
 	}
