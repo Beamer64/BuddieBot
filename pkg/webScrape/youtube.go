@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Jeffail/gabs"
-	_ "github.com/kkdai/youtube/v2"
 	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"net/url"
