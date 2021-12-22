@@ -201,9 +201,9 @@ func TestGetInsult(t *testing.T) {
 }
 
 func TestGroupChat(t *testing.T) {
-	/*if os.Getenv("INTEGRATION") != "true" {
+	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}*/
+	}
 
 	var err error
 	var session *discordgo.Session
@@ -229,7 +229,7 @@ func TestGroupChat(t *testing.T) {
 		t.Fatal(err)
 	}*/
 
-	chn, err := session.GuildChannelCreate(cfg.ExternalServicesConfig.GuildID, "Test", 0)
+	/*chn, err := session.GuildChannelCreate(cfg.ExternalServicesConfig.GuildID, "Test", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +237,7 @@ func TestGroupChat(t *testing.T) {
 	_, err = session.ChannelMessageSend(chn.ID, "test test")
 	if err != nil {
 		t.Fatal(err)
-	}
+	}*/
 }
 
 func TestGetMembers(t *testing.T) {
