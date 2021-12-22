@@ -4,14 +4,8 @@ import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
-	"github.com/faiface/beep"
-	"github.com/faiface/beep/mp3"
-	"github.com/faiface/beep/speaker"
 	"github.com/oleiade/lane"
 	"github.com/pkg/errors"
-	"log"
-	"os"
-	"time"
 )
 
 var (
@@ -187,7 +181,7 @@ func (vi *VoiceInstance) playVideo(url string) {
 		return
 	}*/
 
-	f, err := os.Open("../../res/Lame_Drivers_-_01_-_Frozen_Egg.mp3")
+	/*f, err := os.Open("../../res/Lame_Drivers_-_01_-_Frozen_Egg.mp3")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -206,12 +200,12 @@ func (vi *VoiceInstance) playVideo(url string) {
 	err = speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
 
 	// buffer used during loop below
 	//audiobuf := make([]int16, frameSize*channels)
 
-	err = vi.discordVoice.Speaking(true)
+	err := vi.discordVoice.Speaking(true)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
 		return
@@ -247,6 +241,6 @@ func (vi *VoiceInstance) playVideo(url string) {
 
 	vi.trackPlaying = false
 
-	speaker.Play(streamer)
+	/*speaker.Play(streamer)*/
 	select {}
 }
