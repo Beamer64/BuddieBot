@@ -9,6 +9,7 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e // indirect
 	github.com/faiface/beep v1.0.2
 	github.com/gocolly/colly/v2 v2.1.0
+	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/kkdai/youtube/v2 v2.7.6
 	github.com/oleiade/lane v1.0.1
 	github.com/parnurzeal/gorequest v0.2.16

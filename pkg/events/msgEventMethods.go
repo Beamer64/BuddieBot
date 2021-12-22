@@ -17,16 +17,16 @@ func (d *MessageHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCr
 	/*err := d.playYoutubeLink(s, m, "https://www.youtube.com/watch?v=7tC6DUaPqfM")
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-	}
+	}*/
 
 	// testing webhook stuff
-	mem, _ := s.GuildMember(d.cfg.ExternalServicesConfig.GuildID, "282722418093719556")
+	/*mem, _ := s.GuildMember(d.cfg.ExternalServicesConfig.GuildID, "282722418093719556")
 	t := &discordgo.WebhookParams{
 		Content:   "@everyone" + "\n" + " Thank you.",
 		Username:  mem.User.Username,
 		AvatarURL: mem.User.AvatarURL(""),
 	}
-	_, err = s.WebhookExecute("890475971935891456", d.cfg.ExternalServicesConfig.WebHookToken, false, t)
+	_, err := s.WebhookExecute("890475971935891456", d.cfg.ExternalServicesConfig.WebHookToken, false, t)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
 	}*/
