@@ -5,12 +5,14 @@ go 1.16
 require (
 	cloud.google.com/go v0.99.0
 	github.com/Jeffail/gabs v1.4.0
+	github.com/bwmarrin/dgvoice v0.0.0-20210225172318-caaac756e02e
 	github.com/bwmarrin/discordgo v0.23.2
+	github.com/chromedp/cdproto v0.0.0-20211126220118-81fa0469ad77
+	github.com/chromedp/chromedp v0.7.6
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e // indirect
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
-	github.com/oleiade/lane v1.0.1
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.6.4 // indirect

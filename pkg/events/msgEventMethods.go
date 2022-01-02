@@ -2,34 +2,23 @@ package events
 
 import (
 	"fmt"
+	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
-	"github.com/beamer64/discordBot/pkg/voiceChat"
 	"github.com/beamer64/discordBot/pkg/webScrape"
+	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
+	_ "github.com/pkg/errors"
+	"io/ioutil"
 	"math/rand"
 	"strings"
 	"time"
 )
 
 func (d *MessageHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate) {
-	/*err := d.playYoutubeLink(s, m, "https://www.youtube.com/watch?v=7tC6DUaPqfM")
-	if err != nil {
-		fmt.Printf("%+v", errors.WithStack(err))
-	}*/
-
-	// testing webhook stuff
-	/*mem, _ := s.GuildMember(d.cfg.ExternalServicesConfig.GuildID, "282722418093719556")
-	t := &discordgo.WebhookParams{
-		Content:   "@everyone" + "\n" + " Thank you.",
-		Username:  mem.User.Username,
-		AvatarURL: mem.User.AvatarURL(""),
-	}
-	_, err := s.WebhookExecute("890475971935891456", d.cfg.ExternalServicesConfig.WebHookToken, false, t)
-	if err != nil {
-		fmt.Printf("%+v", errors.WithStack(err))
-	}*/
+	link, fileName, _ := webScrape.GetYtAudioLink("https://www.youtube.com/watch?v=aRhaWRp4dus")
+	_ = webScrape.DownloadMpFile(link, fileName)
 }
 
 func (d *MessageHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
@@ -105,33 +94,70 @@ func (d *MessageHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.MessageCr
 }
 
 func (d *MessageHandler) coinFlip(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	_, err := s.ChannelMessageSend(m.ChannelID, "Flipping...")
+	gifURL, err := api.RequestGifURL("Coin Flip", d.cfg.ExternalServicesConfig.TenorAPIkey)
+	if err != nil {
+		return err
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "Coin Flip",
+		Description: "Flipping...",
+		Color:       16761856,
+		Image: &discordgo.MessageEmbedImage{
+			URL: gifURL,
+		},
+	}
+	t := &discordgo.WebhookParams{
+		Username:  "BuddieBot",
+		AvatarURL: "https://camo.githubusercontent.com/97c16e17070b00f5c5db3447703233bf007dd60706c46db66aa5042a417277a7/68747470733a2f2f696d6167652e666c617469636f6e2e636f6d2f69636f6e732f706e672f3531322f343639382f343639383738372e706e67",
+		Embeds: []*discordgo.MessageEmbed{
+			embed,
+		},
+	}
+
+	_, err = s.WebhookEdit(d.cfg.ExternalServicesConfig.WebHookID, "", "", m.ChannelID)
+	if err != nil {
+		return err
+	}
+	whMessage, err := s.WebhookExecute(d.cfg.ExternalServicesConfig.WebHookID, d.cfg.ExternalServicesConfig.WebHookToken, true, t)
 	if err != nil {
 		return err
 	}
 
 	time.Sleep(3 * time.Second)
-	_, err = s.ChannelMessageSend(m.ChannelID, "...")
+	err = s.ChannelMessageDelete(whMessage.ChannelID, whMessage.ID)
 	if err != nil {
 		return err
 	}
 
-	time.Sleep(3 * time.Second)
 	x1 := rand.NewSource(time.Now().UnixNano())
 	y1 := rand.New(x1)
 	randNum := y1.Intn(200)
 
+	results := ""
 	if randNum%2 == 0 {
-		err = d.sendGif(s, m, "heads")
+		results = "Heads"
+		gifURL, err = api.RequestGifURL(results, d.cfg.ExternalServicesConfig.TenorAPIkey)
 		if err != nil {
 			return err
 		}
 
 	} else {
-		err = d.sendGif(s, m, "tails")
+		results = "Tails"
+		gifURL, err = api.RequestGifURL(results, d.cfg.ExternalServicesConfig.TenorAPIkey)
 		if err != nil {
 			return err
 		}
+	}
+
+	embed.Description = fmt.Sprintf("It's %s!", results)
+	embed.Image = &discordgo.MessageEmbedImage{
+		URL: gifURL,
+	}
+
+	_, err = s.WebhookExecute(d.cfg.ExternalServicesConfig.WebHookID, d.cfg.ExternalServicesConfig.WebHookToken, false, t)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -144,7 +170,7 @@ func (d *MessageHandler) sendGif(s *discordgo.Session, m *discordgo.MessageCreat
 			return err
 		}
 
-		gifURL, err := webScrape.RequestGif(param, d.cfg.ExternalServicesConfig.TenorAPIkey)
+		gifURL, err := api.RequestGifURL(param, d.cfg.ExternalServicesConfig.TenorAPIkey)
 		if err != nil {
 			return err
 		}
@@ -208,47 +234,32 @@ func (d *MessageHandler) playNIM(s *discordgo.Session, m *discordgo.MessageCreat
 }
 
 func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	if d.cfg.ExternalServicesConfig.TenorAPIkey != "" { // check if YouTube API set up
-		guild, err := s.State.Guild(m.GuildID)
-		if err != nil {
-			return err
-		}
-
-		channel, _ := s.Channel(m.ChannelID)
-		serverID := channel.GuildID
-
-		youtubeLink, youtubeTitle, err := webScrape.GetYoutubeURL(param, d.cfg.ExternalServicesConfig.YoutubeAPIKey)
-		if err != nil {
-			return err
-		}
-
-		/*youtubeLink, youtubeTitle, err := webScrape.GetYoutubeURL("https://www.youtube.com/watch?v=72hjeHtSEfg&pp=sAQA", d.cfg.ExternalServicesConfig.YoutubeAPIKey)
-		if err != nil {
-			return err
-		}*/
-
-		if voiceChat.VoiceInstances[serverID] != nil {
-			voiceChat.VoiceInstances[serverID].QueueVideo(youtubeLink)
-			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Queued: %s", youtubeTitle))
-			if err != nil {
-				return err
-			}
-
-		} else {
-			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Playing: %s", youtubeTitle))
-			if err != nil {
-				return err
-			}
-
-			go voiceChat.CreateVoiceInstance(youtubeLink, serverID, guild, channel.ID, d.cfg)
-		}
-
-	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.YoutubeAPIError)
-		if err != nil {
-			return err
-		}
+	link, fileName, err := webScrape.GetYtAudioLink(param)
+	if err != nil {
+		return err
 	}
+
+	err = webScrape.DownloadMpFile(link, fileName)
+	if err != nil {
+		return err
+	}
+
+	dgv, err := s.ChannelVoiceJoin(d.cfg.ExternalServicesConfig.GuildID, m.ChannelID, false, true)
+	if err != nil {
+		return err
+	}
+
+	// Start loop and attempt to play all files in the given folder
+	files, _ := ioutil.ReadDir("webScrape")
+	for _, f := range files {
+		fmt.Println("PlayAudioFile:", f.Name())
+
+		dgvoice.PlayAudioFile(dgv, fileName, make(chan bool))
+	}
+
+	// Close connections
+	dgv.Close()
+	s.Close()
 
 	return nil
 }
@@ -408,7 +419,7 @@ func (d *MessageHandler) sendServerStatusAsMessage(s *discordgo.Session, m *disc
 
 func (d *MessageHandler) postInsult(s *discordgo.Session, m *discordgo.MessageCreate, memberName string) error {
 	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if insult API is set up
-		insult, err := webScrape.GetInsult(d.cfg.ExternalServicesConfig.InsultAPI)
+		insult, err := api.GetInsult(d.cfg.ExternalServicesConfig.InsultAPI)
 		if err != nil {
 			return err
 		}
