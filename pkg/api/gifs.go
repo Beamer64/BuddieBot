@@ -1,4 +1,4 @@
-package webScrape
+package api
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"net/url"
 )
 
-func RequestGif(searchStr, tenorAPIkey string) (string, error) {
+func RequestGifURL(searchStr, tenorAPIkey string) (string, error) {
 	searchStr = url.QueryEscape(searchStr)
 	URL := "https://g.tenor.com/v1/search?q=" + searchStr + "&key=" + tenorAPIkey + "&limit=1"
 
