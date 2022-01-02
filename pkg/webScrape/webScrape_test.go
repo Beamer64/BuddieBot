@@ -13,9 +13,9 @@ import (
 )
 
 func TestChromedp(t *testing.T) {
-	/*if os.Getenv("INTEGRATION") != "true" {
+	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}*/
+	}
 
 	link, fileName, err := GetYtAudioLink("https://www.youtube.com/watch?v=aRhaWRp4dus")
 	if err != nil {
