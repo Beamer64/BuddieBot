@@ -38,7 +38,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 		switch strings.ToLower(command) {
 		case "$test":
 			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
-				d.testMethod(s, m)
+				//d.testMethod(s, m)
 			}
 			return
 
@@ -108,11 +108,11 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 		// Plays youtube link in voice chat
 		case "$play":
 			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
-				err := d.playYoutubeLink(s, m, param)
+				/*err := d.playYoutubeLink(s, m, param)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 					_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
-				}
+				}*/
 			} else {
 				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
 				if err != nil {

@@ -7,10 +7,10 @@ import (
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
 	"github.com/beamer64/discordBot/pkg/webScrape"
-	"github.com/bwmarrin/dgvoice"
+	_ "github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
-	_ "github.com/pkg/errors"
-	"io/ioutil"
+	"github.com/pkg/errors"
+	_ "io/ioutil"
 	"math/rand"
 	"strings"
 	"time"
@@ -234,6 +234,43 @@ func (d *MessageHandler) playNIM(s *discordgo.Session, m *discordgo.MessageCreat
 }
 
 func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+	_, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...one sec..")
+	if err != nil {
+		return err
+	}
+
+	guild, err := s.State.Guild(m.GuildID)
+	if err != nil {
+		return err
+	}
+
+	channels, err := s.GuildChannels(d.cfg.ExternalServicesConfig.GuildID)
+	if err != nil {
+		return err
+	}
+
+	var voiceChannel string
+	var voiceChannels []string
+	for _, channel := range channels {
+		channelType := fmt.Sprintf("%b", channel.Type)
+		if channelType == "10" { // 10 = voice channels
+			if channel.ID != guild.AfkChannelID {
+				voiceChannels = append(voiceChannels, channel.ID)
+			}
+		}
+	}
+	// joins first channel
+	voiceChannel = voiceChannels[0]
+
+	time.AfterFunc(
+		5*time.Second, func() {
+			_, err = s.ChannelMessageSend(m.ChannelID, "Almost...there..")
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+			}
+		},
+	)
+
 	link, fileName, err := webScrape.GetYtAudioLink(param)
 	if err != nil {
 		return err
@@ -244,22 +281,20 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 		return err
 	}
 
-	dgv, err := s.ChannelVoiceJoin(d.cfg.ExternalServicesConfig.GuildID, m.ChannelID, false, true)
+	dgv, err := s.ChannelVoiceJoin(d.cfg.ExternalServicesConfig.GuildID, voiceChannel, false, true)
 	if err != nil {
-		return err
+		if _, ok := s.VoiceConnections[d.cfg.ExternalServicesConfig.GuildID]; ok {
+			dgv = s.VoiceConnections[d.cfg.ExternalServicesConfig.GuildID]
+		} else {
+			return err
+		}
+	}
+	dgv.Speaking(true)
+	if !dgv.Ready {
+		dgv.Ready = true
 	}
 
-	// Start loop and attempt to play all files in the given folder
-	files, _ := ioutil.ReadDir("webScrape")
-	for _, f := range files {
-		fmt.Println("PlayAudioFile:", f.Name())
-
-		dgvoice.PlayAudioFile(dgv, fileName, make(chan bool))
-	}
-
-	// Close connections
-	dgv.Close()
-	s.Close()
+	err = webScrape.PlayAudioFile(dgv, fileName)
 
 	return nil
 }

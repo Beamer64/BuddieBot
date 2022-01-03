@@ -2,9 +2,13 @@ package webScrape
 
 import (
 	"context"
+	"fmt"
+	"github.com/bwmarrin/dgvoice"
+	"github.com/bwmarrin/discordgo"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -38,7 +42,7 @@ func GetYtAudioLink(link string) (mpFileLink string, fileNAme string, err error)
 		return "", "", err
 	}
 
-	// create click tasks
+	// create click tasks to click convert button
 	searchElem = "/html/body/div/div[1]/div[2]/div[4]/button"
 	clickTasks := chromedp.Tasks{
 		chromedp.WaitVisible(searchElem),
@@ -51,19 +55,20 @@ func GetYtAudioLink(link string) (mpFileLink string, fileNAme string, err error)
 		return "", "", err
 	}
 
-	// create capTask list for download link
-	searchElem = "#btnDown"
-	capTasks := chromedp.Tasks{
-		chromedp.Sleep(15 * time.Second),
+	// create waitTasks list to get redirect URL
+	searchElem = "/html/body/div/div[1]/div[2]/div[6]/div/div[1]/div"
+	waitTasks := chromedp.Tasks{
+		chromedp.WaitNotPresent(searchElem),
 		chromedp.Location(&res),
 	}
 
-	// run clickTask list
-	err = chromedp.Run(ctx, capTasks)
+	// run waitTasks list
+	err = chromedp.Run(ctx, waitTasks)
 	if err != nil {
 		return "", "", err
 	}
 
+	// create navTasks to get download link
 	searchElem = "/html/body/div[1]/div[1]/div/div[2]/div[3]/a[1]"
 	resURL := res
 	navTasks := chromedp.Tasks{
@@ -71,16 +76,18 @@ func GetYtAudioLink(link string) (mpFileLink string, fileNAme string, err error)
 		chromedp.AttributeValue(searchElem, "href", &res, ok),
 	}
 
-	// run clickTask list
+	// run navTasks list
 	err = chromedp.Run(ctx, navTasks)
 	if err != nil {
 		return "", "", err
 	}
 
+	// navigate to download link to parse network response
 	getLinkTasks := chromedp.Tasks{
 		chromedp.Navigate(res),
 	}
 
+	// listen for response containing mp3 link
 	mpLink := ""
 	chromedp.ListenTarget(
 		ctx, func(ev interface{}) {
@@ -93,7 +100,7 @@ func GetYtAudioLink(link string) (mpFileLink string, fileNAme string, err error)
 		},
 	)
 
-	// run clickTask list
+	// run getLinkTasks list
 	err = chromedp.Run(ctx, getLinkTasks)
 	if !strings.Contains(err.Error(), "net::ERR_ABORTED") {
 		return "", "", err
@@ -118,6 +125,7 @@ func DownloadMpFile(link string, fileName string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Created File")
 
 	defer out.Close()
 
@@ -126,6 +134,43 @@ func DownloadMpFile(link string, fileName string) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
+func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string) error {
+	// Start loop and attempt to play all files in the given dir
+	files, err := ioutil.ReadDir(".")
+
+	var mpFileNames []string
+	for _, f := range files {
+		if contains(mpFileNames, f.Name()) {
+			err = os.Remove(f.Name())
+			if err != nil {
+				return err
+			}
+		} else {
+			mpFileNames = append(mpFileNames, f.Name())
+			fmt.Println("PlayAudioFile:", f.Name())
+
+			dgvoice.PlayAudioFile(dgv, f.Name(), make(chan bool))
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	// Close connections
+	dgv.Close()
 
 	return nil
 }

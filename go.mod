@@ -13,6 +13,7 @@ require (
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/oleiade/lane v1.0.1
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.6.4 // indirect
