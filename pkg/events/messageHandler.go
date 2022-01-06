@@ -47,6 +47,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			err := d.sendHelpMessage(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -70,6 +71,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 				err := d.startServer(s, m)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 				}
 				return
 
@@ -86,6 +88,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 				err := d.stopServer(s, m)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 				}
 				return
 
@@ -101,6 +104,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			err := d.sendServerStatusAsMessage(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -108,11 +112,12 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 		// Plays youtube link in voice chat
 		case "$play":
 			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
-				/*err := d.playYoutubeLink(s, m, param)
+				err := d.playYoutubeLink(s, m, param)
 				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
 					_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
-				}*/
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				}
 			} else {
 				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
 				if err != nil {
@@ -126,6 +131,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			err := d.displayHoroscope(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -134,6 +140,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			err := d.sendGif(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -142,6 +149,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			err := d.coinFlip(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -150,6 +158,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			err := d.sendLmgtfy(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -157,6 +166,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			err := d.postInsult(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -165,6 +175,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			err := d.playNIM(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
