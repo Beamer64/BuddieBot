@@ -111,7 +111,13 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 		// TODO make this work
 		// Plays youtube link in voice chat
 		case "$play":
-			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
+			err := d.playYoutubeLink(s, m, param)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+			/*if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
 				err := d.playYoutubeLink(s, m, param)
 				if err != nil {
 					_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
@@ -123,7 +129,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 				}
-			}
+			}*/
 			return
 
 		// Sends daily horoscope
