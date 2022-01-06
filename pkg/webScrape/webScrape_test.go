@@ -17,6 +17,10 @@ func TestAudioLink(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}*/
 
+	/*url := "https://www.youtube.com/watch?v=VXtVrNdD3YA"
+
+	newURL := strings.Replace(url, "youtube", "youtubex2", 1)
+
 	link, fileName, err := GetYtAudioLink("https://www.youtube.com/watch?v=VXtVrNdD3YA")
 	if err != nil {
 		t.Fatal(err)
@@ -25,7 +29,7 @@ func TestAudioLink(t *testing.T) {
 	err = DownloadMpFile(link, fileName)
 	if err != nil {
 		t.Fatal(err)
-	}
+	}*/
 }
 
 func TestScrapeHoroscope(t *testing.T) {

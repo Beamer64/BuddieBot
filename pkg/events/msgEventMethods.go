@@ -9,16 +9,17 @@ import (
 	"github.com/beamer64/discordBot/pkg/webScrape"
 	_ "github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
-	"github.com/pkg/errors"
 	_ "io/ioutil"
 	"math/rand"
 	"strings"
 	"time"
 )
 
+var MpFileQueue []string
+
 func (d *MessageHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate) {
-	link, fileName, _ := webScrape.GetYtAudioLink("https://www.youtube.com/watch?v=aRhaWRp4dus")
-	_ = webScrape.DownloadMpFile(link, fileName)
+	/*link, fileName, _ := webScrape.GetYtAudioLink(s, m, "https://www.youtube.com/watch?v=aRhaWRp4dus")
+	_ = webScrape.DownloadMpFile(link, fileName)*/
 }
 
 func (d *MessageHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
@@ -234,7 +235,7 @@ func (d *MessageHandler) playNIM(s *discordgo.Session, m *discordgo.MessageCreat
 }
 
 func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	_, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...one sec..")
+	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
 	if err != nil {
 		return err
 	}
@@ -262,16 +263,7 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 	// joins first channel
 	voiceChannel = voiceChannels[0]
 
-	time.AfterFunc(
-		5*time.Second, func() {
-			_, err = s.ChannelMessageSend(m.ChannelID, "Almost...there..")
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-			}
-		},
-	)
-
-	link, fileName, err := webScrape.GetYtAudioLink(param)
+	link, fileName, err := webScrape.GetYtAudioLink(s, msg, param)
 	if err != nil {
 		return err
 	}
@@ -281,6 +273,8 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 		return err
 	}
 
+	MpFileQueue = append(MpFileQueue, fileName)
+
 	dgv, err := s.ChannelVoiceJoin(d.cfg.ExternalServicesConfig.GuildID, voiceChannel, false, true)
 	if err != nil {
 		if _, ok := s.VoiceConnections[d.cfg.ExternalServicesConfig.GuildID]; ok {
@@ -289,12 +283,16 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 			return err
 		}
 	}
-	dgv.Speaking(true)
+	err = dgv.Speaking(true)
+	if err != nil {
+		return err
+	}
+
 	if !dgv.Ready {
 		dgv.Ready = true
 	}
 
-	err = webScrape.PlayAudioFile(dgv, fileName)
+	err = webScrape.PlayAudioFile(dgv, MpFileQueue)
 
 	return nil
 }
