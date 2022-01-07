@@ -24,11 +24,6 @@ func TestAudioLink(t *testing.T) {
 	link, fileName, err := GetYtAudioLink("https://www.youtube.com/watch?v=VXtVrNdD3YA")
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	err = DownloadMpFile(link, fileName)
-	if err != nil {
-		t.Fatal(err)
 	}*/
 }
 
