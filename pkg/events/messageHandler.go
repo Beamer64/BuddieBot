@@ -111,18 +111,11 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 		// TODO make this work
 		// Plays youtube link in voice chat
 		case "$play":
-			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
-				err := d.playYoutubeLink(s, m, param)
-				if err != nil {
-					_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-				}
-			} else {
-				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-				}
+			err := d.playYoutubeLink(s, m, param)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
