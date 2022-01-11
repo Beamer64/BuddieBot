@@ -240,29 +240,6 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 		return err
 	}
 
-	guild, err := s.State.Guild(m.GuildID)
-	if err != nil {
-		return err
-	}
-
-	channels, err := s.GuildChannels(d.cfg.ExternalServicesConfig.GuildID)
-	if err != nil {
-		return err
-	}
-
-	var voiceChannel string
-	var voiceChannels []string
-	for _, channel := range channels {
-		channelType := fmt.Sprintf("%b", channel.Type)
-		if channelType == "10" { // 10 = voice channels
-			if channel.ID != guild.AfkChannelID {
-				voiceChannels = append(voiceChannels, channel.ID)
-			}
-		}
-	}
-	// joins first channel
-	voiceChannel = voiceChannels[0]
-
 	link, fileName, err := webScrape.GetYtAudioLink(s, msg, param)
 	if err != nil {
 		return err
@@ -275,25 +252,21 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 
 	MpFileQueue = append(MpFileQueue, fileName)
 
-	dgv, err := s.ChannelVoiceJoin(d.cfg.ExternalServicesConfig.GuildID, voiceChannel, false, true)
-	if err != nil {
-		if _, ok := s.VoiceConnections[d.cfg.ExternalServicesConfig.GuildID]; ok {
-			dgv = s.VoiceConnections[d.cfg.ExternalServicesConfig.GuildID]
-		} else {
-			return err
-		}
-	}
-	err = dgv.Speaking(true)
+	err = webScrape.PlayAudioFile(s, m, m.GuildID, MpFileQueue)
 	if err != nil {
 		return err
 	}
 
-	if !dgv.Ready {
-		dgv.Ready = true
+	err = webScrape.RunMpFileCleanUp()
+	if err != nil {
+		return err
 	}
 
-	err = webScrape.PlayAudioFile(dgv, MpFileQueue)
+	return nil
+}
 
+func (d *MessageHandler) stopYoutubeLink() error {
+	close(webScrape.StopPlaying)
 	return nil
 }
 

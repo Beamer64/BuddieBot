@@ -8,6 +8,7 @@ import (
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -15,12 +16,13 @@ import (
 	"time"
 )
 
-func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mpFileLink string, fileNAme string, err error) {
+var StopPlaying chan bool
+
+func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mpFileLink string, fileName string, err error) {
 	url := strings.Replace(link, "youtube", "youtubex2", 1)
 
-	// create context
 	ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf))
-	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel = context.WithTimeout(ctx, 45*time.Second)
 	defer cancel()
 
 	var res string
@@ -131,7 +133,7 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 		},
 	)
 
-	fileName := strings.SplitAfterN(mpLink, "/", 12)[11]
+	fileName = strings.SplitAfterN(mpLink, "/", 12)[11]
 
 	return mpLink, fileName, nil
 }
@@ -163,22 +165,60 @@ func DownloadMpFile(link string, fileName string) error {
 	return nil
 }
 
-func PlayAudioFile(dgv *discordgo.VoiceConnection, fileQueue []string) error {
-	// Start loop and attempt to play all files in the given dir
+func PlayAudioFile(s *discordgo.Session, m *discordgo.MessageCreate, guildID string, fileQueue []string) error {
+
+	voiceState, err := s.State.VoiceState(guildID, m.Author.ID)
+	if err != nil {
+		return err
+	}
+
+	dgv, err := s.ChannelVoiceJoin(guildID, voiceState.ChannelID, false, true)
+	if err != nil {
+		if _, ok := s.VoiceConnections[guildID]; ok {
+			dgv = s.VoiceConnections[guildID]
+		} else {
+			return err
+		}
+	}
+	defer dgv.Close()
+
+	err = dgv.Speaking(true)
+	if err != nil {
+		return err
+	}
+
+	if !dgv.Ready {
+		dgv.Ready = true
+	}
+
+	if StopPlaying == nil {
+		StopPlaying = make(chan bool)
+	}
 
 	for _, v := range fileQueue {
 		fmt.Println("PlayAudioFile:", v)
 
-		dgvoice.PlayAudioFile(dgv, v, make(chan bool))
-		err := os.Remove(v)
+		dgvoice.PlayAudioFile(dgv, v, StopPlaying)
 		fileQueue = fileQueue[1:]
-		if err != nil {
-			return err
-		}
 	}
 
-	// Close connections
-	dgv.Close()
+	return nil
+}
 
+func RunMpFileCleanUp() error {
+	fmt.Println("Running Cleanup")
+	files, err := ioutil.ReadDir(".")
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		if strings.Contains(f.Name(), ".mp3") {
+			err = os.Remove(f.Name())
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }

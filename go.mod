@@ -13,7 +13,6 @@ require (
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
-	github.com/oleiade/lane v1.0.1
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.6.4 // indirect
@@ -26,6 +25,6 @@ require (
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
 	google.golang.org/grpc v1.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32
+	layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32 // indirect
 	moul.io/http2curl v1.0.0 // indirect
 )

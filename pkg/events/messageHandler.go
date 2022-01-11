@@ -66,7 +66,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			return
 
 		// Starts the Minecraft Server
-		case "$start":
+		case "$startServer":
 			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
 				err := d.startServer(s, m)
 				if err != nil {
@@ -83,7 +83,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			}
 
 		// Stops the Minecraft Server
-		case "$stop":
+		case "$stopServer":
 			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
 				err := d.stopServer(s, m)
 				if err != nil {
@@ -115,6 +115,22 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 				err := d.playYoutubeLink(s, m, param)
 				if err != nil {
 					_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				}
+			} else {
+				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+				}
+			}
+			return
+
+			// stops youtube link in voice chat
+		case "$stop":
+			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
+				err := d.stopYoutubeLink()
+				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 				}
