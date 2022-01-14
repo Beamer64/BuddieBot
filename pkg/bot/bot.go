@@ -29,11 +29,11 @@ func Init(cfg *config.Config) error {
 }
 
 func registerEvents(s *discordgo.Session, cfg *config.Config, u *discordgo.User) {
-	joinLeaveHandler := events.NewJoinLeaveHandler()
+	s.AddHandler(events.NewGuildJoinLeaveHandler().GuildJoinHandler)
+	s.AddHandler(events.NewGuildJoinLeaveHandler().GuildLeaveHandler)
 
-	s.AddHandler(joinLeaveHandler.HandlerJoin)
-	s.AddHandler(joinLeaveHandler.HandlerLeave)
+	s.AddHandler(events.NewMessageCreateHandler(cfg, u).MessageCreateHandler)
+	s.AddHandler(events.NewReadyHandler().ReadyHandler)
 
-	s.AddHandler(events.NewMessageHandler(cfg, u).Handler)
-	s.AddHandler(events.NewReadyHandler().Handler)
+	s.AddHandler(events.NewReactionHandler().ReactHandlerAdd)
 }

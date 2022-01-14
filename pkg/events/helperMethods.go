@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/subosito/shorturl"
 	"math/rand"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -32,7 +33,13 @@ func ShortenURL(url string, provider string) (string, error) {
 	return string(u), nil
 }
 
-func (d *MessageHandler) memberHasRole(session *discordgo.Session, message *discordgo.MessageCreate, roleName string) bool {
+func CreateLmgtfyURL(s string) string {
+	strEnc := url.QueryEscape(s)
+	lmgtfyString := "http://lmgtfy.com/?q=" + strEnc
+	return lmgtfyString
+}
+
+func (d *MessageCreateHandler) memberHasRole(session *discordgo.Session, message *discordgo.MessageCreate, roleName string) bool {
 	guildID := message.GuildID
 	roleName = strings.ToLower(roleName)
 
