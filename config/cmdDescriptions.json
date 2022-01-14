@@ -1,12 +1,15 @@
 {
   "Tuuck": "$tuuck - Lists available commands.",
-  "Start": "$start - Starts Minecraft Server.",
-  "Stop": "$stop - Stops Minecraft Server.",
+  "StartServer": "$startServer - Starts Minecraft Server.",
+  "StopServer": "$stopServer - Stops Minecraft Server.",
   "Gif": "$gif {search} - Sends first searched gif",
   "Horoscope": "$horoscope {sign} - Gives daily horoscope.",
-  "McStatus": "$mcstatus - Gives the current status of the MC server.",
+  "ServerStatus": "$serverStatus - Gives the current status of the MC server.",
   "Version": "$version - Gives the Git SHA of the current bot version running",
   "CoinFlip": "$coinflip - Flips a coin, sends gif for results",
-  "LMGTFY": "$lmgtfy - Finds most recent ASK msg and sends LMGTFY link",
-  "Insult": "$insult {@User} - Sends an insult and tags {@User}"
+  "LMGTFY": "{lmgtfy Reaction} - Add the 'Ask' Reaction to a msg and get a LMGTFY link",
+  "Insult": "$insult {@User} - Sends an insult and tags {@User}",
+  "Play": "$play {youtube_link} - Adds youtube audio to queue and plays it",
+  "Stop": "$stop - Stops the audio link playback",
+  "Queue": "$queue - Gets the current song queue"
 }

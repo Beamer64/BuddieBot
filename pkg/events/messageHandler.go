@@ -9,19 +9,19 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-type MessageHandler struct {
+type MessageCreateHandler struct {
 	cfg   *config.Config
 	botID string
 }
 
-func NewMessageHandler(cfg *config.Config, u *discordgo.User) *MessageHandler {
-	return &MessageHandler{
+func NewMessageCreateHandler(cfg *config.Config, u *discordgo.User) *MessageCreateHandler {
+	return &MessageCreateHandler{
 		cfg:   cfg,
 		botID: u.ID,
 	}
 }
 
-func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreate) {
+func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.HasPrefix(m.Content, d.cfg.ExternalServicesConfig.BotPrefix) {
 		if m.Author.ID == d.botID {
 			return
@@ -122,7 +122,7 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			}
 			return
 
-			// stops youtube link in voice chat
+			// stops audio playback
 		case "$stop":
 			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
 				err := d.stopYoutubeLink()
@@ -135,6 +135,15 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 				}
+			}
+			return
+
+			// shows queued songs
+		case "$queue":
+			err := d.getSongQueue(s, m)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -159,15 +168,6 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 		// Flips a coins, sends gif for results
 		case "$coinflip":
 			err := d.coinFlip(s, m)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-		// Creates/sends LMGTFY link for marked msgs
-		case "$lmgtfy":
-			err := d.sendLmgtfy(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))

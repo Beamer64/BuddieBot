@@ -188,7 +188,6 @@ func ConnectVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate, guild
 				return nil, err
 			}
 		}
-		//defer vc.dgv.Close()
 
 		err = vc.dgv.Speaking(true)
 		if err != nil {
@@ -207,7 +206,7 @@ func ConnectVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate, guild
 	return vc.dgv, nil
 }
 
-func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string) error {
+func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID string, s *discordgo.Session) error {
 	if !IsPlaying {
 		if fileName != "" {
 			MpFileQueue = append(MpFileQueue, fileName)
@@ -218,12 +217,11 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string) error {
 			fmt.Println("PlayAudioFile:", v)
 
 			dgvoice.PlayAudioFile(dgv, v, StopPlaying)
-			//MpFileQueue = MpFileQueue[1:]
 			MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
 		}
 		IsPlaying = false
 		if len(MpFileQueue) > 0 {
-			err := PlayAudioFile(dgv, "")
+			err := PlayAudioFile(dgv, "", channelID, s)
 			if err != nil {
 				return err
 			}
@@ -239,6 +237,11 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string) error {
 
 	} else {
 		if fileName != "" {
+			_, err := s.ChannelMessageSend(channelID, fmt.Sprintf("Added to queue: %s", fileName))
+			if err != nil {
+				return err
+			}
+
 			MpFileQueue = append(MpFileQueue, fileName)
 		}
 	}

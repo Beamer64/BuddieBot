@@ -83,7 +83,7 @@ func TestScrapeHoroscope(t *testing.T) {
 		},
 	)
 
-	// Start scraping on https://www.horoscope.com
+	// StartServer scraping on https://www.horoscope.com
 	err := c.Visit("https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-today.aspx?sign=" + signNum)
 	if err != nil {
 		t.Fatal(err)

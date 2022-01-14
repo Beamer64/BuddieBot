@@ -69,16 +69,19 @@ type CommandMessages struct {
 }
 
 type CommandDescriptions struct {
-	Tuuck     string `json:"Tuuck"`
-	Start     string `json:"Start"`
-	Stop      string `json:"Stop"`
-	CoinFlip  string `json:"CoinFlip"`
-	Horoscope string `json:"Horoscope"`
-	Gif       string `json:"Gif"`
-	McStatus  string `json:"McStatus"`
-	Version   string `json:"Version"`
-	LMGTFY    string `json:"LMGTFY"`
-	Insult    string `json:"Insult"`
+	Tuuck        string `json:"Tuuck"`
+	StartServer  string `json:"StartServer"`
+	StopServer   string `json:"StopServer"`
+	CoinFlip     string `json:"CoinFlip"`
+	Horoscope    string `json:"Horoscope"`
+	Gif          string `json:"Gif"`
+	ServerStatus string `json:"ServerStatus"`
+	Version      string `json:"Version"`
+	LMGTFY       string `json:"LMGTFY"`
+	Insult       string `json:"Insult"`
+	Play         string `json:"Play"`
+	Stop         string `json:"Stop"`
+	Queue        string `json:"Queue"`
 }
 
 type ServerCommandOut struct {

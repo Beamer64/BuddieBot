@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func (d *MessageHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	/*err := d.playYoutubeLink(s, m, param)
 	if err != nil {
 		return err
@@ -24,19 +24,20 @@ func (d *MessageHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCr
 	return nil
 }
 
-func (d *MessageHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
+func (d *MessageCreateHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	var cmds []string
 	if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) { // bot mod
 		cmds = append(
 			cmds, d.cfg.CommandDescriptions.Tuuck, d.cfg.CommandDescriptions.Horoscope, d.cfg.CommandDescriptions.Version,
-			d.cfg.CommandDescriptions.CoinFlip, d.cfg.CommandDescriptions.LMGTFY,
+			d.cfg.CommandDescriptions.CoinFlip, d.cfg.CommandDescriptions.LMGTFY, d.cfg.CommandDescriptions.Play, d.cfg.CommandDescriptions.Stop,
+			d.cfg.CommandDescriptions.Queue,
 		)
 
 		if d.cfg.ExternalServicesConfig.TenorAPIkey != "" {
 			cmds = append(cmds, d.cfg.CommandDescriptions.Gif)
 		}
 		if d.cfg.ExternalServicesConfig.MachineIP != "" {
-			cmds = append(cmds, d.cfg.CommandDescriptions.McStatus, d.cfg.CommandDescriptions.Start, d.cfg.CommandDescriptions.Stop)
+			cmds = append(cmds, d.cfg.CommandDescriptions.ServerStatus, d.cfg.CommandDescriptions.StartServer, d.cfg.CommandDescriptions.StopServer)
 		}
 		if d.cfg.ExternalServicesConfig.InsultAPI != "" {
 			cmds = append(cmds, d.cfg.CommandDescriptions.Insult)
@@ -46,6 +47,7 @@ func (d *MessageHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.Mess
 		cmds = append(
 			cmds, d.cfg.CommandDescriptions.Tuuck, d.cfg.CommandDescriptions.Horoscope,
 			d.cfg.CommandDescriptions.CoinFlip, d.cfg.CommandDescriptions.LMGTFY,
+			d.cfg.CommandDescriptions.Play, d.cfg.CommandDescriptions.Stop, d.cfg.CommandDescriptions.Queue,
 		)
 
 		if d.cfg.ExternalServicesConfig.TenorAPIkey != "" {
@@ -69,26 +71,16 @@ func (d *MessageHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.Mess
 	return nil
 }
 
-func (d *MessageHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	err := s.ChannelMessageDelete(m.ChannelID, m.ID)
-	if err != nil {
-		return err
-	}
-
+func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message) error {
 	provider := "tinyurl"
-	lmgtfyMsg, err := webScrape.FindLMGTFY(s, m, d.botID)
-	if err != nil {
-		return err
-	}
-
-	lmgtfyURL := webScrape.LmgtfyURL(lmgtfyMsg.Content)
+	lmgtfyURL := CreateLmgtfyURL(m.Content)
 
 	lmgtfyShortURL, err := ShortenURL(lmgtfyURL, provider)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.ChannelMessageSend(m.ChannelID, "\""+lmgtfyMsg.Content+"\""+"\n"+lmgtfyShortURL)
+	_, err = s.ChannelMessageSend(m.ChannelID, "\""+m.Content+"\""+"\n"+lmgtfyShortURL)
 	if err != nil {
 		return err
 	}
@@ -96,7 +88,7 @@ func (d *MessageHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.MessageCr
 	return nil
 }
 
-func (d *MessageHandler) coinFlip(s *discordgo.Session, m *discordgo.MessageCreate) error {
+func (d *MessageCreateHandler) coinFlip(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	gifURL, err := api.RequestGifURL("Coin Flip", d.cfg.ExternalServicesConfig.TenorAPIkey)
 	if err != nil {
 		return err
@@ -166,7 +158,7 @@ func (d *MessageHandler) coinFlip(s *discordgo.Session, m *discordgo.MessageCrea
 	return nil
 }
 
-func (d *MessageHandler) sendGif(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+func (d *MessageCreateHandler) sendGif(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if d.cfg.ExternalServicesConfig.TenorAPIkey != "" { // check if Tenor API set up
 		err := s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
@@ -198,7 +190,7 @@ func (d *MessageHandler) sendGif(s *discordgo.Session, m *discordgo.MessageCreat
 	return nil
 }
 
-func (d *MessageHandler) displayHoroscope(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+func (d *MessageCreateHandler) displayHoroscope(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	horoscope, err := webScrape.ScrapeSign(param)
 	if err != nil {
 		return err
@@ -212,7 +204,7 @@ func (d *MessageHandler) displayHoroscope(s *discordgo.Session, m *discordgo.Mes
 	return nil
 }
 
-func (d *MessageHandler) playNIM(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+func (d *MessageCreateHandler) playNIM(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if strings.HasPrefix(param, "<@") {
 		err := games.StartNim(s, m, param, true)
 		if err != nil {
@@ -236,7 +228,7 @@ func (d *MessageHandler) playNIM(s *discordgo.Session, m *discordgo.MessageCreat
 	return nil
 }
 
-func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
 	if err != nil {
 		return err
@@ -257,7 +249,7 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 		return err
 	}
 
-	err = webScrape.PlayAudioFile(dgv, fileName)
+	err = webScrape.PlayAudioFile(dgv, fileName, m.ChannelID, s)
 	if err != nil {
 		return err
 	}
@@ -265,9 +257,11 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 	return nil
 }
 
-func (d *MessageHandler) stopYoutubeLink() error {
-	close(webScrape.StopPlaying)
-	webScrape.IsPlaying = false
+func (d *MessageCreateHandler) stopYoutubeLink() error {
+	if webScrape.StopPlaying != nil {
+		close(webScrape.StopPlaying)
+		webScrape.IsPlaying = false
+	}
 
 	err := webScrape.RunMpFileCleanUp()
 	if err != nil {
@@ -277,7 +271,24 @@ func (d *MessageHandler) stopYoutubeLink() error {
 	return nil
 }
 
-func (d *MessageHandler) sendStartUpMessages(s *discordgo.Session, m *discordgo.MessageCreate) error {
+func (d *MessageCreateHandler) getSongQueue(s *discordgo.Session, m *discordgo.MessageCreate) error {
+	if len(webScrape.MpFileQueue) > 0 {
+		_, err := s.ChannelMessageSend(m.ChannelID, strings.Join(webScrape.MpFileQueue, "\n"))
+		if err != nil {
+			return err
+		}
+
+	} else {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Uh owh, song queue is wempty (>.<)")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *MessageCreateHandler) sendStartUpMessages(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	// sleep for 1 minute while saying funny things and to wait for instance to start up
 	sm := 0
 	for i := 1; i < 5; i++ {
@@ -295,7 +306,7 @@ func (d *MessageHandler) sendStartUpMessages(s *discordgo.Session, m *discordgo.
 	return nil
 }
 
-func (d *MessageHandler) startServer(s *discordgo.Session, m *discordgo.MessageCreate) error {
+func (d *MessageCreateHandler) startServer(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if Minecraft server is set up
 		client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
 		if err != nil {
@@ -350,7 +361,7 @@ func (d *MessageHandler) startServer(s *discordgo.Session, m *discordgo.MessageC
 	return nil
 }
 
-func (d *MessageHandler) stopServer(s *discordgo.Session, m *discordgo.MessageCreate) error {
+func (d *MessageCreateHandler) stopServer(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if Minecraft server is set up
 		sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
 		if err != nil {
@@ -398,7 +409,7 @@ func (d *MessageHandler) stopServer(s *discordgo.Session, m *discordgo.MessageCr
 }
 
 // d.sendServerStatusAsMessage Sends the current server status as a message in discord
-func (d *MessageHandler) sendServerStatusAsMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
+func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
 	if err != nil {
 		return err
@@ -430,7 +441,7 @@ func (d *MessageHandler) sendServerStatusAsMessage(s *discordgo.Session, m *disc
 	return nil
 }
 
-func (d *MessageHandler) postInsult(s *discordgo.Session, m *discordgo.MessageCreate, memberName string) error {
+func (d *MessageCreateHandler) postInsult(s *discordgo.Session, m *discordgo.MessageCreate, memberName string) error {
 	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if insult API is set up
 		insult, err := api.GetInsult(d.cfg.ExternalServicesConfig.InsultAPI)
 		if err != nil {
