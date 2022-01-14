@@ -17,6 +17,12 @@ import (
 )
 
 var StopPlaying chan bool
+var IsPlaying bool
+var MpFileQueue []string
+
+type VoiceConnection struct {
+	dgv *discordgo.VoiceConnection
+}
 
 func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mpFileLink string, fileName string, err error) {
 	url := strings.Replace(link, "youtube", "youtubex2", 1)
@@ -165,41 +171,76 @@ func DownloadMpFile(link string, fileName string) error {
 	return nil
 }
 
-func PlayAudioFile(s *discordgo.Session, m *discordgo.MessageCreate, guildID string, fileQueue []string) error {
+func ConnectVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate, guildID string) (*discordgo.VoiceConnection, error) {
+	vc := VoiceConnection{}
 
-	voiceState, err := s.State.VoiceState(guildID, m.Author.ID)
-	if err != nil {
-		return err
-	}
+	if vc.dgv == nil {
+		voiceState, err := s.State.VoiceState(guildID, m.Author.ID)
+		if err != nil {
+			return nil, err
+		}
 
-	dgv, err := s.ChannelVoiceJoin(guildID, voiceState.ChannelID, false, true)
-	if err != nil {
-		if _, ok := s.VoiceConnections[guildID]; ok {
-			dgv = s.VoiceConnections[guildID]
-		} else {
-			return err
+		vc.dgv, err = s.ChannelVoiceJoin(guildID, voiceState.ChannelID, false, true)
+		if err != nil {
+			if _, ok := s.VoiceConnections[guildID]; ok {
+				vc.dgv = s.VoiceConnections[guildID]
+			} else {
+				return nil, err
+			}
+		}
+		//defer vc.dgv.Close()
+
+		err = vc.dgv.Speaking(true)
+		if err != nil {
+			return nil, err
+		}
+
+		if !vc.dgv.Ready {
+			vc.dgv.Ready = true
+		}
+
+		if StopPlaying == nil {
+			StopPlaying = make(chan bool)
 		}
 	}
-	defer dgv.Close()
 
-	err = dgv.Speaking(true)
-	if err != nil {
-		return err
-	}
+	return vc.dgv, nil
+}
 
-	if !dgv.Ready {
-		dgv.Ready = true
-	}
+func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string) error {
+	if !IsPlaying {
+		if fileName != "" {
+			MpFileQueue = append(MpFileQueue, fileName)
+		}
 
-	if StopPlaying == nil {
-		StopPlaying = make(chan bool)
-	}
+		IsPlaying = true
+		for i, v := range MpFileQueue {
+			fmt.Println("PlayAudioFile:", v)
 
-	for _, v := range fileQueue {
-		fmt.Println("PlayAudioFile:", v)
+			dgvoice.PlayAudioFile(dgv, v, StopPlaying)
+			//MpFileQueue = MpFileQueue[1:]
+			MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
+		}
+		IsPlaying = false
+		if len(MpFileQueue) > 0 {
+			err := PlayAudioFile(dgv, "")
+			if err != nil {
+				return err
+			}
 
-		dgvoice.PlayAudioFile(dgv, v, StopPlaying)
-		fileQueue = fileQueue[1:]
+		} else {
+			defer dgv.Close()
+
+			err := RunMpFileCleanUp()
+			if err != nil {
+				return err
+			}
+		}
+
+	} else {
+		if fileName != "" {
+			MpFileQueue = append(MpFileQueue, fileName)
+		}
 	}
 
 	return nil

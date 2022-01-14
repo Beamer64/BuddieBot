@@ -15,11 +15,13 @@ import (
 	"time"
 )
 
-var MpFileQueue []string
+func (d *MessageHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+	/*err := d.playYoutubeLink(s, m, param)
+	if err != nil {
+		return err
+	}*/
 
-func (d *MessageHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate) {
-	/*link, fileName, _ := webScrape.GetYtAudioLink(s, m, "https://www.youtube.com/watch?v=aRhaWRp4dus")
-	_ = webScrape.DownloadMpFile(link, fileName)*/
+	return nil
 }
 
 func (d *MessageHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
@@ -250,14 +252,12 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 		return err
 	}
 
-	MpFileQueue = append(MpFileQueue, fileName)
-
-	err = webScrape.PlayAudioFile(s, m, m.GuildID, MpFileQueue)
+	dgv, err := webScrape.ConnectVoiceChannel(s, m, m.GuildID)
 	if err != nil {
 		return err
 	}
 
-	err = webScrape.RunMpFileCleanUp()
+	err = webScrape.PlayAudioFile(dgv, fileName)
 	if err != nil {
 		return err
 	}
@@ -267,6 +267,13 @@ func (d *MessageHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.Mess
 
 func (d *MessageHandler) stopYoutubeLink() error {
 	close(webScrape.StopPlaying)
+	webScrape.IsPlaying = false
+
+	err := webScrape.RunMpFileCleanUp()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

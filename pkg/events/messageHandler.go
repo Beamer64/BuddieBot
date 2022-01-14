@@ -38,7 +38,11 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 		switch strings.ToLower(command) {
 		case "$test":
 			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
-				//d.testMethod(s, m)
+				err := d.testMethod(s, m, param)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				}
 			}
 			return
 
@@ -108,7 +112,6 @@ func (d *MessageHandler) Handler(s *discordgo.Session, m *discordgo.MessageCreat
 			}
 			return
 
-		// TODO make this work
 		// Plays youtube link in voice chat
 		case "$play":
 			err := d.playYoutubeLink(s, m, param)
