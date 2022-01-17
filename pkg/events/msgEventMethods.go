@@ -6,7 +6,7 @@ import (
 	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
-	"github.com/beamer64/discordBot/pkg/voiceChat"
+	"github.com/beamer64/discordBot/pkg/voicechat"
 	"github.com/beamer64/discordBot/pkg/webscrape"
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
