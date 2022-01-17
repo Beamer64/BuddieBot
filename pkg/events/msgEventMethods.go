@@ -6,8 +6,8 @@ import (
 	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
-	"github.com/beamer64/discordBot/pkg/voiceChat"
-	"github.com/beamer64/discordBot/pkg/webScrape"
+	"github.com/beamer64/discordBot/pkg/voice_chat"
+	"github.com/beamer64/discordBot/pkg/web_scrape"
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
 	"strings"
@@ -189,7 +189,7 @@ func (d *MessageCreateHandler) sendGif(s *discordgo.Session, m *discordgo.Messag
 }
 
 func (d *MessageCreateHandler) displayHoroscope(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	horoscope, err := webScrape.ScrapeSign(param)
+	horoscope, err := web_scrape.ScrapeSign(param)
 	if err != nil {
 		return err
 	}
@@ -232,22 +232,22 @@ func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordg
 		return err
 	}
 
-	link, fileName, err := webScrape.GetYtAudioLink(s, msg, param)
+	link, fileName, err := web_scrape.GetYtAudioLink(s, msg, param)
 	if err != nil {
 		return err
 	}
 
-	err = webScrape.DownloadMpFile(link, fileName)
+	err = web_scrape.DownloadMpFile(link, fileName)
 	if err != nil {
 		return err
 	}
 
-	dgv, err := voiceChat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
+	dgv, err := voice_chat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
 	if err != nil {
 		return err
 	}
 
-	err = webScrape.PlayAudioFile(dgv, fileName, m.ChannelID, s)
+	err = web_scrape.PlayAudioFile(dgv, fileName, m.ChannelID, s)
 	if err != nil {
 		return err
 	}
@@ -256,11 +256,11 @@ func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordg
 }
 
 func (d *MessageCreateHandler) stopYoutubeLink() error {
-	vc := voiceChat.VoiceConnection{}
+	vc := voice_chat.VoiceConnection{}
 
-	if webScrape.StopPlaying != nil {
-		close(webScrape.StopPlaying)
-		webScrape.IsPlaying = false
+	if web_scrape.StopPlaying != nil {
+		close(web_scrape.StopPlaying)
+		web_scrape.IsPlaying = false
 
 		if vc.Dgv != nil {
 			vc.Dgv.Close()
@@ -271,8 +271,8 @@ func (d *MessageCreateHandler) stopYoutubeLink() error {
 }
 
 func (d *MessageCreateHandler) getSongQueue(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	if len(webScrape.MpFileQueue) > 0 {
-		_, err := s.ChannelMessageSend(m.ChannelID, strings.Join(webScrape.MpFileQueue, "\n"))
+	if len(web_scrape.MpFileQueue) > 0 {
+		_, err := s.ChannelMessageSend(m.ChannelID, strings.Join(web_scrape.MpFileQueue, "\n"))
 		if err != nil {
 			return err
 		}
@@ -288,9 +288,9 @@ func (d *MessageCreateHandler) getSongQueue(s *discordgo.Session, m *discordgo.M
 }
 
 func (d *MessageCreateHandler) clearSongQueue() error {
-	webScrape.MpFileQueue = nil
+	web_scrape.MpFileQueue = nil
 
-	err := webScrape.RunMpFileCleanUp()
+	err := web_scrape.RunMpFileCleanUp()
 	if err != nil {
 		return err
 	}

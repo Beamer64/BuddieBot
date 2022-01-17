@@ -1,7 +1,7 @@
-package voiceChat
+package voice_chat
 
 import (
-	"github.com/beamer64/discordBot/pkg/webscrape"
+	"github.com/beamer64/discordBot/pkg/web_scrape"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -41,8 +41,8 @@ func ConnectVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate, guild
 			vc.Dgv.Ready = true
 		}
 
-		if webScrape.StopPlaying == nil {
-			webScrape.StopPlaying = make(chan bool)
+		if web_scrape.StopPlaying == nil {
+			web_scrape.StopPlaying = make(chan bool)
 		}
 	}
 

@@ -3,8 +3,8 @@ package events
 import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/voiceChat"
-	"github.com/beamer64/discordBot/pkg/webScrape"
+	"github.com/beamer64/discordBot/pkg/voice_chat"
+	"github.com/beamer64/discordBot/pkg/web_scrape"
 	"github.com/pkg/errors"
 	"strings"
 
@@ -132,7 +132,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 
-			err = webScrape.RunMpFileCleanUp()
+			err = web_scrape.RunMpFileCleanUp()
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
@@ -166,15 +166,15 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 
-			/*webScrape.MpFileQueue = append(webScrape.MpFileQueue[:0], webScrape.MpFileQueue[1:]...)*/
+			/*web_scrape.MpFileQueue = append(web_scrape.MpFileQueue[:0], web_scrape.MpFileQueue[1:]...)*/
 
-			dgv, err := voiceChat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
+			dgv, err := voice_chat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 
-			err = webScrape.PlayAudioFile(dgv, "", m.ChannelID, s)
+			err = web_scrape.PlayAudioFile(dgv, "", m.ChannelID, s)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))

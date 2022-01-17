@@ -1,4 +1,4 @@
-package webScrape
+package web_scrape
 
 import (
 	"encoding/json"
