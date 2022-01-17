@@ -15,10 +15,10 @@ import (
 )
 
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	err := d.playYoutubeLink(s, m, param)
+	/*err := d.playYoutubeLink(s, m, param)
 	if err != nil {
 		return err
-	}
+	}*/
 
 	return nil
 }
@@ -217,7 +217,7 @@ func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordg
 	return nil
 }
 
-func (d *MessageCreateHandler) stopYoutubeLink() error {
+func (d *MessageCreateHandler) stopAudioPlayback() error {
 	vc := voice_chat.VoiceConnection{}
 
 	if web_scrape.StopPlaying != nil {

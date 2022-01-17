@@ -126,7 +126,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 			// stops audio playback
 		case "$stop":
-			err := d.stopYoutubeLink()
+			err := d.stopAudioPlayback()
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
@@ -160,13 +160,13 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 			// plays next song in queue
 		case "$skip":
-			err := d.stopYoutubeLink()
+			err := d.stopAudioPlayback()
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 
-			/*web_scrape.MpFileQueue = append(web_scrape.MpFileQueue[:0], web_scrape.MpFileQueue[1:]...)*/
+			web_scrape.MpFileQueue = web_scrape.MpFileQueue[1:]
 
 			dgv, err := voice_chat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
 			if err != nil {
