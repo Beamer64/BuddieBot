@@ -20,10 +20,6 @@ var StopPlaying chan bool
 var IsPlaying bool
 var MpFileQueue []string
 
-type VoiceConnection struct {
-	dgv *discordgo.VoiceConnection
-}
-
 func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mpFileLink string, fileName string, err error) {
 	url := strings.Replace(link, "youtube", "youtubex2", 1)
 
@@ -171,41 +167,6 @@ func DownloadMpFile(link string, fileName string) error {
 	return nil
 }
 
-func ConnectVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate, guildID string) (*discordgo.VoiceConnection, error) {
-	vc := VoiceConnection{}
-
-	if vc.dgv == nil {
-		voiceState, err := s.State.VoiceState(guildID, m.Author.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		vc.dgv, err = s.ChannelVoiceJoin(guildID, voiceState.ChannelID, false, true)
-		if err != nil {
-			if _, ok := s.VoiceConnections[guildID]; ok {
-				vc.dgv = s.VoiceConnections[guildID]
-			} else {
-				return nil, err
-			}
-		}
-
-		err = vc.dgv.Speaking(true)
-		if err != nil {
-			return nil, err
-		}
-
-		if !vc.dgv.Ready {
-			vc.dgv.Ready = true
-		}
-
-		if StopPlaying == nil {
-			StopPlaying = make(chan bool)
-		}
-	}
-
-	return vc.dgv, nil
-}
-
 func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID string, s *discordgo.Session) error {
 	if !IsPlaying {
 		if fileName != "" {
@@ -217,6 +178,8 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID st
 			fmt.Println("PlayAudioFile:", v)
 
 			dgvoice.PlayAudioFile(dgv, v, StopPlaying)
+
+			//remove file from queue
 			MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
 		}
 		IsPlaying = false
@@ -227,7 +190,9 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID st
 			}
 
 		} else {
-			defer dgv.Close()
+			if dgv != nil {
+				defer dgv.Close()
+			}
 
 			err := RunMpFileCleanUp()
 			if err != nil {

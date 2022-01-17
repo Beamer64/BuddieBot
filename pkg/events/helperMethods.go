@@ -25,8 +25,8 @@ func GetGuildMembers(session *discordgo.Session, guildID string) ([]*discordgo.M
 	return guild.Members, nil
 }
 
-func ShortenURL(url string, provider string) (string, error) {
-	u, err := shorturl.Shorten(url, provider)
+func ShortenURL(url string) (string, error) {
+	u, err := shorturl.Shorten(url, "tinyurl")
 	if err != nil {
 		return "", err
 	}
