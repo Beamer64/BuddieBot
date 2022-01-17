@@ -15,10 +15,10 @@ import (
 )
 
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	/*err := d.playYoutubeLink(s, m, param)
+	err := d.playYoutubeLink(s, m, param)
 	if err != nil {
 		return err
-	}*/
+	}
 
 	return nil
 }
@@ -249,17 +249,6 @@ func (d *MessageCreateHandler) getSongQueue(s *discordgo.Session, m *discordgo.M
 	return nil
 }
 
-func (d *MessageCreateHandler) clearSongQueue() error {
-	web_scrape.MpFileQueue = nil
-
-	err := web_scrape.RunMpFileCleanUp()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (d *MessageCreateHandler) sendStartUpMessages(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	// sleep for 1 minute while saying funny things and to wait for instance to start up
 	sm := 0
@@ -414,7 +403,7 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 }
 
 func (d *MessageCreateHandler) postInsult(s *discordgo.Session, m *discordgo.MessageCreate, memberName string) error {
-	if d.cfg.Configs.Server.MachineIP != "" { // check if insult API is set up
+	if d.cfg.Configs.Keys.InsultAPI != "" { // check if insult API is set up
 		insult, err := api.GetInsult(d.cfg.Configs.Keys.InsultAPI)
 		if err != nil {
 			return err
