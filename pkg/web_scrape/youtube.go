@@ -215,6 +215,8 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID st
 }
 
 func RunMpFileCleanUp() error {
+	MpFileQueue = nil
+
 	fmt.Println("Running Cleanup")
 	files, err := ioutil.ReadDir(".")
 	if err != nil {

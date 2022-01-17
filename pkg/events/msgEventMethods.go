@@ -15,10 +15,10 @@ import (
 )
 
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	err := d.playYoutubeLink(s, m, param)
+	/*err := d.playYoutubeLink(s, m, param)
 	if err != nil {
 		return err
-	}
+	}*/
 
 	return nil
 }
