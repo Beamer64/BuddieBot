@@ -3,7 +3,6 @@ description:
   tuuck: "$tuuck - Lists available commands."
   startServer: "$startServer - Starts Minecraft Server."
   stopServer: "$stopServer - Stops Minecraft Server."
-  gif: "$gif {search} - Sends first searched gif"
   horoscope: "$horoscope {sign} - Gives daily horoscope."
   serverStatus: "$serverStatus - Gives the current status of the MC server."
   version: "$version - Gives the Git SHA of the current bot version running"

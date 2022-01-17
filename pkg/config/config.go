@@ -63,7 +63,6 @@ type Command struct {
 		StopServer   string `yaml:"stopServer"`
 		CoinFlip     string `yaml:"coinFlip"`
 		Horoscope    string `yaml:"horoscope"`
-		Gif          string `yaml:"gif"`
 		ServerStatus string `yaml:"serverStatus"`
 		Version      string `yaml:"version"`
 		LMGTFY       string `yaml:"lmgtfy"`

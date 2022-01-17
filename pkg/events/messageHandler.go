@@ -106,7 +106,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 
 		// Stops the Minecraft Server
-		case "$mcstatus":
+		case "$serverStatus":
 			err := d.sendServerStatusAsMessage(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -185,15 +185,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		// Sends daily horoscope
 		case "$horoscope":
 			err := d.displayHoroscope(s, m, param)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-		// Sends gif response
-		case "$gif":
-			err := d.sendGif(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))

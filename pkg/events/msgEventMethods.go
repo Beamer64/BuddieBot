@@ -32,9 +32,6 @@ func (d *MessageCreateHandler) sendHelpMessage(s *discordgo.Session, m *discordg
 			d.cfg.Cmd.Desc.Queue,
 		)
 
-		if d.cfg.Configs.Keys.TenorAPIkey != "" {
-			cmds = append(cmds, d.cfg.Cmd.Desc.Gif)
-		}
 		if d.cfg.Configs.Server.MachineIP != "" {
 			cmds = append(cmds, d.cfg.Cmd.Desc.ServerStatus, d.cfg.Cmd.Desc.StartServer, d.cfg.Cmd.Desc.StopServer)
 		}
@@ -49,9 +46,6 @@ func (d *MessageCreateHandler) sendHelpMessage(s *discordgo.Session, m *discordg
 			d.cfg.Cmd.Desc.Play, d.cfg.Cmd.Desc.Stop, d.cfg.Cmd.Desc.Queue,
 		)
 
-		if d.cfg.Configs.Keys.TenorAPIkey != "" {
-			cmds = append(cmds, d.cfg.Cmd.Desc.Gif)
-		}
 		if d.cfg.Configs.Keys.InsultAPI != "" {
 			cmds = append(cmds, d.cfg.Cmd.Desc.Insult)
 		}
@@ -151,38 +145,6 @@ func (d *MessageCreateHandler) coinFlip(s *discordgo.Session, m *discordgo.Messa
 	_, err = s.WebhookExecute(d.cfg.Configs.DiscordIDs.WebHookID, d.cfg.Configs.Keys.WebHookToken, false, t)
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (d *MessageCreateHandler) sendGif(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	if d.cfg.Configs.Keys.TenorAPIkey != "" { // check if Tenor API set up
-		err := s.ChannelMessageDelete(m.ChannelID, m.ID)
-		if err != nil {
-			return err
-		}
-
-		gifURL, err := api.RequestGifURL(param, d.cfg.Configs.Keys.TenorAPIkey)
-		if err != nil {
-			return err
-		}
-
-		_, err = s.ChannelMessageSend(m.ChannelID, param)
-		if err != nil {
-			return err
-		}
-
-		_, err = s.ChannelMessageSend(m.ChannelID, gifURL)
-		if err != nil {
-			return err
-		}
-
-	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.TenorAPIError)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

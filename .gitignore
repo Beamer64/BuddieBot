@@ -1,6 +1,5 @@
 res/depricated/config.json
 config/config.yaml
-res/depricated/
 
 # Binaries for programs and plugins
 *.exe
@@ -29,7 +28,7 @@ pokernotifications-229105-e2eb999fe460.json
 res/depricated/auth.json
 
 # ssh key
-minecraft_rsa
+res/depricated/minecraft_rsa
 
 # idea stuff
 /.idea/shelf/Uncommitted_changes_before_Update_at_7_20_2021_11_24_PM_[Default_Changelist]/shelved.patch
