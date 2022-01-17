@@ -1,4 +1,6 @@
-config/config.json
+res/depricated/config.json
+config/config.yaml
+res/depricated/
 
 # Binaries for programs and plugins
 *.exe
@@ -24,7 +26,7 @@ config/config.json
 
 # gcp auth config
 pokernotifications-229105-e2eb999fe460.json
-auth.json
+res/depricated/auth.json
 
 # ssh key
 minecraft_rsa
