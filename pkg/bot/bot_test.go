@@ -45,7 +45,7 @@ func TestMemberHasRole(t *testing.T) {
 	roleName := "test"
 	s := discordgo.NewState()
 
-	member, err := s.Member(cfg.ExternalServicesConfig.GuildID, "289217573004902400")
+	member, err := s.Member(cfg.Configs.DiscordIDs.GuildID, "289217573004902400")
 	if err != nil {
 		t.Fatal(err)
 	}

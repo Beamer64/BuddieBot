@@ -16,7 +16,7 @@ func TestStopMachine(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	client, err := NewGCPClient("../config/auth.json", cfg.GCPAuth.Project_ID, cfg.GCPAuth.Zone)
+	client, err := NewGCPClient("../config/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func TestStartMachine(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	client, err := NewGCPClient("../config/auth.json", cfg.GCPAuth.Project_ID, cfg.GCPAuth.Zone)
+	client, err := NewGCPClient("../config/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
 	if err != nil {
 		t.Fatal(err)
 	}

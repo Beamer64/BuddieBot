@@ -16,15 +16,11 @@ func TestReadConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if reflect.DeepEqual(cfg.ExternalServicesConfig, &ExternalServicesConfig{}) {
-		t.Fatal("cfg.ExternalServicesConfig is empty")
+	if reflect.DeepEqual(cfg.Configs, &Configuration{}) {
+		t.Fatal("cfg.Configuration is empty")
 	}
 
-	if reflect.DeepEqual(cfg.GCPAuth, &GCPAuth{}) {
-		t.Fatal("cfg.GCPAuth is empty")
-	}
-
-	if reflect.DeepEqual(cfg.CommandMessages, &CommandMessages{}) {
+	if reflect.DeepEqual(cfg.Cmd, &Command{}) {
 		t.Fatal("cfg.CommandMessages is empty")
 	}
 

@@ -7,8 +7,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func Init(cfg *config.Config) error {
-	botSession, err := discordgo.New("Bot " + cfg.ExternalServicesConfig.Token)
+func Init(cfg *config.ConfigStructs) error {
+	botSession, err := discordgo.New("Bot " + cfg.Configs.Keys.BotToken)
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func Init(cfg *config.Config) error {
 	return nil
 }
 
-func registerEvents(s *discordgo.Session, cfg *config.Config, u *discordgo.User) {
+func registerEvents(s *discordgo.Session, cfg *config.ConfigStructs, u *discordgo.User) {
 	s.AddHandler(events.NewGuildJoinLeaveHandler().GuildJoinHandler)
 	s.AddHandler(events.NewGuildJoinLeaveHandler().GuildLeaveHandler)
 

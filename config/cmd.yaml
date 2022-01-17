@@ -1,0 +1,31 @@
+# Displayed when the 'tuuck' cmd is called
+description:
+  tuuck: "$tuuck - Lists available commands."
+  startServer: "$startServer - Starts Minecraft Server."
+  stopServer: "$stopServer - Stops Minecraft Server."
+  gif: "$gif {search} - Sends first searched gif"
+  horoscope: "$horoscope {sign} - Gives daily horoscope."
+  serverStatus: "$serverStatus - Gives the current status of the MC server."
+  version: "$version - Gives the Git SHA of the current bot version running"
+  coinFlip: "$coinflip - Flips a coin, sends gif for results"
+  lmgtfy: "{lmgtfy Reaction} - Add the 'Ask' Reaction to a msg and get a LMGTFY link"
+  insult: "$insult {@User} - Sends an insult and tags {@User}"
+  play: "$play {youtube_link} - Adds youtube audio to queue and plays it"
+  stop: "$stop - Stops the audio link playback"
+  queue: "$queue - Gets the current song queue"
+
+# Static cmd related messages
+message:
+  windUp: "`*starts minecraft server in silence*`"
+  windDown: "stopping minecraft server, Alt-F4 really speeds things up 0.0"
+  finishOpperation: "`*beep boop* All done. Powered by Duracell™️`"
+  serverUP: "Did you even try to connect first, Ding-Dong? It's already running. "
+  serverDOWN: "Someone must've beat you to it. Server isn't running. "
+  checkStatusUp: "Rocking and rolling, my guy. "
+  checkStatusDown: "Server is down. ¯\\_(ツ)_/¯ I just work here."
+  invalid: "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<"
+  notBotAdmin: "XD sowwy, you need spwecial pewrmission to dew dat."
+  tenorAPIError: "UwU dere was a prawblum with the Tenor API :("
+  youtubeAPIError: "UwU dere was a prawblum with the Youtube API :("
+  insultAPIError: "UwU dere was a prawblum with the Insult API :("
+  mcServerError: "UwU dere was a prawblum with the Insult API :("

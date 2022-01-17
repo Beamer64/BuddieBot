@@ -2,86 +2,92 @@ package config
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"strings"
 )
 
-type Config struct {
-	ExternalServicesConfig *ExternalServicesConfig
-	GCPAuth                *GCPAuth
-	CommandMessages        *CommandMessages
-	CommandDescriptions    *CommandDescriptions
-	LoadingMessages        []string
-	Version                string
+type ConfigStructs struct {
+	Configs         *Configuration
+	Cmd             *Command
+	LoadingMessages []string
+	Version         string
 }
 
-type ExternalServicesConfig struct {
-	Token             string `json:"Token"`
-	WebHookToken      string `json:"WebHookToken"`
-	WebHookID         string `json:"WebHookID"`
-	BotPrefix         string `json:"BotPrefix"`
-	SSHKeyBody        string `json:"SSHKeyBody"`
-	MachineIP         string `json:"MachineIP"`
-	TenorAPIkey       string `json:"TenorAPIkey"`
-	YoutubeAPIKey     string `json:"YoutubeAPIKey"`
-	DiscordEmail      string `json:"DiscordEmail"`
-	DiscordPassword   string `json:"DiscordPassword"`
-	BotAdminRole      string `json:"BotAdminRole"`
-	InsultAPI         string `json:"InsultAPI"`
-	GuildID           string `json:"GuildID"`
-	ErrorLogChannelID string `json:"ErrorLogChannelID"`
-	BotPublicKey      string `json:"BotPublicKey"`
-	BotApplicationID  string `json:"BotApplicationID"`
+type Configuration struct {
+	Keys struct {
+		BotToken      string `yaml:"botToken"`
+		WebHookToken  string `yaml:"webHookToken"`
+		BotPublicKey  string `yaml:"botPublicKey"`
+		TenorAPIkey   string `yaml:"tenorAPIkey"`
+		YoutubeAPIKey string `yaml:"youtubeAPIKey"`
+		InsultAPI     string `yaml:"insultAPI"`
+	} `yaml:"keys"`
+
+	DiscordIDs struct {
+		WebHookID         string `yaml:"webHookID"`
+		BotApplicationID  string `yaml:"botApplicationID"`
+		GuildID           string `yaml:"guildID"`
+		ErrorLogChannelID string `yaml:"errorLogChannelID"`
+	} `yaml:"discordIDs"`
+
+	Settings struct {
+		BotPrefix    string `yaml:"botPrefix"`
+		BotAdminRole string `yaml:"botAdminRole"`
+	} `yaml:"settings"`
+
+	Server struct {
+		SSHKeyBody                  string `yaml:"sshKeyBody"`
+		MachineIP                   string `yaml:"machineIP"`
+		Type                        string `yaml:"type"`
+		Project_ID                  string `yaml:"project_id"`
+		Private_key_ID              string `yaml:"private_key_id"`
+		Private_key                 string `yaml:"private_key"`
+		Client_email                string `yaml:"client_email"`
+		Client_ID                   string `yaml:"client_id"`
+		Auth_URI                    string `yaml:"auth_uri"`
+		Token_URI                   string `yaml:"token_uri"`
+		Auth_provider_x509_cert_URL string `yaml:"auth_provider_x509_cert_url"`
+		Client_x509_cert_URL        string `yaml:"client_x509_cert_url"`
+		Zone                        string `yaml:"zone"`
+	} `yaml:"server"`
 }
 
-type GCPAuth struct {
-	Type                        string `json:"type"`
-	Project_ID                  string `json:"project_id"`
-	Private_key_ID              string `json:"private_key_id"`
-	Private_key                 string `json:"private_key"`
-	Client_email                string `json:"client_email"`
-	Client_ID                   string `json:"client_id"`
-	Auth_URI                    string `json:"auth_uri"`
-	Token_URI                   string `json:"token_uri"`
-	Auth_provider_x509_cert_URL string `json:"auth_provider_x509_cert_url"`
-	Client_x509_cert_URL        string `json:"client_x509_cert_url"`
-	Zone                        string `json:"zone"`
-}
+type Command struct {
+	Desc struct {
+		Tuuck        string `yaml:"tuuck"`
+		StartServer  string `yaml:"startServer"`
+		StopServer   string `yaml:"stopServer"`
+		CoinFlip     string `yaml:"coinFlip"`
+		Horoscope    string `yaml:"horoscope"`
+		Gif          string `yaml:"gif"`
+		ServerStatus string `yaml:"serverStatus"`
+		Version      string `yaml:"version"`
+		LMGTFY       string `yaml:"lmgtfy"`
+		Insult       string `yaml:"insult"`
+		Play         string `yaml:"play"`
+		Stop         string `yaml:"stop"`
+		Queue        string `yaml:"queue"`
+	} `yaml:"description"`
 
-type CommandMessages struct {
-	Invalid          string `json:"Invalid"`
-	WindUp           string `json:"WindUp"`
-	WindDown         string `json:"WindDown"`
-	FinishOpperation string `json:"FinishOpperation"`
-	ServerUP         string `json:"ServerUP"`
-	ServerDOWN       string `json:"ServerDOWN"`
-	CheckStatusUp    string `json:"CheckStatusUp"`
-	CheckStatusDown  string `json:"CheckStatusDown"`
-	NotBotAdmin      string `json:"NotBotAdmin"`
-	MCServerError    string `json:"MCServerError"`
-	TenorAPIError    string `json:"TenorAPIError"`
-	YoutubeAPIError  string `json:"YoutubeAPIError"`
-	InsultAPIError   string `json:"InsultAPIError"`
-}
-
-type CommandDescriptions struct {
-	Tuuck        string `json:"Tuuck"`
-	StartServer  string `json:"StartServer"`
-	StopServer   string `json:"StopServer"`
-	CoinFlip     string `json:"CoinFlip"`
-	Horoscope    string `json:"Horoscope"`
-	Gif          string `json:"Gif"`
-	ServerStatus string `json:"ServerStatus"`
-	Version      string `json:"Version"`
-	LMGTFY       string `json:"LMGTFY"`
-	Insult       string `json:"Insult"`
-	Play         string `json:"Play"`
-	Stop         string `json:"Stop"`
-	Queue        string `json:"Queue"`
+	Msg struct {
+		Invalid          string `yaml:"invalid"`
+		WindUp           string `yaml:"windUp"`
+		WindDown         string `yaml:"windDown"`
+		FinishOpperation string `yaml:"finishOpperation"`
+		ServerUP         string `yaml:"serverUP"`
+		ServerDOWN       string `yaml:"serverDOWN"`
+		CheckStatusUp    string `yaml:"checkStatusUp"`
+		CheckStatusDown  string `yaml:"checkStatusDown"`
+		NotBotAdmin      string `yaml:"notBotAdmin"`
+		MCServerError    string `yaml:"mcServerError"`
+		TenorAPIError    string `yaml:"tenorAPIError"`
+		YoutubeAPIError  string `yaml:"youtubeAPIError"`
+		InsultAPIError   string `yaml:"insultAPIError"`
+	} `yaml:"message"`
 }
 
 type ServerCommandOut struct {
@@ -101,7 +107,7 @@ type ServerCommandOut struct {
 	Status       string `json:"Status"`
 }
 
-func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
+func ReadConfig(possibleConfigPaths ...string) (*ConfigStructs, error) {
 
 	var configDir string
 	for _, cp := range possibleConfigPaths {
@@ -118,10 +124,8 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 
 		// build a map of neccesary files
 		fmap := make(map[string]bool)
-		fmap["auth.json"] = false
-		fmap["config.json"] = false
-		fmap["cmdMessages.json"] = false
-		fmap["cmdDescriptions.json"] = false
+		fmap["config.yaml"] = false
+		fmap["cmd.yaml"] = false
 		fmap["loadingMessages.txt"] = false
 
 		// loops thru all files in dir, check if any of them are required
@@ -152,50 +156,26 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 	}
 
 	fmt.Println("Reading from config file...")
-	configFile, err := ioutil.ReadFile(configDir + "config.json")
+	configFile, err := ioutil.ReadFile(configDir + "config.yaml")
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Reading from auth file...")
-	authFile, err := ioutil.ReadFile(configDir + "auth.json")
+	fmt.Println("Reading from cmd file...")
+	commandFile, err := ioutil.ReadFile(configDir + "cmd.yaml")
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Reading from cmdMsg file...")
-	commandMsgFile, err := ioutil.ReadFile(configDir + "cmdMessages.json")
+	var escfg *Configuration
+	var command *Command
+
+	err = yaml.Unmarshal(configFile, &escfg)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Reading from cmdMsg file...")
-	commandDescFile, err := ioutil.ReadFile(configDir + "cmdDescriptions.json")
-	if err != nil {
-		return nil, err
-	}
-
-	var escfg *ExternalServicesConfig
-	var gcpauth *GCPAuth
-	var comMsg *CommandMessages
-	var comDesc *CommandDescriptions
-
-	err = json.Unmarshal(configFile, &escfg)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(authFile, &gcpauth)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(commandMsgFile, &comMsg)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(commandDescFile, &comDesc)
+	err = yaml.Unmarshal(commandFile, &command)
 	if err != nil {
 		return nil, err
 	}
@@ -221,17 +201,15 @@ func ReadConfig(possibleConfigPaths ...string) (*Config, error) {
 		fv = fv[0:7]
 	}
 
-	return &Config{
-		ExternalServicesConfig: escfg,
-		GCPAuth:                gcpauth,
-		CommandMessages:        comMsg,
-		CommandDescriptions:    comDesc,
-		LoadingMessages:        msgs,
-		Version:                fv,
+	return &ConfigStructs{
+		Configs:         escfg,
+		Cmd:             command,
+		LoadingMessages: msgs,
+		Version:         fv,
 	}, nil
 }
 
-// dont move this into bot folder (circular dependency)
+// dont move this out (circular dependency)
 func grabLoadingMessages(loadingMessagesPath string) ([]string, error) {
 	file, err := os.Open(loadingMessagesPath)
 	if err != nil {

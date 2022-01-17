@@ -12,48 +12,6 @@ import (
 	"testing"
 )
 
-func TestGetYoutubeURL(t *testing.T) {
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	query := "https://www.youtube.com/watch?v=72hjeHtSEfg&pp=sAQA"
-	apiKey := cfg.ExternalServicesConfig.YoutubeAPIKey
-	y := new(youtube)
-
-	lenQuery := len(query)
-	if lenQuery < 4 || query[:4] != "http" {
-		link, errr := searchYoutube(query, apiKey)
-		if errr != nil {
-			t.Fatal(err)
-		}
-		query = link
-	}
-
-	err = y.findVideoID(query)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = y.getVideoInfo(apiKey)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = y.parseVideoInfo()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	targetStream := y.streamList[0]
-	downloadURL := targetStream["url"] + "&signature=" + targetStream["sig"]
-
-	fmt.Println("Download URL: ", downloadURL)
-	fmt.Println("Target Stream: ", targetStream["title"])
-	// return downloadURL, targetStream["title"], nil
-}
-
 func TestPostInsult(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
@@ -67,7 +25,7 @@ func TestPostInsult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	session, err = discordgo.New("Bot " + cfg.ExternalServicesConfig.Token)
+	session, err = discordgo.New("Bot " + cfg.Configs.Keys.BotToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +36,7 @@ func TestPostInsult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	insult, err := GetInsult(cfg.ExternalServicesConfig.InsultAPI)
+	insult, err := GetInsult(cfg.Configs.Keys.InsultAPI)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +68,7 @@ func TestGetInsult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	insultURL := cfg.ExternalServicesConfig.InsultAPI
+	insultURL := cfg.Configs.Keys.InsultAPI
 	res, err := http.Get(insultURL)
 	if err != nil {
 		t.Fatal(err)

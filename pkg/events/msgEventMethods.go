@@ -6,55 +6,54 @@ import (
 	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
-	"github.com/beamer64/discordBot/pkg/webScrape"
-	_ "github.com/bwmarrin/dgvoice"
+	"github.com/beamer64/discordBot/pkg/voiceChat"
+	"github.com/beamer64/discordBot/pkg/webscrape"
 	"github.com/bwmarrin/discordgo"
-	_ "io/ioutil"
 	"math/rand"
 	"strings"
 	"time"
 )
 
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	/*err := d.playYoutubeLink(s, m, param)
+	err := d.playYoutubeLink(s, m, param)
 	if err != nil {
 		return err
-	}*/
+	}
 
 	return nil
 }
 
 func (d *MessageCreateHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	var cmds []string
-	if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) { // bot mod
+	if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) { // bot mod
 		cmds = append(
-			cmds, d.cfg.CommandDescriptions.Tuuck, d.cfg.CommandDescriptions.Horoscope, d.cfg.CommandDescriptions.Version,
-			d.cfg.CommandDescriptions.CoinFlip, d.cfg.CommandDescriptions.LMGTFY, d.cfg.CommandDescriptions.Play, d.cfg.CommandDescriptions.Stop,
-			d.cfg.CommandDescriptions.Queue,
+			cmds, d.cfg.Cmd.Desc.Tuuck, d.cfg.Cmd.Desc.Horoscope, d.cfg.Cmd.Desc.Version,
+			d.cfg.Cmd.Desc.CoinFlip, d.cfg.Cmd.Desc.LMGTFY, d.cfg.Cmd.Desc.Play, d.cfg.Cmd.Desc.Stop,
+			d.cfg.Cmd.Desc.Queue,
 		)
 
-		if d.cfg.ExternalServicesConfig.TenorAPIkey != "" {
-			cmds = append(cmds, d.cfg.CommandDescriptions.Gif)
+		if d.cfg.Configs.Keys.TenorAPIkey != "" {
+			cmds = append(cmds, d.cfg.Cmd.Desc.Gif)
 		}
-		if d.cfg.ExternalServicesConfig.MachineIP != "" {
-			cmds = append(cmds, d.cfg.CommandDescriptions.ServerStatus, d.cfg.CommandDescriptions.StartServer, d.cfg.CommandDescriptions.StopServer)
+		if d.cfg.Configs.Server.MachineIP != "" {
+			cmds = append(cmds, d.cfg.Cmd.Desc.ServerStatus, d.cfg.Cmd.Desc.StartServer, d.cfg.Cmd.Desc.StopServer)
 		}
-		if d.cfg.ExternalServicesConfig.InsultAPI != "" {
-			cmds = append(cmds, d.cfg.CommandDescriptions.Insult)
+		if d.cfg.Configs.Keys.InsultAPI != "" {
+			cmds = append(cmds, d.cfg.Cmd.Desc.Insult)
 		}
 
 	} else {
 		cmds = append(
-			cmds, d.cfg.CommandDescriptions.Tuuck, d.cfg.CommandDescriptions.Horoscope,
-			d.cfg.CommandDescriptions.CoinFlip, d.cfg.CommandDescriptions.LMGTFY,
-			d.cfg.CommandDescriptions.Play, d.cfg.CommandDescriptions.Stop, d.cfg.CommandDescriptions.Queue,
+			cmds, d.cfg.Cmd.Desc.Tuuck, d.cfg.Cmd.Desc.Horoscope,
+			d.cfg.Cmd.Desc.CoinFlip, d.cfg.Cmd.Desc.LMGTFY,
+			d.cfg.Cmd.Desc.Play, d.cfg.Cmd.Desc.Stop, d.cfg.Cmd.Desc.Queue,
 		)
 
-		if d.cfg.ExternalServicesConfig.TenorAPIkey != "" {
-			cmds = append(cmds, d.cfg.CommandDescriptions.Gif)
+		if d.cfg.Configs.Keys.TenorAPIkey != "" {
+			cmds = append(cmds, d.cfg.Cmd.Desc.Gif)
 		}
-		if d.cfg.ExternalServicesConfig.InsultAPI != "" {
-			cmds = append(cmds, d.cfg.CommandDescriptions.Insult)
+		if d.cfg.Configs.Keys.InsultAPI != "" {
+			cmds = append(cmds, d.cfg.Cmd.Desc.Insult)
 		}
 	}
 
@@ -72,10 +71,9 @@ func (d *MessageCreateHandler) sendHelpMessage(s *discordgo.Session, m *discordg
 }
 
 func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message) error {
-	provider := "tinyurl"
 	lmgtfyURL := CreateLmgtfyURL(m.Content)
 
-	lmgtfyShortURL, err := ShortenURL(lmgtfyURL, provider)
+	lmgtfyShortURL, err := ShortenURL(lmgtfyURL)
 	if err != nil {
 		return err
 	}
@@ -89,7 +87,7 @@ func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message)
 }
 
 func (d *MessageCreateHandler) coinFlip(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	gifURL, err := api.RequestGifURL("Coin Flip", d.cfg.ExternalServicesConfig.TenorAPIkey)
+	gifURL, err := api.RequestGifURL("Coin Flip", d.cfg.Configs.Keys.TenorAPIkey)
 	if err != nil {
 		return err
 	}
@@ -110,11 +108,11 @@ func (d *MessageCreateHandler) coinFlip(s *discordgo.Session, m *discordgo.Messa
 		},
 	}
 
-	_, err = s.WebhookEdit(d.cfg.ExternalServicesConfig.WebHookID, "", "", m.ChannelID)
+	_, err = s.WebhookEdit(d.cfg.Configs.DiscordIDs.WebHookID, "", "", m.ChannelID)
 	if err != nil {
 		return err
 	}
-	whMessage, err := s.WebhookExecute(d.cfg.ExternalServicesConfig.WebHookID, d.cfg.ExternalServicesConfig.WebHookToken, true, t)
+	whMessage, err := s.WebhookExecute(d.cfg.Configs.DiscordIDs.WebHookID, d.cfg.Configs.Keys.WebHookToken, true, t)
 	if err != nil {
 		return err
 	}
@@ -132,14 +130,14 @@ func (d *MessageCreateHandler) coinFlip(s *discordgo.Session, m *discordgo.Messa
 	results := ""
 	if randNum%2 == 0 {
 		results = "Heads"
-		gifURL, err = api.RequestGifURL(results, d.cfg.ExternalServicesConfig.TenorAPIkey)
+		gifURL, err = api.RequestGifURL(results, d.cfg.Configs.Keys.TenorAPIkey)
 		if err != nil {
 			return err
 		}
 
 	} else {
 		results = "Tails"
-		gifURL, err = api.RequestGifURL(results, d.cfg.ExternalServicesConfig.TenorAPIkey)
+		gifURL, err = api.RequestGifURL(results, d.cfg.Configs.Keys.TenorAPIkey)
 		if err != nil {
 			return err
 		}
@@ -150,7 +148,7 @@ func (d *MessageCreateHandler) coinFlip(s *discordgo.Session, m *discordgo.Messa
 		URL: gifURL,
 	}
 
-	_, err = s.WebhookExecute(d.cfg.ExternalServicesConfig.WebHookID, d.cfg.ExternalServicesConfig.WebHookToken, false, t)
+	_, err = s.WebhookExecute(d.cfg.Configs.DiscordIDs.WebHookID, d.cfg.Configs.Keys.WebHookToken, false, t)
 	if err != nil {
 		return err
 	}
@@ -159,13 +157,13 @@ func (d *MessageCreateHandler) coinFlip(s *discordgo.Session, m *discordgo.Messa
 }
 
 func (d *MessageCreateHandler) sendGif(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	if d.cfg.ExternalServicesConfig.TenorAPIkey != "" { // check if Tenor API set up
+	if d.cfg.Configs.Keys.TenorAPIkey != "" { // check if Tenor API set up
 		err := s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
 			return err
 		}
 
-		gifURL, err := api.RequestGifURL(param, d.cfg.ExternalServicesConfig.TenorAPIkey)
+		gifURL, err := api.RequestGifURL(param, d.cfg.Configs.Keys.TenorAPIkey)
 		if err != nil {
 			return err
 		}
@@ -181,7 +179,7 @@ func (d *MessageCreateHandler) sendGif(s *discordgo.Session, m *discordgo.Messag
 		}
 
 	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.TenorAPIError)
+		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.TenorAPIError)
 		if err != nil {
 			return err
 		}
@@ -219,7 +217,7 @@ func (d *MessageCreateHandler) playNIM(s *discordgo.Session, m *discordgo.Messag
 			}
 
 		} else {
-			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.Invalid)
+			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.Invalid)
 			if err != nil {
 				return err
 			}
@@ -244,7 +242,7 @@ func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordg
 		return err
 	}
 
-	dgv, err := webScrape.ConnectVoiceChannel(s, m, m.GuildID)
+	dgv, err := voiceChat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
 	if err != nil {
 		return err
 	}
@@ -258,14 +256,15 @@ func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordg
 }
 
 func (d *MessageCreateHandler) stopYoutubeLink() error {
+	vc := voiceChat.VoiceConnection{}
+
 	if webScrape.StopPlaying != nil {
 		close(webScrape.StopPlaying)
 		webScrape.IsPlaying = false
-	}
 
-	err := webScrape.RunMpFileCleanUp()
-	if err != nil {
-		return err
+		if vc.Dgv != nil {
+			vc.Dgv.Close()
+		}
 	}
 
 	return nil
@@ -283,6 +282,17 @@ func (d *MessageCreateHandler) getSongQueue(s *discordgo.Session, m *discordgo.M
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (d *MessageCreateHandler) clearSongQueue() error {
+	webScrape.MpFileQueue = nil
+
+	err := webScrape.RunMpFileCleanUp()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -307,8 +317,8 @@ func (d *MessageCreateHandler) sendStartUpMessages(s *discordgo.Session, m *disc
 }
 
 func (d *MessageCreateHandler) startServer(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if Minecraft server is set up
-		client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
+	if d.cfg.Configs.Server.MachineIP != "" { // check if Minecraft server is set up
+		client, err := gcp.NewGCPClient("config/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
 		if err != nil {
 			return err
 		}
@@ -318,20 +328,20 @@ func (d *MessageCreateHandler) startServer(s *discordgo.Session, m *discordgo.Me
 			return err
 		}
 
-		sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
+		sshClient, err := ssh.NewSSHClient(d.cfg.Configs.Server.SSHKeyBody, d.cfg.Configs.Server.MachineIP)
 		if err != nil {
 			return err
 		}
 
 		status, serverUp := sshClient.CheckServerStatus(sshClient)
 		if serverUp {
-			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.ServerUP+status)
+			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.ServerUP+status)
 			if err != nil {
 				return err
 			}
 
 		} else {
-			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.WindUp)
+			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.WindUp)
 			if err != nil {
 				return err
 			}
@@ -346,14 +356,14 @@ func (d *MessageCreateHandler) startServer(s *discordgo.Session, m *discordgo.Me
 				return err
 			}
 
-			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.FinishOpperation)
+			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.FinishOpperation)
 			if err != nil {
 				return err
 			}
 		}
 
 	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.MCServerError)
+		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.MCServerError)
 		if err != nil {
 			return err
 		}
@@ -362,22 +372,22 @@ func (d *MessageCreateHandler) startServer(s *discordgo.Session, m *discordgo.Me
 }
 
 func (d *MessageCreateHandler) stopServer(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if Minecraft server is set up
-		sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
+	if d.cfg.Configs.Server.MachineIP != "" { // check if Minecraft server is set up
+		sshClient, err := ssh.NewSSHClient(d.cfg.Configs.Server.SSHKeyBody, d.cfg.Configs.Server.MachineIP)
 		if err != nil {
 			return err
 		}
 
 		status, serverUp := sshClient.CheckServerStatus(sshClient)
 		if serverUp {
-			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.WindDown)
+			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.WindDown)
 
 			_, err = sshClient.RunCommand("docker container stop 06ae729f5c2b")
 			if err != nil {
 				return err
 			}
 
-			client, errr := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
+			client, errr := gcp.NewGCPClient("config/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
 			if errr != nil {
 				return err
 			}
@@ -387,20 +397,20 @@ func (d *MessageCreateHandler) stopServer(s *discordgo.Session, m *discordgo.Mes
 				return err
 			}
 
-			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.FinishOpperation)
+			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.FinishOpperation)
 			if err != nil {
 				return err
 			}
 
 		} else {
-			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.ServerDOWN+status)
+			_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.ServerDOWN+status)
 			if err != nil {
 				return err
 			}
 		}
 
 	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.MCServerError)
+		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.MCServerError)
 		if err != nil {
 			return err
 		}
@@ -410,7 +420,7 @@ func (d *MessageCreateHandler) stopServer(s *discordgo.Session, m *discordgo.Mes
 
 // d.sendServerStatusAsMessage Sends the current server status as a message in discord
 func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	client, err := gcp.NewGCPClient("config/auth.json", d.cfg.GCPAuth.Project_ID, d.cfg.GCPAuth.Zone)
+	client, err := gcp.NewGCPClient("config/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
 	if err != nil {
 		return err
 	}
@@ -420,20 +430,20 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 		return err
 	}
 
-	sshClient, err := ssh.NewSSHClient(d.cfg.ExternalServicesConfig.SSHKeyBody, d.cfg.ExternalServicesConfig.MachineIP)
+	sshClient, err := ssh.NewSSHClient(d.cfg.Configs.Server.SSHKeyBody, d.cfg.Configs.Server.MachineIP)
 	if err != nil {
 		return err
 	}
 
 	status, serverUp := sshClient.CheckServerStatus(sshClient)
 	if serverUp {
-		_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.CheckStatusUp+status)
+		_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.CheckStatusUp+status)
 		if err != nil {
 			return err
 		}
 
 	} else {
-		_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.CheckStatusDown+status)
+		_, err = s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.CheckStatusDown+status)
 		if err != nil {
 			return err
 		}
@@ -442,8 +452,8 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 }
 
 func (d *MessageCreateHandler) postInsult(s *discordgo.Session, m *discordgo.MessageCreate, memberName string) error {
-	if d.cfg.ExternalServicesConfig.MachineIP != "" { // check if insult API is set up
-		insult, err := api.GetInsult(d.cfg.ExternalServicesConfig.InsultAPI)
+	if d.cfg.Configs.Server.MachineIP != "" { // check if insult API is set up
+		insult, err := api.GetInsult(d.cfg.Configs.Keys.InsultAPI)
 		if err != nil {
 			return err
 		}
@@ -484,7 +494,7 @@ func (d *MessageCreateHandler) postInsult(s *discordgo.Session, m *discordgo.Mes
 		}
 
 	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.InsultAPIError)
+		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.InsultAPIError)
 		if err != nil {
 			return err
 		}

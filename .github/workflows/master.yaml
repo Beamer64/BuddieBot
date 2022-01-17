@@ -21,8 +21,8 @@ jobs:
 
       - name: Pull secrets
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
-          echo '${{ secrets.GCP_SSH_KEY }}' > config/config.json
+          echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
+      #  echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
 
       - name: Test
         run: |
@@ -59,19 +59,19 @@ jobs:
 
       - name: Upload new configs from secret
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
-          echo '${{ secrets.GCP_SSH_KEY }}' > config/config.json
+          echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
           echo "${GITHUB_SHA}" > config/version.txt
           
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config"
-          
-          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/auth.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/config.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmdDescriptions.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmdMessages.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/version.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+
+      #  echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
+      #  gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/auth.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
 
       - name: Stop old service and start new
         run: |

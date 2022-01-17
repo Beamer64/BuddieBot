@@ -106,7 +106,7 @@ func TestGroupChat(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	session, err = discordgo.New("Bot " + cfg.ExternalServicesConfig.Token)
+	session, err = discordgo.New("Bot " + cfg.Configs.Keys.BotToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func TestGroupChat(t *testing.T) {
 		t.Fatal(err)
 	}*/
 
-	/*chn, err := session.GuildChannelCreate(cfg.ExternalServicesConfig.GuildID, "Test", 0)
+	/*chn, err := session.GuildChannelCreate(cfg.Configuration.GuildID, "Test", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +146,7 @@ func TestGetMembers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	session, err = discordgo.New("Bot " + cfg.ExternalServicesConfig.Token)
+	session, err = discordgo.New("Bot " + cfg.Configs.Keys.BotToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,12 +158,12 @@ func TestGetMembers(t *testing.T) {
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://discord.com/api/guilds/%s/members", cfg.ExternalServicesConfig.GuildID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://discord.com/api/guilds/%s/members", cfg.Configs.DiscordIDs.GuildID), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	req.Header.Add("Authorization", "Bot "+cfg.ExternalServicesConfig.Token)
+	req.Header.Add("Authorization", "Bot "+cfg.Configs.Keys.BotToken)
 	req.Header.Add("User-Agent", "DiscordBot")
 	res, err := client.Do(req)
 	if err != nil {

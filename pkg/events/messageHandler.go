@@ -3,6 +3,8 @@ package events
 import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/discordBot/pkg/voiceChat"
+	"github.com/beamer64/discordBot/pkg/webscrape"
 	"github.com/pkg/errors"
 	"strings"
 
@@ -10,11 +12,11 @@ import (
 )
 
 type MessageCreateHandler struct {
-	cfg   *config.Config
+	cfg   *config.ConfigStructs
 	botID string
 }
 
-func NewMessageCreateHandler(cfg *config.Config, u *discordgo.User) *MessageCreateHandler {
+func NewMessageCreateHandler(cfg *config.ConfigStructs, u *discordgo.User) *MessageCreateHandler {
 	return &MessageCreateHandler{
 		cfg:   cfg,
 		botID: u.ID,
@@ -22,7 +24,7 @@ func NewMessageCreateHandler(cfg *config.Config, u *discordgo.User) *MessageCrea
 }
 
 func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if strings.HasPrefix(m.Content, d.cfg.ExternalServicesConfig.BotPrefix) {
+	if strings.HasPrefix(m.Content, d.cfg.Configs.Settings.BotPrefix) {
 		if m.Author.ID == d.botID {
 			return
 		}
@@ -37,11 +39,11 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 		switch strings.ToLower(command) {
 		case "$test":
-			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
+			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
 				err := d.testMethod(s, m, param)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+					_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 				}
 			}
 			return
@@ -51,18 +53,18 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.sendHelpMessage(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
 		case "$version":
-			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
+			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
 				_, err := s.ChannelMessageSend(m.ChannelID, "We'we wunnying vewsion `"+d.cfg.Version+"` wight nyow")
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 				}
 			} else {
-				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
+				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 				}
@@ -71,16 +73,16 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 		// Starts the Minecraft Server
 		case "$startServer":
-			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
+			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
 				err := d.startServer(s, m)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+					_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 				}
 				return
 
 			} else {
-				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
+				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 				}
@@ -88,16 +90,16 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 		// Stops the Minecraft Server
 		case "$stopServer":
-			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
+			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
 				err := d.stopServer(s, m)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+					_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 				}
 				return
 
 			} else {
-				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
+				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 				}
@@ -108,7 +110,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.sendServerStatusAsMessage(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -118,24 +120,24 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			if err != nil {
 				_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
 			// stops audio playback
 		case "$stop":
-			if d.memberHasRole(s, m, d.cfg.ExternalServicesConfig.BotAdminRole) {
-				err := d.stopYoutubeLink()
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-				}
-			} else {
-				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.NotBotAdmin)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-				}
+			err := d.stopYoutubeLink()
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
+
+			err = webScrape.RunMpFileCleanUp()
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+
 			return
 
 			// shows queued songs
@@ -143,8 +145,41 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.getSongQueue(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
+			return
+
+			// clears song queue
+		case "$clear":
+			err := d.clearSongQueue()
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+			return
+
+			// plays next song in queue
+		case "$skip":
+			err := d.stopYoutubeLink()
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+
+			/*webScrape.MpFileQueue = append(webScrape.MpFileQueue[:0], webScrape.MpFileQueue[1:]...)*/
+
+			dgv, err := voiceChat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+
+			err = webScrape.PlayAudioFile(dgv, "", m.ChannelID, s)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+
 			return
 
 		// Sends daily horoscope
@@ -152,7 +187,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.displayHoroscope(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -161,7 +196,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.sendGif(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -170,7 +205,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.coinFlip(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -178,7 +213,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.postInsult(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
@@ -187,13 +222,13 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.playNIM(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.ExternalServicesConfig.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 			return
 
 		// Sends the "Invalid" command Message
 		default:
-			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.CommandMessages.Invalid)
+			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.Invalid)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 			}

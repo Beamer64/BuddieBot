@@ -20,7 +20,7 @@ func TestRunCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sshClient, err := NewSSHClient(cfg.ExternalServicesConfig.SSHKeyBody, cfg.ExternalServicesConfig.MachineIP)
+	sshClient, err := NewSSHClient(cfg.Configs.Server.SSHKeyBody, cfg.Configs.Server.MachineIP)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestRunCommandStartContainer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sshClient, err := NewSSHClient(cfg.ExternalServicesConfig.SSHKeyBody, cfg.ExternalServicesConfig.MachineIP)
+	sshClient, err := NewSSHClient(cfg.Configs.Server.SSHKeyBody, cfg.Configs.Server.MachineIP)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestCheckServerStatus(t *testing.T) {
 	}
 
 	// need to be careful importing from other packages in tests, could cause issues in future
-	client, err := gcp.NewGCPClient("../config/auth.json", cfg.GCPAuth.Project_ID, cfg.GCPAuth.Zone)
+	client, err := gcp.NewGCPClient("../config/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestCheckServerStatus(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	sshClient, err := NewSSHClient(cfg.ExternalServicesConfig.SSHKeyBody, cfg.ExternalServicesConfig.MachineIP)
+	sshClient, err := NewSSHClient(cfg.Configs.Server.SSHKeyBody, cfg.Configs.Server.MachineIP)
 	if err != nil {
 		t.Fatal(err)
 	}
