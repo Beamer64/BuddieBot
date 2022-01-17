@@ -3,8 +3,8 @@ package events
 import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/voicechat"
-	"github.com/beamer64/discordBot/pkg/webscrape"
+	"github.com/beamer64/discordBot/pkg/voiceChat"
+	"github.com/beamer64/discordBot/pkg/webScrape"
 	"github.com/pkg/errors"
 	"strings"
 
