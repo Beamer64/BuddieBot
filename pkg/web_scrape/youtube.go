@@ -191,7 +191,12 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID st
 
 		} else {
 			if dgv != nil {
-				defer dgv.Close()
+				//dgv.Close()
+
+				err := dgv.Disconnect()
+				if err != nil {
+					return err
+				}
 			}
 
 			err := RunMpFileCleanUp()
