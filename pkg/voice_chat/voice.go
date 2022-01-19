@@ -27,11 +27,6 @@ func ConnectVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate, guild
 			}
 		}
 
-		_, err = s.ChannelMessageSend(errChannelID, "Voice Channel Joined")
-		if err != nil {
-			return nil, err
-		}
-
 		err = vc.Dgv.Speaking(true)
 		if err != nil {
 			return nil, err

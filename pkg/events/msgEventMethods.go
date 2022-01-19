@@ -194,6 +194,11 @@ func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordg
 		return err
 	}
 
+	//yas
+	if m.Member.User.ID == "932843527870742538" {
+		param = "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
+	}
+
 	link, fileName, err := web_scrape.GetYtAudioLink(s, msg, param)
 	if err != nil {
 		return err
