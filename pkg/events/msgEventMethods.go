@@ -15,10 +15,10 @@ import (
 )
 
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	/*err := d.playYoutubeLink(s, m, param)
+	err := d.playYoutubeLink(s, m, param)
 	if err != nil {
 		return err
-	}*/
+	}
 
 	return nil
 }
@@ -195,7 +195,7 @@ func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordg
 	}
 
 	//yas
-	if m.Member.User.ID == "932843527870742538" {
+	if m.Author.ID == "932843527870742538" {
 		param = "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
 	}
 
