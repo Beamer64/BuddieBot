@@ -53,7 +53,7 @@ type Configuration struct {
 		Auth_provider_x509_cert_URL string `yaml:"auth_provider_x509_cert_url"`
 		Client_x509_cert_URL        string `yaml:"client_x509_cert_url"`
 		Zone                        string `yaml:"zone"`
-	} `yaml:"server"`
+	} `yaml:"vm"`
 }
 
 type Command struct {
