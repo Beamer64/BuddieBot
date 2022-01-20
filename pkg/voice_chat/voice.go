@@ -36,8 +36,13 @@ func ConnectVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate, guild
 			vc.Dgv.Ready = true
 		}
 
-		if web_scrape.StopPlaying == nil {
+		select {
+		case <-web_scrape.StopPlaying:
 			web_scrape.StopPlaying = make(chan bool)
+		default:
+			if !web_scrape.IsPlaying {
+				web_scrape.StopPlaying = make(chan bool)
+			}
 		}
 	}
 
