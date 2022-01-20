@@ -2,6 +2,8 @@ package events
 
 import (
 	"fmt"
+	"github.com/beamer64/discordBot/pkg/commands"
+	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 )
@@ -9,6 +11,15 @@ import (
 type GuildJoinLeaveHandler struct{}
 type ReactionHandler struct{}
 type ReadyHandler struct{}
+type CommandHandler struct {
+	cfg *config.ConfigStructs
+}
+
+func NewCommandHandler(cfg *config.ConfigStructs) *CommandHandler {
+	return &CommandHandler{
+		cfg: cfg,
+	}
+}
 
 func NewGuildJoinLeaveHandler() *GuildJoinLeaveHandler {
 	return &GuildJoinLeaveHandler{}
@@ -20,6 +31,12 @@ func NewReactionHandler() *ReactionHandler {
 
 func NewReadyHandler() *ReadyHandler {
 	return &ReadyHandler{}
+}
+
+func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if h, ok := commands.CommandHandlers[i.ApplicationCommandData().Name]; ok {
+		h(s, i, c.cfg)
+	}
 }
 
 func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {

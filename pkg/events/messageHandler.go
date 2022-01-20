@@ -131,13 +131,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
-
-			err = web_scrape.RunMpFileCleanUp()
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-
 			return
 
 			// shows queued songs
@@ -171,8 +164,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
-
-			//web_scrape.MpFileQueue = web_scrape.MpFileQueue[1:]
 
 			dgv, err := voice_chat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
 			if err != nil {

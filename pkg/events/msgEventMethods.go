@@ -223,19 +223,16 @@ func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordg
 }
 
 func (d *MessageCreateHandler) stopAudioPlayback() error {
-	vc := voice_chat.VoiceConnection{}
+	//vc := voice_chat.VoiceConnection{}
 
 	if web_scrape.StopPlaying != nil {
 		close(web_scrape.StopPlaying)
 		web_scrape.IsPlaying = false
 
-		if vc.Dgv != nil {
-			//vc.Dgv.Close()
-			err := vc.Dgv.Disconnect()
-			if err != nil {
-				return err
-			}
-		}
+		/*if vc.Dgv != nil {
+			vc.Dgv.Close()
+
+		}*/
 	}
 
 	return nil
