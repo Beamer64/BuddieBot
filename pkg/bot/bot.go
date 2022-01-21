@@ -25,31 +25,9 @@ func Init(cfg *config.ConfigStructs) error {
 		return err
 	}
 
-	// fetch current commands
-	fmt.Println("Fetching current commands")
-	cmds, err := botSession.ApplicationCommands(botSession.State.User.ID, cfg.Configs.DiscordIDs.GuildID)
+	err = registerCommands(botSession, cfg)
 	if err != nil {
 		return err
-	}
-
-	// unregister commands
-	if len(cmds) > 0 {
-		fmt.Println("Unregistering commands")
-		for _, v := range cmds {
-			err = botSession.ApplicationCommandDelete(botSession.State.User.ID, cfg.Configs.DiscordIDs.GuildID, v.ID)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// register new commands
-	fmt.Println("Registering new commands")
-	for _, v := range commands.Commands {
-		_, err = botSession.ApplicationCommandCreate(botSession.State.User.ID, cfg.Configs.DiscordIDs.GuildID, v)
-		if err != nil {
-			return err
-		}
 	}
 
 	fmt.Println("DiscordBot is running!")
@@ -66,4 +44,35 @@ func registerEvents(s *discordgo.Session, cfg *config.ConfigStructs, u *discordg
 	s.AddHandler(events.NewReactionHandler().ReactHandlerAdd)
 
 	s.AddHandler(events.NewCommandHandler(cfg).CommandHandler)
+}
+
+func registerCommands(s *discordgo.Session, cfg *config.ConfigStructs) error {
+	// fetch current commands
+	fmt.Println("Fetching current commands")
+	cmds, err := s.ApplicationCommands(s.State.User.ID, cfg.Configs.DiscordIDs.GuildID)
+	if err != nil {
+		return err
+	}
+
+	// unregister commands
+	if len(cmds) > 0 {
+		fmt.Println("Unregistering commands")
+		for _, v := range cmds {
+			err = s.ApplicationCommandDelete(s.State.User.ID, cfg.Configs.DiscordIDs.GuildID, v.ID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// register new commands
+	fmt.Println("Registering new commands")
+	for _, v := range commands.Commands {
+		_, err = s.ApplicationCommandCreate(s.State.User.ID, cfg.Configs.DiscordIDs.GuildID, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

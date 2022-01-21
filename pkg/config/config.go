@@ -19,12 +19,11 @@ type ConfigStructs struct {
 
 type Configuration struct {
 	Keys struct {
-		BotToken      string `yaml:"botToken"`
-		WebHookToken  string `yaml:"webHookToken"`
-		BotPublicKey  string `yaml:"botPublicKey"`
-		TenorAPIkey   string `yaml:"tenorAPIkey"`
-		YoutubeAPIKey string `yaml:"youtubeAPIKey"`
-		InsultAPI     string `yaml:"insultAPI"`
+		BotToken     string `yaml:"botToken"`
+		WebHookToken string `yaml:"webHookToken"`
+		BotPublicKey string `yaml:"botPublicKey"`
+		TenorAPIkey  string `yaml:"tenorAPIkey"`
+		InsultAPI    string `yaml:"insultAPI"`
 	} `yaml:"keys"`
 
 	DiscordIDs struct {
