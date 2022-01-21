@@ -9,11 +9,11 @@ type VoiceConnection struct {
 	Dgv *discordgo.VoiceConnection
 }
 
-func ConnectVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate, guildID string, errChannelID string) (*discordgo.VoiceConnection, error) {
+func ConnectVoiceChannel(s *discordgo.Session, userID string, guildID string) (*discordgo.VoiceConnection, error) {
 	vc := VoiceConnection{}
 
 	if vc.Dgv == nil {
-		voiceState, err := s.State.VoiceState(guildID, m.Author.ID)
+		voiceState, err := s.State.VoiceState(guildID, userID)
 		if err != nil {
 			return nil, err
 		}

@@ -166,10 +166,10 @@ func ReadConfig(possibleConfigPaths ...string) (*ConfigStructs, error) {
 		return nil, err
 	}
 
-	var escfg *Configuration
+	var cfg *Configuration
 	var command *Command
 
-	err = yaml.Unmarshal(configFile, &escfg)
+	err = yaml.Unmarshal(configFile, &cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func ReadConfig(possibleConfigPaths ...string) (*ConfigStructs, error) {
 	}
 
 	return &ConfigStructs{
-		Configs:         escfg,
+		Configs:         cfg,
 		Cmd:             command,
 		LoadingMessages: msgs,
 		Version:         fv,

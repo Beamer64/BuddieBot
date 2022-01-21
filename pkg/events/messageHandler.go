@@ -3,8 +3,6 @@ package events
 import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/voice_chat"
-	"github.com/beamer64/discordBot/pkg/web_scrape"
 	"github.com/pkg/errors"
 	"strings"
 
@@ -57,20 +55,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-		case "$version":
-			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
-				_, err := s.ChannelMessageSend(m.ChannelID, "We'we wunnying vewsion `"+d.cfg.Version+"` wight nyow")
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-				}
-			} else {
-				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-				}
-			}
-			return
-
 		// Starts the Minecraft Server
 		case "$startServer":
 			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
@@ -108,97 +92,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		// Stops the Minecraft Server
 		case "$serverStatus":
 			err := d.sendServerStatusAsMessage(s, m)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-		// Plays youtube link in voice chat
-		case "$play":
-			err := d.playYoutubeLink(s, m, param)
-			if err != nil {
-				_, _ = s.ChannelMessageSend(m.ChannelID, "No vidya dood.")
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-			// stops audio playback
-		case "$stop":
-			err := d.stopAudioPlayback()
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-			// shows queued songs
-		case "$queue":
-			err := d.getSongQueue(s, m)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-			// clears song queue
-		case "$clear":
-			err := web_scrape.RunMpFileCleanUp()
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-
-			_, err = s.ChannelMessageSend(m.ChannelID, "Queue Cleared")
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-			// plays next song in queue
-		case "$skip":
-			err := d.stopAudioPlayback()
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-
-			dgv, err := voice_chat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-
-			err = web_scrape.PlayAudioFile(dgv, "", m.ChannelID, s)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-
-			return
-
-		// Sends daily horoscope
-		case "$horoscope":
-			err := d.displayHoroscope(s, m, param)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-		// Flips a coins, sends gif for results
-		case "$coinflip":
-			err := d.coinFlip(s, m)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
-		case "$insult":
-			err := d.postInsult(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))

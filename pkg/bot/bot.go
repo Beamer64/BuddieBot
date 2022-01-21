@@ -26,7 +26,7 @@ func Init(cfg *config.ConfigStructs) error {
 	}
 
 	// fetch current commands
-	fmt.Println("fetching current commands")
+	fmt.Println("Fetching current commands")
 	cmds, err := botSession.ApplicationCommands(botSession.State.User.ID, cfg.Configs.DiscordIDs.GuildID)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func Init(cfg *config.ConfigStructs) error {
 
 	// unregister commands
 	if len(cmds) > 0 {
-		fmt.Println("unregistering commands")
+		fmt.Println("Unregistering commands")
 		for _, v := range cmds {
 			err = botSession.ApplicationCommandDelete(botSession.State.User.ID, cfg.Configs.DiscordIDs.GuildID, v.ID)
 			if err != nil {
@@ -44,7 +44,7 @@ func Init(cfg *config.ConfigStructs) error {
 	}
 
 	// register new commands
-	fmt.Println("registering new commands")
+	fmt.Println("Registering new commands")
 	for _, v := range commands.Commands {
 		_, err = botSession.ApplicationCommandCreate(botSession.State.User.ID, cfg.Configs.DiscordIDs.GuildID, v)
 		if err != nil {

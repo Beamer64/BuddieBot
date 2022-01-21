@@ -1,15 +1,11 @@
 package events
 
 import (
-	"fmt"
-	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
-	"github.com/beamer64/discordBot/pkg/voice_chat"
 	"github.com/beamer64/discordBot/pkg/web_scrape"
 	"github.com/bwmarrin/discordgo"
-	"math/rand"
 	"strings"
 	"time"
 )
@@ -80,76 +76,6 @@ func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message)
 	return nil
 }
 
-func (d *MessageCreateHandler) coinFlip(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	gifURL, err := api.RequestGifURL("Coin Flip", d.cfg.Configs.Keys.TenorAPIkey)
-	if err != nil {
-		return err
-	}
-
-	embed := &discordgo.MessageEmbed{
-		Title:       "Coin Flip",
-		Description: "Flipping...",
-		Color:       16761856,
-		Image: &discordgo.MessageEmbedImage{
-			URL: gifURL,
-		},
-	}
-	t := &discordgo.WebhookParams{
-		Username:  "BuddieBot",
-		AvatarURL: "https://camo.githubusercontent.com/97c16e17070b00f5c5db3447703233bf007dd60706c46db66aa5042a417277a7/68747470733a2f2f696d6167652e666c617469636f6e2e636f6d2f69636f6e732f706e672f3531322f343639382f343639383738372e706e67",
-		Embeds: []*discordgo.MessageEmbed{
-			embed,
-		},
-	}
-
-	_, err = s.WebhookEdit(d.cfg.Configs.DiscordIDs.WebHookID, "", "", m.ChannelID)
-	if err != nil {
-		return err
-	}
-	whMessage, err := s.WebhookExecute(d.cfg.Configs.DiscordIDs.WebHookID, d.cfg.Configs.Keys.WebHookToken, true, t)
-	if err != nil {
-		return err
-	}
-
-	time.Sleep(3 * time.Second)
-	err = s.ChannelMessageDelete(whMessage.ChannelID, whMessage.ID)
-	if err != nil {
-		return err
-	}
-
-	x1 := rand.NewSource(time.Now().UnixNano())
-	y1 := rand.New(x1)
-	randNum := y1.Intn(200)
-
-	results := ""
-	if randNum%2 == 0 {
-		results = "Heads"
-		gifURL, err = api.RequestGifURL(results, d.cfg.Configs.Keys.TenorAPIkey)
-		if err != nil {
-			return err
-		}
-
-	} else {
-		results = "Tails"
-		gifURL, err = api.RequestGifURL(results, d.cfg.Configs.Keys.TenorAPIkey)
-		if err != nil {
-			return err
-		}
-	}
-
-	embed.Description = fmt.Sprintf("It's %s!", results)
-	embed.Image = &discordgo.MessageEmbedImage{
-		URL: gifURL,
-	}
-
-	_, err = s.WebhookExecute(d.cfg.Configs.DiscordIDs.WebHookID, d.cfg.Configs.Keys.WebHookToken, false, t)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (d *MessageCreateHandler) displayHoroscope(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	horoscope, err := web_scrape.ScrapeSign(param)
 	if err != nil {
@@ -185,73 +111,6 @@ func (d *MessageCreateHandler) playNIM(s *discordgo.Session, m *discordgo.Messag
 			}
 		}
 	}
-	return nil
-}
-
-func (d *MessageCreateHandler) playYoutubeLink(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
-	if err != nil {
-		return err
-	}
-
-	//yas
-	if m.Author.ID == "932843527870742538" {
-		param = "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
-	}
-
-	link, fileName, err := web_scrape.GetYtAudioLink(s, msg, param)
-	if err != nil {
-		return err
-	}
-
-	err = web_scrape.DownloadMpFile(link, fileName)
-	if err != nil {
-		return err
-	}
-
-	dgv, err := voice_chat.ConnectVoiceChannel(s, m, m.GuildID, d.cfg.Configs.DiscordIDs.ErrorLogChannelID)
-	if err != nil {
-		return err
-	}
-
-	err = web_scrape.PlayAudioFile(dgv, fileName, m.ChannelID, s)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (d *MessageCreateHandler) stopAudioPlayback() error {
-	//vc := voice_chat.VoiceConnection{}
-
-	if web_scrape.StopPlaying != nil {
-		close(web_scrape.StopPlaying)
-		web_scrape.IsPlaying = false
-
-		/*if vc.Dgv != nil {
-			vc.Dgv.Close()
-
-		}*/
-	}
-
-	return nil
-}
-
-func (d *MessageCreateHandler) getSongQueue(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	if len(web_scrape.MpFileQueue) > 0 {
-		_, err := s.ChannelMessageSend(m.ChannelID, strings.Join(web_scrape.MpFileQueue, "\n"))
-		if err != nil {
-			return err
-		}
-
-	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, "Uh owh, song queue is wempty (>.<)")
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -405,57 +264,5 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 			return err
 		}
 	}
-	return nil
-}
-
-func (d *MessageCreateHandler) postInsult(s *discordgo.Session, m *discordgo.MessageCreate, memberName string) error {
-	if d.cfg.Configs.Keys.InsultAPI != "" { // check if insult API is set up
-		insult, err := api.GetInsult(d.cfg.Configs.Keys.InsultAPI)
-		if err != nil {
-			return err
-		}
-
-		// get some info before deleting msg
-		msgChannelID := m.ChannelID
-		msgAuthorID := m.Author.ID
-
-		err = s.ChannelMessageDelete(msgChannelID, m.ID)
-		if err != nil {
-			return err
-		}
-
-		if !strings.HasPrefix(memberName, "<@") {
-			if strings.ToLower(memberName) == "me" || strings.ToLower(memberName) == "@me" {
-				_, err = s.ChannelMessageSend(msgChannelID, "<@!"+msgAuthorID+">"+"\n"+insult)
-				if err != nil {
-					return err
-				}
-
-			} else {
-				channel, err := s.UserChannelCreate(msgAuthorID)
-				if err != nil {
-					return err
-				}
-
-				_, err = s.ChannelMessageSend(channel.ID, "You need to '@Mention' the user for insults. eg: @UserName")
-				if err != nil {
-					return err
-				}
-			}
-
-		} else {
-			_, err = s.ChannelMessageSend(msgChannelID, memberName+"\n"+insult)
-			if err != nil {
-				return err
-			}
-		}
-
-	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.InsultAPIError)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
