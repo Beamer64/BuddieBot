@@ -3,15 +3,15 @@ description:
   tuuck: "$tuuck - Lists available commands."
   startServer: "$startServer - Starts Minecraft Server."
   stopServer: "$stopServer - Stops Minecraft Server."
-  horoscope: "$horoscope {sign} - Gives daily horoscope."
+  horoscope: "/horoscope {sign} - Gives daily horoscope."
   serverStatus: "$serverStatus - Gives the current status of the MC server."
-  version: "$version - Gives the Git SHA of the current bot version running"
-  coinFlip: "$coinflip - Flips a coin, sends gif for results"
+  version: "/version - Gives the Git SHA of the current bot version running"
+  coinFlip: "/coinflip - Flips a coin, sends gif for results"
   lmgtfy: "{lmgtfy Reaction} - Add the 'Ask' Reaction to a msg and get a LMGTFY link"
-  insult: "$insult {@User} - Sends an insult and tags {@User}"
-  play: "$play {youtube_link} - Adds youtube audio to queue and plays it"
-  stop: "$stop - Stops the audio link playback"
-  queue: "$queue - Gets the current song queue"
+  insult: "/insult {@User} - Sends an insult and tags {@User}"
+  play: "/play {youtube_link} - Adds youtube audio to queue and plays it"
+  stop: "/stop - Stops the audio link playback"
+  queue: "/queue - Gets the current song queue"
 
 # Static cmd related messages
 message:
