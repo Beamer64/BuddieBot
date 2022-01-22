@@ -67,7 +67,7 @@ BuddieBot also comes packed with a variety of features, such as:
 * **Starting/Stopping** a Minecraft Server
 * Receive your daily **Horoscope**
 * **Insult** your friends
-* **Embeds/Webhooks**
+* **Slash Commands!**
 * **Moderator only** commands
 * And much more!
 
@@ -208,9 +208,9 @@ The Tenor API is used to deliver gifs from the DiscordBot. The website can be fo
 
 ---
 
-<img src="https://images.ganeshaspeaks.com/images_gsv7/gs-logo-big-1.png" width="500" height="150"  alt=""/>
+<img src="https://www.horoscope.com/images-US/horoscope-logo.svg" width="500" height="150"  alt=""/>
 
-The ganeshaspeaks daily horoscopes are used to allow our DiscordBot to deliver a daily horoscope to our users. The website can be found [here](https://tenor.com/).
+The horoscope.com daily horoscopes are used to allow our DiscordBot to deliver a daily horoscope to our users. The website can be found [here](https://www.horoscope.com/us/index.aspx).
 
 ---
 
