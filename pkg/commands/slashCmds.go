@@ -58,7 +58,7 @@ var (
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "zodiac",
-					Description: "Name of the zodiac sign to return",
+					Description: "Name of the zodiac sign to horoscope",
 					Required:    true,
 				},
 			},
@@ -97,7 +97,7 @@ var (
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 
-			err = s.InteractionRespond(
+			/*err = s.InteractionRespond(
 				i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
@@ -106,7 +106,9 @@ var (
 						},
 					},
 				},
-			)
+			)*/
+
+			_, err = s.ChannelMessageSendEmbeds(i.ChannelID, []*discordgo.MessageEmbed{embed})
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
