@@ -107,6 +107,9 @@ var (
 					},
 				},
 			)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
 		},
 		"stop": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			err := stopAudioPlayback()
