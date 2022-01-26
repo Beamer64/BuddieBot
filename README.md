@@ -9,7 +9,7 @@
 <h3 align=center>A Homemade Discord Bot for Golang practice and development...also for funsies.</a></h3>
 
 <div align="center">
-  <a href="https://harleyroper.com/" target="_blank">
+  <a href="http://www.harleyroper.com/" target="_blank">
     <img src="https://img.shields.io/badge/Check%20out-My%20Website!-brightgreen" alt="shield.png">
   </a>
   <a href="https://golang.org" target="_blank">
