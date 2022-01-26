@@ -34,13 +34,21 @@ func NewReadyHandler() *ReadyHandler {
 }
 
 func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if h, ok := commands.CommandHandlers[i.ApplicationCommandData().Name]; ok {
-		h(s, i, c.cfg)
+	switch i.Type {
+	case discordgo.InteractionApplicationCommand:
+		if h, ok := commands.CommandHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i, c.cfg)
+		}
+	case discordgo.InteractionMessageComponent:
+		if h, ok := commands.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
+			h(s, i, c.cfg)
+		}
 	}
 }
 
 func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
-	fmt.Println("Bot Session is ready!")
+	// FYI can get all connected Guild list here
+	fmt.Println(fmt.Sprintf("Invited to %d Servers!", len(e.Guilds)))
 	fmt.Printf("Logged in as %s\n", e.User.String())
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/beamer64/discordBot/pkg/events"
 	"github.com/bwmarrin/discordgo"
+	"time"
 )
 
 func Init(cfg *config.ConfigStructs) error {
@@ -25,7 +26,7 @@ func Init(cfg *config.ConfigStructs) error {
 		return err
 	}
 
-	err = registerCommands(botSession, cfg)
+	err = registerCommands(botSession)
 	if err != nil {
 		return err
 	}
@@ -46,33 +47,20 @@ func registerEvents(s *discordgo.Session, cfg *config.ConfigStructs, u *discordg
 	s.AddHandler(events.NewCommandHandler(cfg).CommandHandler)
 }
 
-func registerCommands(s *discordgo.Session, cfg *config.ConfigStructs) error {
-	// fetch current commands
-	fmt.Println("Fetching current commands")
-	cmds, err := s.ApplicationCommands(s.State.User.ID, cfg.Configs.DiscordIDs.GuildID)
+func registerCommands(s *discordgo.Session) error {
+	fmt.Println("Updating commands")
+
+	time.Sleep(3 * time.Second)
+	_, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, "", commands.Commands)
 	if err != nil {
 		return err
 	}
 
-	// unregister commands
-	if len(cmds) > 0 {
-		fmt.Println("Unregistering commands")
-		for _, v := range cmds {
-			err = s.ApplicationCommandDelete(s.State.User.ID, cfg.Configs.DiscordIDs.GuildID, v.ID)
-			if err != nil {
-				return err
-			}
-		}
+	cmds, err := s.ApplicationCommands(s.State.User.ID, "")
+	if err != nil {
+		return err
 	}
 
-	// register new commands
-	fmt.Println("Registering new commands")
-	for _, v := range commands.Commands {
-		_, err = s.ApplicationCommandCreate(s.State.User.ID, cfg.Configs.DiscordIDs.GuildID, v)
-		if err != nil {
-			return err
-		}
-	}
-
+	fmt.Println(fmt.Sprintf("%d Commands Registered", len(cmds)))
 	return nil
 }

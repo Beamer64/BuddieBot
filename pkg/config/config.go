@@ -28,8 +28,6 @@ type Configuration struct {
 
 	DiscordIDs struct {
 		WebHookID         string `yaml:"webHookID"`
-		BotApplicationID  string `yaml:"botApplicationID"`
-		GuildID           string `yaml:"guildID"`
 		ErrorLogChannelID string `yaml:"errorLogChannelID"`
 	} `yaml:"discordIDs"`
 
@@ -187,7 +185,7 @@ func ReadConfig(possibleConfigPaths ...string) (*ConfigStructs, error) {
 	fmt.Println("Looking for version.txt")
 	file, err := os.Open(configDir + "version.txt")
 	if err != nil {
-		fmt.Println("WARNING didn't find version.txt if directory")
+		fmt.Println("WARNING didn't find version.txt in directory")
 	}
 	contents, err := ioutil.ReadAll(file)
 	if err != nil {
