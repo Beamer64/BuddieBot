@@ -2,11 +2,12 @@ package web_scrape
 
 import (
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
 	"strings"
 )
 
-func ScrapeSign(sign string) (string, error) {
+func GetHoroscopeEmbed(sign string, color int) (*discordgo.MessageEmbed, error) {
 	horoscope := ""
 	found := false
 	signNum := ""
@@ -42,8 +43,6 @@ func ScrapeSign(sign string) (string, error) {
 	// On every p element which has style attribute call callback
 	c.OnHTML(
 		"p", func(e *colly.HTMLElement) {
-			// link := e.Attr("font-size:16px;")
-
 			if !found {
 				if e.Text != "" {
 					horoscope = e.Text
@@ -63,8 +62,18 @@ func ScrapeSign(sign string) (string, error) {
 	// StartServer scraping on https://www.horoscope.com
 	err := c.Visit("https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-today.aspx?sign=" + signNum)
 	if err != nil {
-		return "", nil
+		return nil, nil
 	}
 
-	return horoscope, nil
+	embed := &discordgo.MessageEmbed{
+		Title:       sign,
+		Description: horoscope,
+		Color:       color,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:    "Via Horoscopes.com",
+			IconURL: "https://www.horoscope.com/images-US/horoscope-logo.svg",
+		},
+	}
+
+	return embed, nil
 }

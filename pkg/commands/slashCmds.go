@@ -40,6 +40,10 @@ var (
 			Description: "Gets the current song queue",
 		},
 		{
+			Name:        "horoscope",
+			Description: "Gives daily horoscope",
+		},
+		{
 			Name:        "play",
 			Description: "Play audio from a YouTube link",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -47,18 +51,6 @@ var (
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "link",
 					Description: "Link to YouTube video",
-					Required:    true,
-				},
-			},
-		},
-		{
-			Name:        "horoscope",
-			Description: "Gives daily horoscope",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "zodiac",
-					Description: "Name of the zodiac sign to horoscope",
 					Required:    true,
 				},
 			},
@@ -74,6 +66,44 @@ var (
 					Required:    true,
 				},
 			},
+		},
+	}
+
+	ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs){
+		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+			data := i.MessageComponentData()
+			sign := data.Values[0]
+
+			randColorInt := rangeIn(1, 16777215)
+
+			embed, err := web_scrape.GetHoroscopeEmbed(sign, randColorInt)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+
+			cme := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
+			newContent := ""
+			cme.Content = &newContent
+			cme.Embeds = []*discordgo.MessageEmbed{embed}
+
+			_, err = s.ChannelMessageEditComplex(cme)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+
+			err = s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "",
+					},
+				},
+			)
+			if err != nil {
+				if !strings.Contains(err.Error(), "Cannot send an empty message") {
+					_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				}
+			}
 		},
 	}
 
@@ -97,7 +127,7 @@ var (
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 
-			/*err = s.InteractionRespond(
+			err = s.InteractionRespond(
 				i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
@@ -106,9 +136,7 @@ var (
 						},
 					},
 				},
-			)*/
-
-			_, err = s.ChannelMessageSendEmbeds(i.ChannelID, []*discordgo.MessageEmbed{embed})
+			)
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
@@ -124,6 +152,24 @@ var (
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Content: "Okay Dad",
+					},
+				},
+			)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+		},
+		"clear": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+			err := web_scrape.RunMpFileCleanUp()
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+
+			err = s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "This house is clean.",
 					},
 				},
 			)
@@ -155,24 +201,6 @@ var (
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 		},
-		"clear": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			err := web_scrape.RunMpFileCleanUp()
-			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "This house is clean.",
-					},
-				},
-			)
-			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-		},
 		"queue": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			queue := ""
 			if len(web_scrape.MpFileQueue) > 0 {
@@ -186,6 +214,103 @@ var (
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Content: queue,
+					},
+				},
+			)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+		},
+		"horoscope": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+			err := s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "Choose a zodiac sign",
+						Components: []discordgo.MessageComponent{
+							discordgo.ActionsRow{
+								Components: []discordgo.MessageComponent{
+									discordgo.SelectMenu{
+										CustomID:    "horo-select",
+										Placeholder: "Zodiac",
+										Options: []discordgo.SelectMenuOption{
+											{
+												Label:   "Aquarius",
+												Value:   "aquarius",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🌊"},
+											},
+											{
+												Label:   "Aries",
+												Value:   "aries",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🐏"},
+											},
+											{
+												Label:   "Cancer",
+												Value:   "cancer",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🦀"},
+											},
+											{
+												Label:   "Capricorn",
+												Value:   "capricorn",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🐐"},
+											},
+											{
+												Label:   "Gemini",
+												Value:   "gemini",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "♊"},
+											},
+											{
+												Label:   "Leo",
+												Value:   "leo",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🦁"},
+											},
+											{
+												Label:   "Libra",
+												Value:   "libra",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "⚖️"},
+											},
+											{
+												Label:   "Pisces",
+												Value:   "pisces",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🐠"},
+											},
+											{
+												Label:   "Sagittarius",
+												Value:   "sagittarius",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🏹"},
+											},
+											{
+												Label:   "Scorpio",
+												Value:   "scorpio",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🦂"},
+											},
+											{
+												Label:   "Taurus",
+												Value:   "taurus",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "🐃"},
+											},
+											{
+												Label:   "Virgo",
+												Value:   "virgo",
+												Default: false,
+												Emoji:   discordgo.ComponentEmoji{Name: "♍"},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			)
@@ -208,25 +333,6 @@ var (
 			}
 
 			err = playYoutubeLink(s, i, link)
-			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-		},
-		"horoscope": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			sign := i.ApplicationCommandData().Options[0].StringValue()
-			horoscope, err := web_scrape.ScrapeSign(sign)
-			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: horoscope,
-					},
-				},
-			)
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}

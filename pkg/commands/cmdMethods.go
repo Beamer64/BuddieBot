@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+func rangeIn(low, hi int) int {
+	return low + rand.Intn(hi-low)
+}
+
 func coinFlip(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	gifURL, err := api.RequestGifURL("Coin Flip", cfg.Configs.Keys.TenorAPIkey)
 	if err != nil {

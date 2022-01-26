@@ -7,9 +7,22 @@ import (
 	"github.com/subosito/shorturl"
 	"math/rand"
 	"net/url"
+	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
+
+func IsLaunchedByDebugger() bool {
+	// gops executable must be in the path. See https://github.com/google/gops
+	gopsOut, err := exec.Command("gops", strconv.Itoa(os.Getppid())).Output()
+	if err == nil && strings.Contains(string(gopsOut), "\\dlv.exe") {
+		// our parent process is (probably) the Delve debugger
+		return true
+	}
+	return false
+}
 
 func getRandomLoadingMessage(possibleMessages []string) string {
 	rand.Seed(time.Now().Unix())

@@ -4,17 +4,12 @@ import (
 	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
-	"github.com/beamer64/discordBot/pkg/web_scrape"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 	"time"
 )
 
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	/*err := d.playYoutubeLink(s, m, param)
-	if err != nil {
-		return err
-	}*/
 
 	return nil
 }
@@ -79,20 +74,6 @@ func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message)
 	}
 
 	_, err = s.ChannelMessageSend(m.ChannelID, "\""+m.Content+"\""+"\n"+lmgtfyShortURL)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (d *MessageCreateHandler) displayHoroscope(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	horoscope, err := web_scrape.ScrapeSign(param)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.ChannelMessageSend(m.ChannelID, horoscope)
 	if err != nil {
 		return err
 	}
