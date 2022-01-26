@@ -158,7 +158,7 @@ func TestGetMembers(t *testing.T) {
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://discord.com/api/guilds/%s/members", cfg.Configs.DiscordIDs.GuildID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://discord.com/api/guilds/%s/members", ""), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
