@@ -23,6 +23,7 @@ description:
   desc-play: "Adds youtube audio to queue and plays it"
   desc-stop: "Stops the audio link playback"
   desc-queue: "Gets the current song queue"
+  desc-clear: "Clears the audio queue"
 
 # Static cmd related messages
 message:

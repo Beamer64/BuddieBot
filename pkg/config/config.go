@@ -79,6 +79,7 @@ type Command struct {
 		Play         string `yaml:"desc-play"`
 		Stop         string `yaml:"desc-stop"`
 		Queue        string `yaml:"desc-queue"`
+		Clear        string `yaml:"desc-clear"`
 	} `yaml:"description"`
 
 	Msg struct {

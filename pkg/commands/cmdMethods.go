@@ -21,14 +21,26 @@ func rangeIn(low, hi int) int {
 func getTuuckEmbed(cmd string, cfg *config.ConfigStructs) *discordgo.MessageEmbed {
 	n := reflect.ValueOf(&cfg.Cmd.Name).Elem()
 	d := reflect.ValueOf(&cfg.Cmd.Desc).Elem()
+
 	desc := ""
+	title := "A list of current Slash commands:"
+	cmd = strings.ToLower(cmd)
+
 	if cmd == "" {
 		for i := 0; i < n.NumField(); i++ {
 			desc = desc + fmt.Sprintf("%s \n", n.Field(i).Interface())
 		}
 	} else {
+		for i := 0; i < n.NumField(); i++ {
+			if strings.Contains(fmt.Sprintf("%s", n.Field(i).Interface()), cmd) {
+				title = fmt.Sprintf("%s", n.Field(i).Interface())
+				break
+			}
+		}
+
 		for i := 0; i < d.NumField(); i++ {
-			if strings.Contains(fmt.Sprintf("%s", d.Field(i).Interface()), cmd) {
+			name := strings.ToLower(d.Type().Field(i).Name)
+			if strings.Contains(name, cmd) {
 				desc = fmt.Sprintf("%s", d.Field(i).Interface())
 				break
 			}
@@ -36,7 +48,7 @@ func getTuuckEmbed(cmd string, cfg *config.ConfigStructs) *discordgo.MessageEmbe
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title:       "A list of current Slash commands:",
+		Title:       title,
 		Color:       rangeIn(1, 16777215),
 		Description: desc,
 	}
