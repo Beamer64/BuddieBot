@@ -47,6 +47,12 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 }
 
 func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
+	err := s.UpdateGameStatus(0, "try /tuuck")
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+		return
+	}
+
 	// FYI can get all connected Guild list here
 	fmt.Println(fmt.Sprintf("Invited to %d Servers!", len(e.Guilds)))
 	fmt.Printf("Logged in as %s\n", e.User.String())
