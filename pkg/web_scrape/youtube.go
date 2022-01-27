@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -140,17 +141,32 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	return mpLink, fileName, nil
 }
 
-func DownloadMpFile(link string, fileName string) error {
+func DownloadMpFile(i *discordgo.InteractionCreate, link string, fileName string) error {
 	// Get the data
 	resp, err := http.Get(link)
 	if err != nil {
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+	}(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	// Create the dir
+	dir := fmt.Sprintf("/%s/Audio", i.GuildID)
+	if _, err = os.Stat(dir); os.IsNotExist(err) {
+		// does not exist
+		err = os.MkdirAll(dir, 0755)
+	}
+	if err != nil {
+		return err
+	}
 
 	// Create the file
-	out, err := os.Create(fileName)
+	out, err := os.Create(filepath.Join(dir, filepath.Base(fileName)))
 	if err != nil {
 		return err
 	}
@@ -167,10 +183,12 @@ func DownloadMpFile(link string, fileName string) error {
 	return nil
 }
 
-func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID string, s *discordgo.Session) error {
+func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, ic *discordgo.InteractionCreate, s *discordgo.Session) error {
+	dir := fmt.Sprintf("/%s/Audio", ic.GuildID)
+
 	if !IsPlaying {
 		if fileName != "" {
-			MpFileQueue = append(MpFileQueue, fileName)
+			MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
 		}
 
 		IsPlaying = true
@@ -184,22 +202,20 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID st
 		}
 		IsPlaying = false
 		if len(MpFileQueue) > 0 {
-			err := PlayAudioFile(dgv, "", channelID, s)
+			err := PlayAudioFile(dgv, "", ic, s)
 			if err != nil {
 				return err
 			}
 
 		} else {
 			if dgv != nil {
-				//dgv.Close()
-
 				err := dgv.Disconnect()
 				if err != nil {
 					return err
 				}
 			}
 
-			err := RunMpFileCleanUp()
+			err := RunMpFileCleanUp(dir)
 			if err != nil {
 				return err
 			}
@@ -207,23 +223,23 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, channelID st
 
 	} else {
 		if fileName != "" {
-			_, err := s.ChannelMessageSend(channelID, fmt.Sprintf("Added to queue: %s", fileName))
+			_, err := s.ChannelMessageSend(ic.ChannelID, fmt.Sprintf("Added to queue: %s", fileName))
 			if err != nil {
 				return err
 			}
 
-			MpFileQueue = append(MpFileQueue, fileName)
+			MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
 		}
 	}
 
 	return nil
 }
 
-func RunMpFileCleanUp() error {
+func RunMpFileCleanUp(dir string) error {
 	MpFileQueue = nil
 
 	fmt.Println("Running Cleanup")
-	files, err := ioutil.ReadDir(".")
+	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return err
 	}

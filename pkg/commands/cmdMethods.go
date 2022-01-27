@@ -190,7 +190,7 @@ func playYoutubeLink(s *discordgo.Session, i *discordgo.InteractionCreate, param
 		return err
 	}
 
-	err = web_scrape.DownloadMpFile(link, fileName)
+	err = web_scrape.DownloadMpFile(i, link, fileName)
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func playYoutubeLink(s *discordgo.Session, i *discordgo.InteractionCreate, param
 		return err
 	}
 
-	err = web_scrape.PlayAudioFile(dgv, fileName, i.ChannelID, s)
+	err = web_scrape.PlayAudioFile(dgv, fileName, i, s)
 	if err != nil {
 		return err
 	}
@@ -236,7 +236,7 @@ func skipPlayback(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 			return err
 		}
 
-		err = web_scrape.PlayAudioFile(dgv, "", i.ChannelID, s)
+		err = web_scrape.PlayAudioFile(dgv, "", i, s)
 		if err != nil {
 			return err
 		}
