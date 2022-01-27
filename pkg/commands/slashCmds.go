@@ -72,7 +72,7 @@ var (
 			Description: "Tag and insult a user",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
+					Type:        discordgo.ApplicationCommandOptionUser,
 					Name:        "user",
 					Description: "Tag the user to be insulted",
 					Required:    true,
@@ -84,7 +84,6 @@ var (
 	ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs){
 		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			sign := i.MessageComponentData().Values[0]
-
 			embed, err := getHoroscopeEmbed(sign)
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
@@ -119,11 +118,19 @@ var (
 
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs){
 		"version": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+			embed := &discordgo.MessageEmbed{
+				Title:       fmt.Sprintf("Version: %s", cfg.Version),
+				Color:       62033,
+				Description: "You see it up there.",
+			}
+
 			err := s.InteractionRespond(
 				i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
-						Content: fmt.Sprintf("We'we wunnying vewsion `%s` wight nyow", cfg.Version),
+						Embeds: []*discordgo.MessageEmbed{
+							embed,
+						},
 					},
 				},
 			)
@@ -371,8 +378,9 @@ var (
 			}
 		},
 		"insult": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			user := i.ApplicationCommandData().Options[0].StringValue()
-			insult, err := api.PostInsult(user, cfg)
+			user := i.ApplicationCommandData().Options[0].UserValue(s)
+			randColorInt := rangeIn(1, 16777215)
+			embed, err := api.GetInsultEmbed(randColorInt, cfg)
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
@@ -381,7 +389,10 @@ var (
 				i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
-						Content: insult,
+						Content: fmt.Sprintf("An ode to: <@%s>", user.ID),
+						Embeds: []*discordgo.MessageEmbed{
+							embed,
+						},
 					},
 				},
 			)

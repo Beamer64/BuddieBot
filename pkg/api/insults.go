@@ -2,11 +2,10 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/bwmarrin/discordgo"
 	"io"
 	"net/http"
-	"strings"
 )
 
 type insult struct {
@@ -36,25 +35,24 @@ func GetInsult(insultURL string) (string, error) {
 	return insultObj.Insult, nil
 }
 
-func PostInsult(user string, cfg *config.ConfigStructs) (string, error) {
+func GetInsultEmbed(randColorInt int, cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	retVal := ""
 	if cfg.Configs.Keys.InsultAPI != "" { // check if insult API is set up
-		if !strings.HasPrefix(user, "<@") {
-			retVal = "You need to '@Mention' the user for insults, Dingus. eg: @UserName"
-
-			return retVal, nil
-		}
-
 		insult, err := GetInsult(cfg.Configs.Keys.InsultAPI)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		retVal = fmt.Sprintf("%s %s", user, insult)
-
+		retVal = insult
 	} else {
 		retVal = cfg.Cmd.Msg.InsultAPIError
 	}
 
-	return retVal, nil
+	embed := &discordgo.MessageEmbed{
+		Title:       "(ง ͠° ͟ل͜ ͡°)ง",
+		Color:       randColorInt,
+		Description: retVal,
+	}
+
+	return embed, nil
 }
