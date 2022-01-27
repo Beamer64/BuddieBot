@@ -110,8 +110,6 @@ keys:
 # IDs relating to Discord or Bot
 discordIDs:
   webHookID: ""
-  botApplicationID: ""
-  guildID: ""
   errorLogChannelID: ""
 
 # Custom Settings
@@ -156,12 +154,16 @@ Once done, feel free to launch BuddieBot using the command `go run cmd/discord-b
 
 BuddieBot is in a continuous state of development. New features/updates may come at any time. Some pending ideas are:
 
-- [ ] Games
-- [ ] Skip songs
-- [X] Play/Queue Music
-- [X] Slash Commands
-- [X] Custom tag/reaction system
-- [X] Better insult API
+- [ ]  Games
+- [ ]  Be Funnier
+- [ ]  Skip songs
+- [ ]  Multiple Music Sources
+- [ ]  Rename Repo
+- [X]  DM Your Mother
+- [X]  Convert most commands to embeds
+- [X]  Play/Queue Music
+- [X]  Slash Commands
+- [X]  Custom tag/reaction system
 
 ---
 
@@ -172,9 +174,6 @@ BuddieBot is in a continuous state of development. New features/updates may come
 - *webHookToken* - Can be easily found in the Webhook URL.††
 - *botPublicKey* - Given when a new bot is created. Located in the [Gen Info section](https://discord.com/developers/applications/866151939472883762/information) of the Discord Dev portal.
 - *webHookID* - Can be easily found in the Webhook URL.††
-- *botApplicationID* - Given when a new bot is created. Also, sometimes called 'Client ID', located in
-  the [Gen Info section](https://discord.com/developers/applications/866151939472883762/information) of the Discord Dev portal.
-- *guildID* - The ID of the Server your bot is in.†
 - *errorLogChannelID* - The ID of the Channel you'd like the bot to update with any errors it encounters.†
 - *botPrefix* - The prefix given when the bot recognizes a command. For example, the one I use is '$'.
 - *botAdminRole* - The name of the Role you create to restrict users from certain commands or actions. E.g. Mine was 'Bot Admin Role'.
