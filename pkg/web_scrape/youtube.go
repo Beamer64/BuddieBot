@@ -185,7 +185,7 @@ func DownloadMpFile(i *discordgo.InteractionCreate, link string, fileName string
 }
 
 func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, ic *discordgo.InteractionCreate, s *discordgo.Session) error {
-	dir := fmt.Sprintf("%s/Audio", ic.GuildID)
+	dir := fmt.Sprintf("%s/Audio/", ic.GuildID)
 
 	if !IsPlaying {
 		if fileName != "" {
