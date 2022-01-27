@@ -177,7 +177,7 @@ var (
 			}
 		},
 		"clear": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			err := web_scrape.RunMpFileCleanUp(fmt.Sprintf("/%s/Audio", i.GuildID))
+			err := web_scrape.RunMpFileCleanUp(fmt.Sprintf("%s/Audio", i.GuildID))
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}

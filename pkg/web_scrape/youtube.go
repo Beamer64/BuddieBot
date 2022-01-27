@@ -156,10 +156,11 @@ func DownloadMpFile(i *discordgo.InteractionCreate, link string, fileName string
 	}
 
 	// Create the dir
-	dir := fmt.Sprintf("/%s/Audio", i.GuildID)
+	dir := fmt.Sprintf("%s/Audio", i.GuildID)
 	if _, err = os.Stat(dir); os.IsNotExist(err) {
 		// does not exist
 		err = os.MkdirAll(dir, 0755)
+		fmt.Println(fmt.Sprintf("Dir created: %s", dir))
 	}
 	if err != nil {
 		return err
@@ -184,7 +185,7 @@ func DownloadMpFile(i *discordgo.InteractionCreate, link string, fileName string
 }
 
 func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, ic *discordgo.InteractionCreate, s *discordgo.Session) error {
-	dir := fmt.Sprintf("/%s/Audio", ic.GuildID)
+	dir := fmt.Sprintf("%s/Audio", ic.GuildID)
 
 	if !IsPlaying {
 		if fileName != "" {
