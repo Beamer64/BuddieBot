@@ -54,19 +54,31 @@ type Configuration struct {
 }
 
 type Command struct {
+	Name struct {
+		Tuuck     string `yaml:"list-tuuck"`
+		CoinFlip  string `yaml:"list-coin-flip"`
+		Horoscope string `yaml:"list-horoscope"`
+		Version   string `yaml:"list-version"`
+		Insult    string `yaml:"list-insult"`
+		Play      string `yaml:"list-play"`
+		Stop      string `yaml:"list-stop"`
+		Queue     string `yaml:"list-queue"`
+		Clear     string `yaml:"list-clear"`
+	} `yaml:"name"`
+
 	Desc struct {
-		Tuuck        string `yaml:"tuuck"`
-		StartServer  string `yaml:"startServer"`
-		StopServer   string `yaml:"stopServer"`
-		CoinFlip     string `yaml:"coinFlip"`
-		Horoscope    string `yaml:"horoscope"`
-		ServerStatus string `yaml:"serverStatus"`
-		Version      string `yaml:"version"`
-		LMGTFY       string `yaml:"lmgtfy"`
-		Insult       string `yaml:"insult"`
-		Play         string `yaml:"play"`
-		Stop         string `yaml:"stop"`
-		Queue        string `yaml:"queue"`
+		Tuuck        string `yaml:"desc-tuuck"`
+		StartServer  string `yaml:"desc-start-server"`
+		StopServer   string `yaml:"desc-stop-server"`
+		CoinFlip     string `yaml:"desc-coin-flip"`
+		Horoscope    string `yaml:"desc-horoscope"`
+		ServerStatus string `yaml:"desc-server-status"`
+		Version      string `yaml:"desc-version"`
+		LMGTFY       string `yaml:"desc-lmgtfy"`
+		Insult       string `yaml:"desc-insult"`
+		Play         string `yaml:"desc-play"`
+		Stop         string `yaml:"desc-stop"`
+		Queue        string `yaml:"desc-queue"`
 	} `yaml:"description"`
 
 	Msg struct {

@@ -44,6 +44,18 @@ var (
 			Description: "Gives daily horoscope",
 		},
 		{
+			Name:        "tuuck",
+			Description: "I've fallen and can't get up!",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "command",
+					Description: "Specify a command for a description",
+					Required:    false,
+				},
+			},
+		},
+		{
 			Name:        "play",
 			Description: "Play audio from a YouTube link",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -71,22 +83,20 @@ var (
 
 	ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs){
 		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			data := i.MessageComponentData()
-			sign := data.Values[0]
+			sign := i.MessageComponentData().Values[0]
 
-			randColorInt := rangeIn(1, 16777215)
-
-			embed, err := web_scrape.GetHoroscopeEmbed(sign, randColorInt)
+			embed, err := getHoroscopeEmbed(sign)
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
 
-			cme := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
-			newContent := ""
-			cme.Content = &newContent
-			cme.Embeds = []*discordgo.MessageEmbed{embed}
+			msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
+			msgContent := ""
+			msgEdit.Content = &msgContent
+			msgEdit.Embeds = []*discordgo.MessageEmbed{embed}
 
-			_, err = s.ChannelMessageEditComplex(cme)
+			// edit response (i.Interaction) and replace with embed
+			_, err = s.ChannelMessageEditComplex(msgEdit)
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
@@ -122,7 +132,7 @@ var (
 			}
 		},
 		"coin-flip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			embed, err := coinFlip(cfg)
+			embed, err := getCoinFlipEmbed(cfg)
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
@@ -310,6 +320,29 @@ var (
 									},
 								},
 							},
+						},
+					},
+				},
+			)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+		},
+		"tuuck": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+			cmd := ""
+			if i.ApplicationCommandData().Options != nil {
+				cmd = i.ApplicationCommandData().Options[0].StringValue()
+			} else {
+				cmd = ""
+			}
+			embed := getTuuckEmbed(cmd, cfg)
+
+			err := s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Embeds: []*discordgo.MessageEmbed{
+							embed,
 						},
 					},
 				},

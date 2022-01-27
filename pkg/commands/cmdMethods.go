@@ -7,7 +7,10 @@ import (
 	"github.com/beamer64/discordBot/pkg/voice_chat"
 	"github.com/beamer64/discordBot/pkg/web_scrape"
 	"github.com/bwmarrin/discordgo"
+	"github.com/gocolly/colly/v2"
 	"math/rand"
+	"reflect"
+	"strings"
 	"time"
 )
 
@@ -15,7 +18,104 @@ func rangeIn(low, hi int) int {
 	return low + rand.Intn(hi-low)
 }
 
-func coinFlip(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+func getTuuckEmbed(cmd string, cfg *config.ConfigStructs) *discordgo.MessageEmbed {
+	n := reflect.ValueOf(&cfg.Cmd.Name).Elem()
+	d := reflect.ValueOf(&cfg.Cmd.Desc).Elem()
+	desc := ""
+	if cmd == "" {
+		for i := 0; i < n.NumField(); i++ {
+			desc = desc + fmt.Sprintf("%s \n", n.Field(i).Interface())
+		}
+	} else {
+		for i := 0; i < d.NumField(); i++ {
+			if strings.Contains(fmt.Sprintf("%s", d.Field(i).Interface()), cmd) {
+				desc = fmt.Sprintf("%s", d.Field(i).Interface())
+				break
+			}
+		}
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "A list of current Slash commands:",
+		Color:       rangeIn(1, 16777215),
+		Description: desc,
+	}
+
+	return embed
+}
+
+func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
+	horoscope := ""
+	found := false
+	signNum := ""
+
+	switch strings.ToLower(sign) {
+	case "aries":
+		signNum = "1"
+	case "taurus":
+		signNum = "2"
+	case "gemini":
+		signNum = "3"
+	case "cancer":
+		signNum = "4"
+	case "leo":
+		signNum = "5"
+	case "virgo":
+		signNum = "6"
+	case "libra":
+		signNum = "7"
+	case "scorpio":
+		signNum = "8"
+	case "sagittarius":
+		signNum = "9"
+	case "capricorn":
+		signNum = "10"
+	case "aquarius":
+		signNum = "11"
+	case "pisces":
+		signNum = "12"
+	}
+
+	c := colly.NewCollector()
+	// On every p element which has style attribute call callback
+	c.OnHTML(
+		"p", func(e *colly.HTMLElement) {
+			if !found {
+				if e.Text != "" {
+					horoscope = e.Text
+					found = true
+				}
+			}
+		},
+	)
+
+	// Before making a request print "Visiting ..."
+	c.OnRequest(
+		func(r *colly.Request) {
+			fmt.Println("Visiting", r.URL.String())
+		},
+	)
+
+	// StartServer scraping on https://www.horoscope.com
+	err := c.Visit("https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-today.aspx?sign=" + signNum)
+	if err != nil {
+		return nil, nil
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       sign,
+		Description: horoscope,
+		Color:       rangeIn(1, 16777215),
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:    "Via Horoscopes.com",
+			IconURL: "https://www.horoscope.com/images-US/horoscope-logo.svg",
+		},
+	}
+
+	return embed, nil
+}
+
+func getCoinFlipEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	gifURL, err := api.RequestGifURL("Coin Flip", cfg.Configs.Keys.TenorAPIkey)
 	if err != nil {
 		return nil, err
@@ -24,11 +124,6 @@ func coinFlip(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	embed := &discordgo.MessageEmbed{
 		Title: "Flipping...",
 		Color: 16761856,
-		Author: &discordgo.MessageEmbedAuthor{
-			Name: "BuddieBot",
-			IconURL: "https://camo.githubusercontent.com/97c16e17070b00f5c5db3447703233bf007dd60706c46db66aa5042a417277a7" +
-				"/68747470733a2f2f696d6167652e666c617469636f6e2e636f6d2f69636f6e732f706e672f3531322f343639382f343639383738372e706e67",
-		},
 		Image: &discordgo.MessageEmbedImage{
 			URL: gifURL,
 		},

@@ -1,17 +1,28 @@
-# Displayed when the 'tuuck' cmd is called
+# Displayed when the '/tuuck' cmd is called
+name:
+  list-tuuck: "/tuuck"
+  list-horoscope: "/horoscope"
+  list-version: "/version"
+  list-coin-flip: "/coin-flip"
+  list-insult: "/insult"
+  list-play: "/play"
+  list-stop: "/stop"
+  list-queue: "/queue"
+  list-clear: "/clear"
+
 description:
-  tuuck: "$tuuck - Lists available commands."
-  startServer: "$startServer - Starts Minecraft Server."
-  stopServer: "$stopServer - Stops Minecraft Server."
-  horoscope: "/horoscope {sign} - Gives daily horoscope."
-  serverStatus: "$serverStatus - Gives the current status of the MC server."
-  version: "/version - Gives the Git SHA of the current bot version running"
-  coinFlip: "/coinflip - Flips a coin, sends gif for results"
-  lmgtfy: "{lmgtfy Reaction} - Add the 'Ask' Reaction to a msg and get a LMGTFY link"
-  insult: "/insult {@User} - Sends an insult and tags {@User}"
-  play: "/play {youtube_link} - Adds youtube audio to queue and plays it"
-  stop: "/stop - Stops the audio link playback"
-  queue: "/queue - Gets the current song queue"
+  desc-tuuck: Lists available commands."
+  desc-start-server: "Starts Minecraft Server."
+  desc-stop-server: "Stops Minecraft Server."
+  desc-horoscope: "Gives daily horoscope."
+  desc-server-status: "Gives the current status of the MC server."
+  desc-version: "Gives the Git SHA of the current bot version running"
+  desc-coin-flip: "Flips a coin, sends gif for results"
+  desc-lmgtfy: "Add the 'Ask' Reaction to a msg and get a LMGTFY link"
+  desc-insult: "Sends an insult and tags {@User}"
+  desc-play: "Adds youtube audio to queue and plays it"
+  desc-stop: "Stops the audio link playback"
+  desc-queue: "Gets the current song queue"
 
 # Static cmd related messages
 message:
