@@ -46,15 +46,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-		// Sends command list
-		case "$tuuck":
-			err := d.sendHelpMessage(s, m)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
-			}
-			return
-
 		// Starts the Minecraft Server
 		case "$startServer":
 			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {

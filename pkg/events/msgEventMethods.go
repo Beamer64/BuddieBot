@@ -14,57 +14,6 @@ func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.Mes
 	return nil
 }
 
-func (d *MessageCreateHandler) sendHelpMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	var cmds []string
-	if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) { // bot mod
-
-		//the weird order is, so it looks better until all are converted (listed $ then /)
-		cmds = append(cmds, d.cfg.Cmd.Desc.Tuuck, d.cfg.Cmd.Desc.LMGTFY)
-
-		if d.cfg.Configs.Server.MachineIP != "" {
-			cmds = append(cmds, d.cfg.Cmd.Desc.ServerStatus, d.cfg.Cmd.Desc.StartServer, d.cfg.Cmd.Desc.StopServer)
-		}
-
-		cmds = append(
-			cmds, d.cfg.Cmd.Desc.Horoscope, d.cfg.Cmd.Desc.Version, d.cfg.Cmd.Desc.CoinFlip, d.cfg.Cmd.Desc.Play,
-			d.cfg.Cmd.Desc.Stop, d.cfg.Cmd.Desc.Queue,
-		)
-
-		if d.cfg.Configs.Keys.InsultAPI != "" {
-			cmds = append(cmds, d.cfg.Cmd.Desc.Insult)
-		}
-
-	} else {
-		//the weird order is, so it looks better until all are converted (listed $ then /)
-		cmds = append(cmds, d.cfg.Cmd.Desc.Tuuck, d.cfg.Cmd.Desc.LMGTFY)
-
-		if d.cfg.Configs.Server.MachineIP != "" {
-			cmds = append(cmds, d.cfg.Cmd.Desc.ServerStatus)
-		}
-
-		cmds = append(
-			cmds, d.cfg.Cmd.Desc.Horoscope, d.cfg.Cmd.Desc.CoinFlip, d.cfg.Cmd.Desc.Play, d.cfg.Cmd.Desc.Stop,
-			d.cfg.Cmd.Desc.Queue,
-		)
-
-		if d.cfg.Configs.Keys.InsultAPI != "" {
-			cmds = append(cmds, d.cfg.Cmd.Desc.Insult)
-		}
-	}
-
-	cmdDesc := ""
-	for _, command := range cmds {
-		cmdDesc = cmdDesc + "\n" + command
-	}
-
-	_, err := s.ChannelMessageSend(m.ChannelID, cmdDesc)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message) error {
 	lmgtfyURL := CreateLmgtfyURL(m.Content)
 
