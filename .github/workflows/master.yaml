@@ -22,7 +22,6 @@ jobs:
       - name: Pull secrets
         run: |
           echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
-      #  echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
 
       - name: Test
         run: |
@@ -52,6 +51,10 @@ jobs:
       # sudo apt-get install software-properties-common
       # sudo add-apt-repository -r ppa:webkit-team/ppa && sudo apt-get install libwebkit2gtk-4.0-37 libwebkit2gtk-4.0-dev
 
+      - name: Remove old directory builds
+        run: |
+          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf *"
+
       - name: Upload new server binary and install packages
         run: |
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}"
@@ -62,7 +65,6 @@ jobs:
           echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
           echo "${GITHUB_SHA}" > config/version.txt
           
-          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf *"
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config"
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmd.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
@@ -70,15 +72,11 @@ jobs:
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/version.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
 
-      #  echo '${{ secrets.GCP_SA_KEY }}' > config/auth.json
-      #  gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/auth.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-
       - name: Stop old service and start new
         run: |
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="unlink current; ln -s ${GITHUB_SHA} current"
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo systemctl restart bot.service"
-        # gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf $(ls -lt | grep '^d' | tail -1  | tr " " "\n" | tail -1)"
 
 # This line needs to be run if service never created before
 # gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"

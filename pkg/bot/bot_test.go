@@ -11,6 +11,10 @@ import (
 )
 
 func TestCoinFlip(t *testing.T) {
+	if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}
+
 	fmt.Println("Flipping...")
 
 	time.Sleep(3 * time.Second)

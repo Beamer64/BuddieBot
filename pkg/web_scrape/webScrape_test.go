@@ -13,9 +13,9 @@ import (
 )
 
 func TestAudioLink(t *testing.T) {
-	/*if os.Getenv("INTEGRATION") != "true" {
+	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}*/
+	}
 
 	/*url := "https://www.youtube.com/watch?v=VXtVrNdD3YA"
 
@@ -28,6 +28,10 @@ func TestAudioLink(t *testing.T) {
 }
 
 func TestScrapeHoroscope(t *testing.T) {
+	if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}
+
 	found := false
 	signNum := ""
 	horoscope := ""
