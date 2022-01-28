@@ -22,7 +22,7 @@
 
 <div align="center">
   <a target="_blank">
-    <img src="https://img.shields.io/tokei/lines/github/beamer64/DiscordBot?color=maroon" alt="shield.png">
+    <img src="https://img.shields.io/tokei/lines/github/Beamer64/DiscordBot?color=maroon" alt="shield.png">
   </a>
 </div>
 
