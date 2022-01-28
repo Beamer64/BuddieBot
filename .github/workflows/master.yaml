@@ -77,7 +77,7 @@ jobs:
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="unlink current; ln -s ${GITHUB_SHA} current"
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo systemctl restart bot.service"
-          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="ls -lt | tail -1 | awk '{print $NF}' | xargs rm -rf"
+          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf "$(ls -t | tail -1)""
 
         # gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf $(ls -lt | grep '^d' | tail -1  | tr " " "\n" | tail -1)"
 
