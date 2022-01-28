@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/config"
@@ -8,16 +9,72 @@ import (
 	"github.com/beamer64/discordBot/pkg/web_scrape"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
+	"io"
 	"math/rand"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 )
 
+type steamGames struct {
+	Applist struct {
+		Apps []struct {
+			Appid int    `json:"appid"`
+			Name  string `json:"name"`
+		} `json:"apps"`
+	} `json:"applist"`
+}
+
 // rangeIn Returns pseudo rand num between low and high.
 // For random embed color: rangeIn(1, 16777215)
 func rangeIn(low, hi int) int {
 	return low + rand.Intn(hi-low)
+}
+
+func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+	choice := ""
+	if strings.ToLower(options[0].StringValue()) == "steam" {
+		res, err := http.Get(cfg.Configs.Keys.SteamAPI)
+		if err != nil {
+			return nil, err
+		}
+
+		var steamObj steamGames
+
+		err = json.NewDecoder(res.Body).Decode(&steamObj)
+		if err != nil {
+			return nil, err
+		}
+
+		defer func(Body io.ReadCloser) {
+			err = Body.Close()
+			if err != nil {
+				return
+			}
+		}(res.Body)
+
+		randomIndex := rand.Intn(len(steamObj.Applist.Apps))
+		choice = steamObj.Applist.Apps[randomIndex].Name
+
+	} else {
+		randomIndex := rand.Intn(len(options))
+		choice = options[randomIndex].StringValue()
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title: "I have Chosen...",
+		Color: rangeIn(1, 16777215),
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   choice,
+				Value:  "☝(°ロ°)",
+				Inline: true,
+			},
+		},
+	}
+
+	return embed, nil
 }
 
 func getTuuckEmbed(cmd string, cfg *config.ConfigStructs) *discordgo.MessageEmbed {

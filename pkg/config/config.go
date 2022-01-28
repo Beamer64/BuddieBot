@@ -24,6 +24,7 @@ type Configuration struct {
 		BotPublicKey string `yaml:"botPublicKey"`
 		TenorAPIkey  string `yaml:"tenorAPIkey"`
 		InsultAPI    string `yaml:"insultAPI"`
+		SteamAPI     string `yaml:"steamAPI"`
 	} `yaml:"keys"`
 
 	DiscordIDs struct {

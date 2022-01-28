@@ -44,13 +44,43 @@ var (
 			Description: "Gives daily horoscope",
 		},
 		{
-			Name:        "tuuck",
-			Description: "I've fallen and can't get up!",
+			Name:        "pick",
+			Description: "I'll pick stuff for you. I'll also pick a steam game with the 1st choice of 'steam'",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "command",
-					Description: "Specify a command for a description",
+					Name:        "1st",
+					Description: "First choice",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "2nd",
+					Description: "Second choice",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "3rd",
+					Description: "Third choice",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "4th",
+					Description: "Fourth choice",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "5th",
+					Description: "Fifth choice",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "6th",
+					Description: "Sixth choice",
 					Required:    false,
 				},
 			},
@@ -76,6 +106,18 @@ var (
 					Name:        "user",
 					Description: "Tag the user to be insulted",
 					Required:    true,
+				},
+			},
+		},
+		{
+			Name:        "tuuck",
+			Description: "I've fallen and can't get up!",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "command",
+					Description: "Specify a command for a description",
+					Required:    false,
 				},
 			},
 		},
@@ -327,6 +369,38 @@ var (
 									},
 								},
 							},
+						},
+					},
+				},
+			)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+		},
+		"pick": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+			embed, err := getPickEmbed(i.ApplicationCommandData().Options, cfg)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			}
+
+			content := ""
+			if len(i.ApplicationCommandData().Options) > 1 {
+				for _, v := range i.ApplicationCommandData().Options {
+					content = content + fmt.Sprintf("[%s] ", v.StringValue())
+				}
+				content = strings.TrimSpace(content)
+				content = fmt.Sprintf("*%s*", content)
+			} else if strings.ToLower(i.ApplicationCommandData().Options[0].StringValue()) == "steam" {
+				content = "Choosing Steam Game"
+			}
+
+			err = s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: content,
+						Embeds: []*discordgo.MessageEmbed{
+							embed,
 						},
 					},
 				},
