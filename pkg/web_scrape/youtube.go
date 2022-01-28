@@ -159,7 +159,7 @@ func DownloadMpFile(i *discordgo.InteractionCreate, link string, fileName string
 	dir := fmt.Sprintf("%s/Audio", i.GuildID)
 	if _, err = os.Stat(dir); os.IsNotExist(err) {
 		// does not exist
-		err = os.MkdirAll(dir, 0755)
+		err = os.MkdirAll(dir, 0777)
 		fmt.Println(fmt.Sprintf("Dir created: %s", dir))
 	}
 	if err != nil {
