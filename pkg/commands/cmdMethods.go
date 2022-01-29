@@ -34,7 +34,6 @@ func rangeIn(low, hi int) int {
 
 func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	choice := ""
-	//content := ""
 	if strings.ToLower(options[0].StringValue()) == "steam" {
 		res, err := http.Get(cfg.Configs.Keys.SteamAPI)
 		if err != nil {
@@ -56,7 +55,6 @@ func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, 
 		}(res.Body)
 
 		randomIndex := rand.Intn(len(steamObj.Applist.Apps))
-		//choice = steamObj.Applist.Apps[randomIndex].Name
 		choice = fmt.Sprintf("%s\nsteam://openurl/https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Name, steamObj.Applist.Apps[randomIndex].Appid)
 
 	} else {
