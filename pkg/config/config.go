@@ -28,13 +28,16 @@ type Configuration struct {
 	} `yaml:"keys"`
 
 	DiscordIDs struct {
-		WebHookID         string `yaml:"webHookID"`
-		ErrorLogChannelID string `yaml:"errorLogChannelID"`
+		WebHookID           string `yaml:"webHookID"`
+		ErrorLogChannelID   string `yaml:"errorLogChannelID"`
+		EventNotifChannelID string `yaml:"eventNotifChannelID"`
 	} `yaml:"discordIDs"`
 
 	Settings struct {
-		BotPrefix    string `yaml:"botPrefix"`
-		BotAdminRole string `yaml:"botAdminRole"`
+		BotPrefix     string `yaml:"botPrefix"`
+		BotAdminRole  string `yaml:"botAdminRole"`
+		Email         string `yaml:"email"`
+		EmailPassword string `yaml:"emailPassword"`
 	} `yaml:"settings"`
 
 	Server struct {
