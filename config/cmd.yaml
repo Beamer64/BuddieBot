@@ -9,6 +9,7 @@ name:
   list-stop: "/stop"
   list-queue: "/queue"
   list-clear: "/clear"
+  list-pick: "/pick"
 
 description:
   desc-tuuck: Lists available commands."
@@ -24,6 +25,7 @@ description:
   desc-stop: "Stops the audio link playback"
   desc-queue: "Gets the current song queue"
   desc-clear: "Clears the audio queue"
+  desc-pick: "Chooses between 2 or more things. Can even pick a random steam game to play"
 
 # Static cmd related messages
 message:

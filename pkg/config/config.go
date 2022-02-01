@@ -68,6 +68,7 @@ type Command struct {
 		Stop      string `yaml:"list-stop"`
 		Queue     string `yaml:"list-queue"`
 		Clear     string `yaml:"list-clear"`
+		Pick      string `yaml:"list-pick"`
 	} `yaml:"name"`
 
 	Desc struct {
@@ -84,6 +85,7 @@ type Command struct {
 		Stop         string `yaml:"desc-stop"`
 		Queue        string `yaml:"desc-queue"`
 		Clear        string `yaml:"desc-clear"`
+		Pick         string `yaml:"desc-pick"`
 	} `yaml:"description"`
 
 	Msg struct {
