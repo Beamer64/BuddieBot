@@ -37,41 +37,43 @@ func NewReadyHandler(cfg *config.ConfigStructs) *ReadyHandler {
 // Events
 
 func (g *GuildCreateHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
-	desc := "None"
-	if e.Description != "" {
-		desc = e.Description
-	}
-	embed := &discordgo.MessageEmbed{
-		Title: "NEW SERVER JOIN",
-		Color: 1564907,
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "ServerID",
-				Value:  e.ID,
-				Inline: true,
+	if !IsLaunchedByDebugger() {
+		desc := "None"
+		if e.Description != "" {
+			desc = e.Description
+		}
+		embed := &discordgo.MessageEmbed{
+			Title: "NEW SERVER JOIN",
+			Color: 1564907,
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   "ServerID",
+					Value:  e.ID,
+					Inline: true,
+				},
+				{
+					Name:   "Server Name",
+					Value:  e.Name,
+					Inline: true,
+				},
+				{
+					Name:   "Member Count",
+					Value:  fmt.Sprintf("%v", e.MemberCount),
+					Inline: true,
+				},
+				{
+					Name:   "Description",
+					Value:  desc,
+					Inline: false,
+				},
 			},
-			{
-				Name:   "Server Name",
-				Value:  e.Name,
-				Inline: true,
-			},
-			{
-				Name:   "Member Count",
-				Value:  fmt.Sprintf("%v", e.MemberCount),
-				Inline: true,
-			},
-			{
-				Name:   "Description",
-				Value:  desc,
-				Inline: false,
-			},
-		},
-	}
+		}
 
-	_, err := s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
-	if err != nil {
-		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSend(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+		_, err := s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
+		if err != nil {
+			fmt.Printf("%+v", errors.WithStack(err))
+			_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+		}
 	}
 }
 
@@ -92,7 +94,7 @@ func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 	err := s.UpdateGameStatus(0, "try /tuuck")
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSend(h.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+		_, _ = s.ChannelMessageSendEmbed(h.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 	}
 
 	// FYI can get all connected Guild list here
@@ -107,7 +109,7 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 		err := r.sendLmgtfy(s, msg)
 		if err != nil {
 			fmt.Printf("%+v", errors.WithStack(err))
-			_, _ = s.ChannelMessageSend(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+			_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 		}
 	}
 }
@@ -116,7 +118,7 @@ func (d *GuildJoinLeaveHandler) GuildJoinHandler(s *discordgo.Session, e *discor
 	guild, err := s.Guild(e.GuildID)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+		_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 	}
 
 	fmt.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", e.Member.User.String(), guild.Name)
@@ -126,7 +128,7 @@ func (d *GuildJoinLeaveHandler) GuildLeaveHandler(s *discordgo.Session, e *disco
 	guild, err := s.Guild(e.GuildID)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+		_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 	}
 
 	fmt.Printf("%s left the server %s\n Seacrest OUT..", e.Member.User.String(), guild.Name)

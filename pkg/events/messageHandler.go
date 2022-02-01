@@ -41,7 +41,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				err := d.testMethod(s, m, param)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 				}
 			}
 			return
@@ -52,7 +52,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				err := d.startServer(s, m)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 				}
 				return
 
@@ -60,6 +60,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 				}
 			}
 
@@ -69,7 +70,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				err := d.stopServer(s, m)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 				}
 				return
 
@@ -77,6 +78,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 				}
 			}
 
@@ -85,7 +87,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.sendServerStatusAsMessage(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 			return
 
@@ -94,7 +96,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			err := d.playNIM(s, m, param)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSend(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 			return
 
@@ -103,6 +105,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.Invalid)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 			return
 		}

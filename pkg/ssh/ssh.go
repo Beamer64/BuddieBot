@@ -70,14 +70,24 @@ func (client *SSHClient) RunCommand(commandText string) (string, error) {
 		return "", err
 	}
 
-	defer conn.Close()
+	defer func(conn *ssh.Client) {
+		err = conn.Close()
+	}(conn)
+	if err != nil {
+		return "", err
+	}
 
 	sess, err := conn.NewSession()
 	if err != nil {
 		return "", err
 	}
 
-	defer sess.Close()
+	defer func(sess *ssh.Session) {
+		err = sess.Close()
+	}(sess)
+	if err != nil {
+		return "", err
+	}
 
 	outPutByte, err := sess.CombinedOutput(commandText)
 	if err != nil {

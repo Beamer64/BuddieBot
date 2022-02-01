@@ -14,6 +14,24 @@ import (
 	"time"
 )
 
+func getErrorEmbed(err error) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title:       "ERROR",
+		Description: "(ノಠ益ಠ)ノ彡┻━┻",
+		Color:       16726843,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Stack",
+				Value:  fmt.Sprintf("%+v", errors.WithStack(err)),
+				Inline: true,
+			},
+		},
+	}
+
+	return embed
+}
+
+// IsLaunchedByDebugger Determines if application is being run by the debugger.
 func IsLaunchedByDebugger() bool {
 	// gops executable must be in the path. See https://github.com/google/gops
 	gopsOut, err := exec.Command("gops", strconv.Itoa(os.Getppid())).Output()

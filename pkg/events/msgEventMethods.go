@@ -9,8 +9,12 @@ import (
 	"time"
 )
 
-func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+// functions here should mostly be used for the prefix commands ($)
 
+func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+	if IsLaunchedByDebugger() {
+
+	}
 	return nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
+	"github.com/pkg/errors"
 	"io"
 	"math/rand"
 	"net/http"
@@ -26,10 +27,29 @@ type steamGames struct {
 	} `json:"applist"`
 }
 
+// functions here should mostly be used for the slash commands
+
 // rangeIn Returns pseudo rand num between low and high.
 // For random embed color: rangeIn(1, 16777215)
 func rangeIn(low, hi int) int {
 	return low + rand.Intn(hi-low)
+}
+
+func getErrorEmbed(err error) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title:       "ERROR",
+		Description: "(ノಠ益ಠ)ノ彡┻━┻",
+		Color:       16726843,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Stack",
+				Value:  fmt.Sprintf("%+v", errors.WithStack(err)),
+				Inline: true,
+			},
+		},
+	}
+
+	return embed
 }
 
 func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {

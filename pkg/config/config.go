@@ -2,8 +2,8 @@ package config
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
@@ -133,7 +133,7 @@ func ReadConfig(possibleConfigPaths ...string) (*ConfigStructs, error) {
 		// attempt to open dir
 		files, err := ioutil.ReadDir(cp)
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Printf("%+v", errors.WithStack(err))
 			continue
 		}
 

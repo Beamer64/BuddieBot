@@ -123,12 +123,14 @@ var (
 		},
 	}
 
+	// ComponentHandlers for handling components in interactions. Eg. Buttons, Dropdowns, Searchbars Etc.
 	ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs){
 		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			sign := i.MessageComponentData().Values[0]
 			embed, err := getHoroscopeEmbed(sign)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
@@ -139,7 +141,8 @@ var (
 			// edit response (i.Interaction) and replace with embed
 			_, err = s.ChannelMessageEditComplex(msgEdit)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			err = s.InteractionRespond(
@@ -152,12 +155,14 @@ var (
 			)
 			if err != nil {
 				if !strings.Contains(err.Error(), "Cannot send an empty message") {
-					_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 				}
 			}
 		},
 	}
 
+	// CommandHandlers for handling the commands themselves. Main interaction response here.
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs){
 		"version": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			embed := &discordgo.MessageEmbed{
@@ -177,13 +182,15 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"coin-flip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			embed, err := getCoinFlipEmbed(cfg)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			err = s.InteractionRespond(
@@ -197,13 +204,15 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"stop": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			err := stopAudioPlayback()
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			err = s.InteractionRespond(
@@ -215,13 +224,15 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"clear": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			err := web.RunMpFileCleanUp(fmt.Sprintf("%s/Audio", i.GuildID))
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			err = s.InteractionRespond(
@@ -233,7 +244,8 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"skip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
@@ -252,12 +264,14 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			err = skipPlayback(s, i)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"queue": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
@@ -277,7 +291,8 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"horoscope": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
@@ -374,13 +389,15 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"pick": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			embed, err := getPickEmbed(i.ApplicationCommandData().Options, cfg)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			content := ""
@@ -406,7 +423,8 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"tuuck": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
@@ -429,7 +447,8 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"play": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
@@ -443,12 +462,14 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			err = playYoutubeLink(s, i, link)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 		"insult": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
@@ -456,7 +477,8 @@ var (
 			randColorInt := rangeIn(1, 16777215)
 			embed, err := api.GetInsultEmbed(randColorInt, cfg)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 
 			err = s.InteractionRespond(
@@ -471,7 +493,8 @@ var (
 				},
 			)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
 	}
