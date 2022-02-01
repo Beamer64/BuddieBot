@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/web_scrape"
+	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 	"strings"
@@ -219,7 +219,7 @@ var (
 			}
 		},
 		"clear": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			err := web_scrape.RunMpFileCleanUp(fmt.Sprintf("%s/Audio", i.GuildID))
+			err := web.RunMpFileCleanUp(fmt.Sprintf("%s/Audio", i.GuildID))
 			if err != nil {
 				_, _ = s.ChannelMessageSend(cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
 			}
@@ -238,8 +238,8 @@ var (
 		},
 		"skip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			audio := ""
-			if len(web_scrape.MpFileQueue) > 0 {
-				audio = fmt.Sprintf("Skipping %s", web_scrape.MpFileQueue[0])
+			if len(web.MpFileQueue) > 0 {
+				audio = fmt.Sprintf("Skipping %s", web.MpFileQueue[0])
 			} else {
 				audio = "Queue is empty, my guy"
 			}
@@ -262,8 +262,8 @@ var (
 		},
 		"queue": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			queue := ""
-			if len(web_scrape.MpFileQueue) > 0 {
-				queue = strings.Join(web_scrape.MpFileQueue, "\n")
+			if len(web.MpFileQueue) > 0 {
+				queue = strings.Join(web.MpFileQueue, "\n")
 			} else {
 				queue = "Uh owh, song queue is wempty (>.<)"
 			}

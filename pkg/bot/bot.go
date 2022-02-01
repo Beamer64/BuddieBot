@@ -36,13 +36,14 @@ func Init(cfg *config.ConfigStructs) error {
 }
 
 func registerEvents(s *discordgo.Session, cfg *config.ConfigStructs, u *discordgo.User) {
-	s.AddHandler(events.NewReadyHandler().ReadyHandler)
+	s.AddHandler(events.NewReadyHandler(cfg).ReadyHandler)
 
-	s.AddHandler(events.NewGuildJoinLeaveHandler().GuildJoinHandler)
-	s.AddHandler(events.NewGuildJoinLeaveHandler().GuildLeaveHandler)
+	s.AddHandler(events.NewGuildCreateHandler(cfg).GuildCreateHandler)
+	s.AddHandler(events.NewGuildJoinLeaveHandler(cfg).GuildJoinHandler)
+	s.AddHandler(events.NewGuildJoinLeaveHandler(cfg).GuildLeaveHandler)
 
 	s.AddHandler(events.NewMessageCreateHandler(cfg, u).MessageCreateHandler)
-	s.AddHandler(events.NewReactionHandler().ReactHandlerAdd)
+	s.AddHandler(events.NewReactionHandler(cfg).ReactHandlerAdd)
 
 	s.AddHandler(events.NewCommandHandler(cfg).CommandHandler)
 }

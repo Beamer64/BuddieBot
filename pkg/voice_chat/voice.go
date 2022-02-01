@@ -1,7 +1,7 @@
 package voice_chat
 
 import (
-	"github.com/beamer64/discordBot/pkg/web_scrape"
+	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -37,11 +37,11 @@ func ConnectVoiceChannel(s *discordgo.Session, userID string, guildID string) (*
 		}
 
 		select {
-		case <-web_scrape.StopPlaying:
-			web_scrape.StopPlaying = make(chan bool)
+		case <-web.StopPlaying:
+			web.StopPlaying = make(chan bool)
 		default:
-			if !web_scrape.IsPlaying {
-				web_scrape.StopPlaying = make(chan bool)
+			if !web.IsPlaying {
+				web.StopPlaying = make(chan bool)
 			}
 		}
 	}

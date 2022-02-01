@@ -1,16 +1,55 @@
-package web_scrape
+package web
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
+	gomail "gopkg.in/mail.v2"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 )
+
+func TestSendEmail(t *testing.T) {
+	if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}
+
+	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	m := gomail.NewMessage()
+
+	// receivers
+	m.SetHeader("To", cfg.Configs.Settings.Email)
+
+	// sender
+	m.SetHeader("From", cfg.Configs.Settings.Email)
+
+	// subject
+	m.SetHeader("Subject", "Test Subject")
+
+	// E-Mail body. You can set plain text or html with text/html
+	m.SetBody("text/plain", "Test Email sent.")
+
+	// Settings for SMTP server
+	d := gomail.NewDialer("smtp.gmail.com", 587, cfg.Configs.Settings.Email, cfg.Configs.Settings.EmailPassword)
+
+	// This is only needed when SSL/TLS certificate is not valid on server.
+	// In production this should be set to false.
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+
+	// Now send E-Mail
+	if err = d.DialAndSend(m); err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestAudioLink(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {

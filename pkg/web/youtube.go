@@ -1,4 +1,4 @@
-package web_scrape
+package web
 
 import (
 	"context"

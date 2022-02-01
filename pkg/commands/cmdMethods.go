@@ -6,7 +6,7 @@ import (
 	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/beamer64/discordBot/pkg/voice_chat"
-	"github.com/beamer64/discordBot/pkg/web_scrape"
+	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
 	"io"
@@ -242,12 +242,12 @@ func playYoutubeLink(s *discordgo.Session, i *discordgo.InteractionCreate, param
 		param = "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
 	}
 
-	link, fileName, err := web_scrape.GetYtAudioLink(s, msg, param)
+	link, fileName, err := web.GetYtAudioLink(s, msg, param)
 	if err != nil {
 		return err
 	}
 
-	err = web_scrape.DownloadMpFile(i, link, fileName)
+	err = web.DownloadMpFile(i, link, fileName)
 	if err != nil {
 		return err
 	}
@@ -257,7 +257,7 @@ func playYoutubeLink(s *discordgo.Session, i *discordgo.InteractionCreate, param
 		return err
 	}
 
-	err = web_scrape.PlayAudioFile(dgv, fileName, i, s)
+	err = web.PlayAudioFile(dgv, fileName, i, s)
 	if err != nil {
 		return err
 	}
@@ -268,9 +268,9 @@ func playYoutubeLink(s *discordgo.Session, i *discordgo.InteractionCreate, param
 func stopAudioPlayback() error {
 	//vc := voice_chat.VoiceConnection{}
 
-	if web_scrape.StopPlaying != nil {
-		close(web_scrape.StopPlaying)
-		web_scrape.IsPlaying = false
+	if web.StopPlaying != nil {
+		close(web.StopPlaying)
+		web.IsPlaying = false
 
 		/*if vc.Dgv != nil {
 			vc.Dgv.Close()
@@ -282,7 +282,7 @@ func stopAudioPlayback() error {
 }
 
 func skipPlayback(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	if len(web_scrape.MpFileQueue) > 0 {
+	if len(web.MpFileQueue) > 0 {
 		err := stopAudioPlayback()
 		if err != nil {
 			return err
@@ -293,7 +293,7 @@ func skipPlayback(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 			return err
 		}
 
-		err = web_scrape.PlayAudioFile(dgv, "", i, s)
+		err = web.PlayAudioFile(dgv, "", i, s)
 		if err != nil {
 			return err
 		}
