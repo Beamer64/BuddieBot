@@ -37,10 +37,38 @@ func NewReadyHandler(cfg *config.ConfigStructs) *ReadyHandler {
 // Events
 
 func (g *GuildCreateHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
-	_, err := s.ChannelMessageSend(
-		g.cfg.Configs.DiscordIDs.EventNotifChannelID,
-		fmt.Sprintf("BuddieBot has joined ServerID: %s\nServerName: %s\nDescription: %s\nMemberCount: %v\nRegion: %s", e.ID, e.Name, e.Description, e.MemberCount, e.Region),
-	)
+	desc := "None"
+	if e.Description != "" {
+		desc = e.Description
+	}
+	embed := &discordgo.MessageEmbed{
+		Title: "NEW SERVER JOIN",
+		Color: 1564907,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "ServerID",
+				Value:  e.ID,
+				Inline: true,
+			},
+			{
+				Name:   "Server Name",
+				Value:  e.Name,
+				Inline: true,
+			},
+			{
+				Name:   "Member Count",
+				Value:  fmt.Sprintf("%v", e.MemberCount),
+				Inline: true,
+			},
+			{
+				Name:   "Description",
+				Value:  desc,
+				Inline: false,
+			},
+		},
+	}
+
+	_, err := s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
 		_, _ = s.ChannelMessageSend(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, fmt.Sprintf("%+v", errors.WithStack(err)))
