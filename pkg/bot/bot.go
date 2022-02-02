@@ -31,7 +31,7 @@ func Init(cfg *config.ConfigStructs) error {
 		return err
 	}
 
-	fmt.Println("DiscordBot is running!")
+	fmt.Println("BuddieBot is running!")
 	return nil
 }
 

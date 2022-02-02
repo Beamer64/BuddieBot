@@ -154,22 +154,32 @@ func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
 	}
 
 	c := colly.NewCollector()
-	// On every p element which has style attribute call callback
-	c.OnHTML(
-		"p", func(e *colly.HTMLElement) {
-			if !found {
-				if e.Text != "" {
-					horoscope = e.Text
-					found = true
-				}
-			}
-		},
-	)
 
 	// Before making a request print "Visiting ..."
 	c.OnRequest(
 		func(r *colly.Request) {
 			fmt.Println("Visiting", r.URL.String())
+		},
+	)
+
+	// this is ugly, and I'd like to do away with it eventually
+	current := time.Now().UTC()
+	timeFormat := current.Format("2006 Jan 2")
+	split := strings.Split(timeFormat, " ")
+	month := split[1]
+	day := split[2]
+	year := split[0]
+	newFormat := fmt.Sprintf("%s %s, %s", month, day, year)
+
+	// On every p element which has style attribute call callback
+	c.OnHTML(
+		"p", func(e *colly.HTMLElement) {
+			if !found {
+				if strings.Contains(e.Text, newFormat) {
+					horoscope = e.Text
+					found = true
+				}
+			}
 		},
 	)
 
