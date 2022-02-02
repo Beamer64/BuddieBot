@@ -48,39 +48,53 @@ var (
 			Description: "I'll pick stuff for you. I'll also pick a steam game with the 1st choice of 'steam'",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "1st",
-					Description: "First choice",
-					Required:    true,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "2nd",
-					Description: "Second choice",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "choices",
+					Description: "Will choose between 2 or more things.",
 					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "1st",
+							Description: "First choice",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "2nd",
+							Description: "Second choice",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "3rd",
+							Description: "Third choice",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "4th",
+							Description: "Fourth choice",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "5th",
+							Description: "Fifth choice",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "6th",
+							Description: "Sixth choice",
+							Required:    false,
+						},
+					},
 				},
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "3rd",
-					Description: "Third choice",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "4th",
-					Description: "Fourth choice",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "5th",
-					Description: "Fifth choice",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "6th",
-					Description: "Sixth choice",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "steam",
+					Description: "Will choose a random Steam game to play.",
 					Required:    false,
 				},
 			},
@@ -401,14 +415,15 @@ var (
 			}
 
 			content := ""
-			if len(i.ApplicationCommandData().Options) > 1 {
-				for _, v := range i.ApplicationCommandData().Options {
+			switch strings.ToLower(i.ApplicationCommandData().Options[0].Name) {
+			case "steam":
+				content = "Choosing Steam Game"
+			case "choices":
+				for _, v := range i.ApplicationCommandData().Options[0].Options {
 					content = content + fmt.Sprintf("[%s] ", v.StringValue())
 				}
 				content = strings.TrimSpace(content)
 				content = fmt.Sprintf("*%s*", content)
-			} else if strings.ToLower(i.ApplicationCommandData().Options[0].StringValue()) == "steam" {
-				content = "Choosing Steam Game"
 			}
 
 			err = s.InteractionRespond(

@@ -39,7 +39,8 @@ func getErrorEmbed(err error) *discordgo.MessageEmbed {
 
 func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	choice := ""
-	if strings.ToLower(options[0].StringValue()) == "steam" {
+	switch strings.ToLower(options[0].Name) {
+	case "steam":
 		res, err := http.Get(cfg.Configs.Keys.SteamAPI)
 		if err != nil {
 			return nil, err
@@ -62,9 +63,9 @@ func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, 
 		randomIndex := rand.Intn(len(steamObj.Applist.Apps))
 		choice = fmt.Sprintf("%s\nsteam://openurl/https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Name, steamObj.Applist.Apps[randomIndex].Appid)
 
-	} else {
+	case "choices":
 		randomIndex := rand.Intn(len(options))
-		choice = options[randomIndex].StringValue()
+		choice = options[0].Options[randomIndex].StringValue()
 	}
 
 	embed := &discordgo.MessageEmbed{

@@ -133,7 +133,7 @@ func ReadConfig(possibleConfigPaths ...string) (*ConfigStructs, error) {
 		// attempt to open dir
 		files, err := ioutil.ReadDir(cp)
 		if err != nil {
-			fmt.Printf("%+v", errors.WithStack(err))
+			fmt.Printf("Couldn't find file in dir %s\n", cp)
 			continue
 		}
 
