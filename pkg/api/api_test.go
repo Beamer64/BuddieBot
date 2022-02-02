@@ -12,6 +12,54 @@ import (
 	"testing"
 )
 
+func TestGetGifURL(t *testing.T) {
+	/*if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}*/
+	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type gif struct {
+		Results []struct {
+			Media []struct {
+				Gif struct {
+					Size    int    `json:"size"`
+					Preview string `json:"preview"`
+					Dims    []int  `json:"dims"`
+					URL     string `json:"url"`
+				} `json:"gif"`
+			} `json:"media"`
+		} `json:"results"`
+	}
+
+	URL := fmt.Sprintf("https://g.tenor.com/v1/search?q=cat&key=%s&limit=1", cfg.Configs.Keys.TenorAPIkey)
+
+	res, err := http.Get(URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var gifObj gif
+
+	err = json.NewDecoder(res.Body).Decode(&gifObj)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}(res.Body)
+
+	gifURL := gifObj.Results[0].Media[0].Gif.URL
+
+	fmt.Println(gifURL)
+}
+
 func TestPostInsult(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")

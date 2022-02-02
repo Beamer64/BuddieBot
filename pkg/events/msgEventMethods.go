@@ -1,10 +1,13 @@
 package events
 
 import (
+	"fmt"
 	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
 	"github.com/bwmarrin/discordgo"
+	"github.com/subosito/shorturl"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -19,14 +22,15 @@ func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.Mes
 }
 
 func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message) error {
-	lmgtfyURL := CreateLmgtfyURL(m.Content)
+	strEnc := url.QueryEscape(m.Content)
+	lmgtfyURL := fmt.Sprintf("http://lmgtfy.com/?q=%s", strEnc)
 
-	lmgtfyShortURL, err := ShortenURL(lmgtfyURL)
+	lmgtfyShortURL, err := shorturl.Shorten(lmgtfyURL, "tinyurl")
 	if err != nil {
 		return err
 	}
 
-	_, err = s.ChannelMessageSend(m.ChannelID, "\""+m.Content+"\""+"\n"+lmgtfyShortURL)
+	_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("\"%s\"\n%s", m.Content, string(lmgtfyShortURL)))
 	if err != nil {
 		return err
 	}

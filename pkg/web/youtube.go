@@ -236,6 +236,7 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, ic *discordg
 	return nil
 }
 
+// RunMpFileCleanUp clear out Audio directory
 func RunMpFileCleanUp(dir string) error {
 	MpFileQueue = nil
 

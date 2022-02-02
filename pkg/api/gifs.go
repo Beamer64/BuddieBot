@@ -2,68 +2,48 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 )
 
+type gif struct {
+	Results []struct {
+		Media []struct {
+			Gif struct {
+				Size    int    `json:"size"`
+				Preview string `json:"preview"`
+				Dims    []int  `json:"dims"`
+				URL     string `json:"url"`
+			} `json:"gif"`
+		} `json:"media"`
+	} `json:"results"`
+}
+
 func RequestGifURL(searchStr, tenorAPIkey string) (string, error) {
+	var gifObj gif
+
 	searchStr = url.QueryEscape(searchStr)
 	URL := "https://g.tenor.com/v1/search?q=" + searchStr + "&key=" + tenorAPIkey + "&limit=1"
 
-	responseResults, err := GetResponseResults(URL)
+	res, err := http.Get(URL)
 	if err != nil {
 		return "", err
 	}
 
-	gifURL := ParseGifResponseForGifURL(responseResults)
-	return gifURL, nil
-}
-
-func GetResponseResults(url string) (map[string]interface{}, error) {
-	var responseResults map[string]interface{}
-
-	resp, err := http.Get(url)
+	err = json.NewDecoder(res.Body).Decode(&gifObj)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	defer func(Body io.ReadCloser) {
 		err = Body.Close()
 		if err != nil {
-			log.Fatal(err)
+			return
 		}
-	}(resp.Body)
+	}(res.Body)
 
-	err = json.NewDecoder(resp.Body).Decode(&responseResults)
-	if err != nil {
-		return nil, err
-	}
+	gifURL := gifObj.Results[0].Media[0].Gif.URL
 
-	return responseResults, nil
-}
-
-func ParseGifResponseForGifURL(responseResults map[string]interface{}) string {
-	var gifURL string
-
-	for responseResultsKey, responseResultsValue := range responseResults {
-		if responseResultsKey == "results" {
-			for key, value := range responseResultsValue.([]interface{})[0].(map[string]interface{}) {
-				if key == "media" {
-					for k, v := range value.([]interface{})[0].(map[string]interface{}) {
-						if k == "gif" {
-							for finalKey, finalValue := range v.(map[string]interface{}) {
-								if finalKey == "url" {
-									gifURL = fmt.Sprintf("%v", finalValue)
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return gifURL
+	return gifURL, nil
 }

@@ -18,22 +18,7 @@ import (
 	"time"
 )
 
-type steamGames struct {
-	Applist struct {
-		Apps []struct {
-			Appid int    `json:"appid"`
-			Name  string `json:"name"`
-		} `json:"apps"`
-	} `json:"applist"`
-}
-
 // functions here should mostly be used for the slash commands
-
-// rangeIn Returns pseudo rand num between low and high.
-// For random embed color: rangeIn(1, 16777215)
-func rangeIn(low, hi int) int {
-	return low + rand.Intn(hi-low)
-}
 
 func getErrorEmbed(err error) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
