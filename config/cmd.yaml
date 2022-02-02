@@ -19,7 +19,7 @@ description:
   desc-server-status: "Gives the current status of the MC server."
   desc-version: "Gives the Git SHA of the current bot version running"
   desc-coin-flip: "Flips a coin, sends gif for results"
-  desc-lmgtfy: "Add the 'Ask' Reaction to a msg and get a LMGTFY link"
+  desc-lmgtfy: "Add the ':grey_question:' Reaction to a msg and get a LMGTFY link"
   desc-insult: "Sends an insult and tags {@User}"
   desc-play: "Adds youtube audio to queue and plays it"
   desc-stop: "Stops the audio link playback"

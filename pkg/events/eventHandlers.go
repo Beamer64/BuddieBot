@@ -36,6 +36,7 @@ func NewReadyHandler(cfg *config.ConfigStructs) *ReadyHandler {
 
 // Events
 
+// GuildCreateHandler joins new guild
 func (g *GuildCreateHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
 	if !IsLaunchedByDebugger() {
 		desc := "None"
@@ -77,6 +78,7 @@ func (g *GuildCreateHandler) GuildCreateHandler(s *discordgo.Session, e *discord
 	}
 }
 
+// CommandHandler new commands
 func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
@@ -90,6 +92,7 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 	}
 }
 
+// ReadyHandler session is created
 func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 	err := s.UpdateGameStatus(0, "try /tuuck")
 	if err != nil {
@@ -102,8 +105,9 @@ func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 	fmt.Printf("Logged in as %s\n", e.User.String())
 }
 
+// ReactHandlerAdd when reactions are added to messages
 func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.MessageReactionAdd) {
-	if mr.MessageReaction.Emoji.Name == "lmgtfy" {
+	if mr.MessageReaction.Emoji.Name == "grey_question" {
 		msg, _ := s.ChannelMessage(mr.ChannelID, mr.MessageID)
 
 		err := r.sendLmgtfy(s, msg)
@@ -114,6 +118,7 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 	}
 }
 
+// GuildJoinHandler when someone joins our server
 func (d *GuildJoinLeaveHandler) GuildJoinHandler(s *discordgo.Session, e *discordgo.GuildMemberAdd) {
 	guild, err := s.Guild(e.GuildID)
 	if err != nil {
@@ -124,6 +129,7 @@ func (d *GuildJoinLeaveHandler) GuildJoinHandler(s *discordgo.Session, e *discor
 	fmt.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", e.Member.User.String(), guild.Name)
 }
 
+// GuildLeaveHandler when someone leaves our server
 func (d *GuildJoinLeaveHandler) GuildLeaveHandler(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
 	guild, err := s.Guild(e.GuildID)
 	if err != nil {
