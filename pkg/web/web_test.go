@@ -149,7 +149,7 @@ func TestGroupChat(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	session, err = discordgo.New("Bot " + cfg.Configs.Keys.BotToken)
+	session, err = discordgo.New("Bot " + cfg.Configs.Keys.TestBotToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func TestGetMembers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	session, err = discordgo.New("Bot " + cfg.Configs.Keys.BotToken)
+	session, err = discordgo.New("Bot " + cfg.Configs.Keys.TestBotToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +206,7 @@ func TestGetMembers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req.Header.Add("Authorization", "Bot "+cfg.Configs.Keys.BotToken)
+	req.Header.Add("Authorization", "Bot "+cfg.Configs.Keys.TestBotToken)
 	req.Header.Add("User-Agent", "DiscordBot")
 	res, err := client.Do(req)
 	if err != nil {

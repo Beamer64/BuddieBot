@@ -73,7 +73,7 @@ func TestPostInsult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	session, err = discordgo.New("Bot " + cfg.Configs.Keys.BotToken)
+	session, err = discordgo.New("Bot " + cfg.Configs.Keys.TestBotToken)
 	if err != nil {
 		t.Fatal(err)
 	}
