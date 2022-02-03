@@ -28,6 +28,7 @@ type Configuration struct {
 		SteamAPI       string `yaml:"steamAPI"`
 		AffirmationAPI string `yaml:"affirmationAPI"`
 		KanyeAPI       string `yaml:"kanyeAPI"`
+		AdviceAPI      string `yaml:"adviceAPI"`
 	} `yaml:"keys"`
 
 	DiscordIDs struct {

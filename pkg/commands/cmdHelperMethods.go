@@ -21,6 +21,13 @@ type kanye struct {
 	Quote string `json:"quote"`
 }
 
+type advice struct {
+	Slip struct {
+		ID     int    `json:"id"`
+		Advice string `json:"advice"`
+	} `json:"slip"`
+}
+
 // rangeIn Returns pseudo rand num between low and high.
 // For random embed color: rangeIn(1, 16777215)
 func rangeIn(low, hi int) int {

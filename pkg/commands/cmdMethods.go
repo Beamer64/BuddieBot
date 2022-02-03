@@ -37,6 +37,35 @@ func getErrorEmbed(err error) *discordgo.MessageEmbed {
 	return embed
 }
 
+func getAdviceEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+	res, err := http.Get(cfg.Configs.Keys.AdviceAPI)
+	if err != nil {
+		return nil, err
+	}
+
+	var adviceObj advice
+
+	err = json.NewDecoder(res.Body).Decode(&adviceObj)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "( ಠ ͜ʖರೃ)",
+		Color:       rangeIn(1, 16777215),
+		Description: adviceObj.Slip.Advice,
+	}
+
+	return embed, nil
+}
+
 func getKanyeEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	res, err := http.Get(cfg.Configs.Keys.KanyeAPI)
 	if err != nil {

@@ -61,6 +61,12 @@ var (
 					Description: "Gifts us with a quote from the man himself",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "advice",
+					Description: "Words of wisdom",
+					Required:    false,
+				},
 			},
 		},
 		{
@@ -331,6 +337,28 @@ var (
 		},
 		"daily": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			switch i.ApplicationCommandData().Options[0].Name {
+			case "advice":
+				embed, err := getAdviceEmbed(cfg)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+
+				err = s.InteractionRespond(
+					i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Embeds: []*discordgo.MessageEmbed{
+								embed,
+							},
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+
 			case "kanye":
 				embed, err := getKanyeEmbed(cfg)
 				if err != nil {
