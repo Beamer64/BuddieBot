@@ -40,8 +40,28 @@ var (
 			Description: "Gets the current song queue",
 		},
 		{
-			Name:        "horoscope",
-			Description: "Gives daily horoscope",
+			Name:        "daily",
+			Description: "Receive daily quotes, horoscopes, affirmations, etc.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "horoscope",
+					Description: "Gives daily horoscope",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "affirmation",
+					Description: "Gives daily affirmation",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "kanye",
+					Description: "Gifts us with a quote from the man himself",
+					Required:    false,
+				},
+			},
 		},
 		{
 			Name:        "pick",
@@ -309,90 +329,137 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"horoscope": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			err := s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "Choose a zodiac sign",
-						Components: []discordgo.MessageComponent{
-							discordgo.ActionsRow{
-								Components: []discordgo.MessageComponent{
-									discordgo.SelectMenu{
-										CustomID:    "horo-select",
-										Placeholder: "Zodiac",
-										Options: []discordgo.SelectMenuOption{
-											{
-												Label:   "Aquarius",
-												Value:   "aquarius",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🌊"},
-											},
-											{
-												Label:   "Aries",
-												Value:   "aries",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🐏"},
-											},
-											{
-												Label:   "Cancer",
-												Value:   "cancer",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🦀"},
-											},
-											{
-												Label:   "Capricorn",
-												Value:   "capricorn",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🐐"},
-											},
-											{
-												Label:   "Gemini",
-												Value:   "gemini",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "♊"},
-											},
-											{
-												Label:   "Leo",
-												Value:   "leo",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🦁"},
-											},
-											{
-												Label:   "Libra",
-												Value:   "libra",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "⚖️"},
-											},
-											{
-												Label:   "Pisces",
-												Value:   "pisces",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🐠"},
-											},
-											{
-												Label:   "Sagittarius",
-												Value:   "sagittarius",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🏹"},
-											},
-											{
-												Label:   "Scorpio",
-												Value:   "scorpio",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🦂"},
-											},
-											{
-												Label:   "Taurus",
-												Value:   "taurus",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "🐃"},
-											},
-											{
-												Label:   "Virgo",
-												Value:   "virgo",
-												Default: false,
-												Emoji:   discordgo.ComponentEmoji{Name: "♍"},
+		"daily": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+			switch i.ApplicationCommandData().Options[0].Name {
+			case "kanye":
+				embed, err := getKanyeEmbed(cfg)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+
+				err = s.InteractionRespond(
+					i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Embeds: []*discordgo.MessageEmbed{
+								embed,
+							},
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+
+			case "affirmation":
+				embed, err := getAffirmationEmbed(cfg)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+
+				err = s.InteractionRespond(
+					i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Embeds: []*discordgo.MessageEmbed{
+								embed,
+							},
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+
+			case "horoscope":
+				err := s.InteractionRespond(
+					i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Content: "Choose a zodiac sign",
+							Components: []discordgo.MessageComponent{
+								discordgo.ActionsRow{
+									Components: []discordgo.MessageComponent{
+										discordgo.SelectMenu{
+											CustomID:    "horo-select",
+											Placeholder: "Zodiac",
+											Options: []discordgo.SelectMenuOption{
+												{
+													Label:   "Aquarius",
+													Value:   "aquarius",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🌊"},
+												},
+												{
+													Label:   "Aries",
+													Value:   "aries",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🐏"},
+												},
+												{
+													Label:   "Cancer",
+													Value:   "cancer",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🦀"},
+												},
+												{
+													Label:   "Capricorn",
+													Value:   "capricorn",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🐐"},
+												},
+												{
+													Label:   "Gemini",
+													Value:   "gemini",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "♊"},
+												},
+												{
+													Label:   "Leo",
+													Value:   "leo",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🦁"},
+												},
+												{
+													Label:   "Libra",
+													Value:   "libra",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "⚖️"},
+												},
+												{
+													Label:   "Pisces",
+													Value:   "pisces",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🐠"},
+												},
+												{
+													Label:   "Sagittarius",
+													Value:   "sagittarius",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🏹"},
+												},
+												{
+													Label:   "Scorpio",
+													Value:   "scorpio",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🦂"},
+												},
+												{
+													Label:   "Taurus",
+													Value:   "taurus",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "🐃"},
+												},
+												{
+													Label:   "Virgo",
+													Value:   "virgo",
+													Default: false,
+													Emoji:   discordgo.ComponentEmoji{Name: "♍"},
+												},
 											},
 										},
 									},
@@ -400,11 +467,11 @@ var (
 							},
 						},
 					},
-				},
-			)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
 			}
 		},
 		"pick": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {

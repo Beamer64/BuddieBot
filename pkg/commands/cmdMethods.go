@@ -37,6 +37,72 @@ func getErrorEmbed(err error) *discordgo.MessageEmbed {
 	return embed
 }
 
+func getKanyeEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+	res, err := http.Get(cfg.Configs.Keys.KanyeAPI)
+	if err != nil {
+		return nil, err
+	}
+
+	var kanyeObj kanye
+
+	err = json.NewDecoder(res.Body).Decode(&kanyeObj)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+
+	embed := &discordgo.MessageEmbed{
+		Title: "(▀̿Ĺ̯▀̿ ̿)",
+		Color: rangeIn(1, 16777215),
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:  fmt.Sprintf("\"%s\"", kanyeObj.Quote),
+				Value: "- Kanye",
+			},
+		},
+	}
+
+	return embed, nil
+}
+
+func getAffirmationEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+	res, err := http.Get(cfg.Configs.Keys.AffirmationAPI)
+	if err != nil {
+		return nil, err
+	}
+
+	var affirmObj affirmation
+
+	err = json.NewDecoder(res.Body).Decode(&affirmObj)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+
+	current := time.Now().UTC()
+	timeFormat := current.Format("Jan 2, 2006")
+
+	embed := &discordgo.MessageEmbed{
+		Title:       timeFormat,
+		Color:       rangeIn(1, 16777215),
+		Description: affirmObj.Affirmation,
+	}
+
+	return embed, nil
+}
+
 func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	choice := ""
 	switch strings.ToLower(options[0].Name) {
@@ -164,18 +230,13 @@ func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
 
 	// this is ugly, and I'd like to do away with it eventually
 	current := time.Now().UTC()
-	timeFormat := current.Format("2006 Jan 2")
-	split := strings.Split(timeFormat, " ")
-	month := split[1]
-	day := split[2]
-	year := split[0]
-	newFormat := fmt.Sprintf("%s %s, %s", month, day, year)
+	timeFormat := current.Format("Jan 2, 2006")
 
 	// On every p element which has style attribute call callback
 	c.OnHTML(
 		"p", func(e *colly.HTMLElement) {
 			if !found {
-				if strings.Contains(e.Text, newFormat) {
+				if strings.Contains(e.Text, timeFormat) {
 					horoscope = e.Text
 					found = true
 				}

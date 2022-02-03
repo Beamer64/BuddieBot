@@ -19,12 +19,14 @@ type ConfigStructs struct {
 
 type Configuration struct {
 	Keys struct {
-		BotToken     string `yaml:"botToken"`
-		WebHookToken string `yaml:"webHookToken"`
-		BotPublicKey string `yaml:"botPublicKey"`
-		TenorAPIkey  string `yaml:"tenorAPIkey"`
-		InsultAPI    string `yaml:"insultAPI"`
-		SteamAPI     string `yaml:"steamAPI"`
+		BotToken       string `yaml:"botToken"`
+		WebHookToken   string `yaml:"webHookToken"`
+		BotPublicKey   string `yaml:"botPublicKey"`
+		TenorAPIkey    string `yaml:"tenorAPIkey"`
+		InsultAPI      string `yaml:"insultAPI"`
+		SteamAPI       string `yaml:"steamAPI"`
+		AffirmationAPI string `yaml:"affirmationAPI"`
+		KanyeAPI       string `yaml:"kanyeAPI"`
 	} `yaml:"keys"`
 
 	DiscordIDs struct {
