@@ -37,6 +37,92 @@ func getErrorEmbed(err error) *discordgo.MessageEmbed {
 	return embed
 }
 
+func callDoggoAPI(cfg *config.ConfigStructs) (doggo, error) {
+	res, err := http.Get(cfg.Configs.Keys.DoggoAPI)
+	if err != nil {
+		return nil, err
+	}
+
+	var doggoObj doggo
+
+	err = json.NewDecoder(res.Body).Decode(&doggoObj)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+
+	return doggoObj, nil
+}
+
+func getDoggoEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+	// a data scientist had to fix this...
+	doggoObj, err := callDoggoAPI(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(doggoObj[0].Breeds) < 1 {
+		doggoObj, err = callDoggoAPI(cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	impWeight := checkIfEmpty(doggoObj[0].Breeds[0].Weight.Imperial)
+	metWeight := checkIfEmpty(doggoObj[0].Breeds[0].Weight.Metric)
+	impHeight := checkIfEmpty(doggoObj[0].Breeds[0].Height.Imperial)
+	metHeight := checkIfEmpty(doggoObj[0].Breeds[0].Height.Metric)
+
+	embed := &discordgo.MessageEmbed{
+		Title:       doggoObj[0].Breeds[0].Name,
+		Color:       rangeIn(1, 16777215),
+		Description: doggoObj[0].Breeds[0].Temperament,
+		Image: &discordgo.MessageEmbedImage{
+			URL: doggoObj[0].URL,
+		},
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Weight",
+				Value:  fmt.Sprintf("%s lbs / %s kg", impWeight, metWeight),
+				Inline: true,
+			},
+			{
+				Name:   "Height",
+				Value:  fmt.Sprintf("%s in / %s cm", impHeight, metHeight),
+				Inline: true,
+			},
+			{
+				Name:   "Origin",
+				Value:  checkIfEmpty(doggoObj[0].Breeds[0].Origin),
+				Inline: true,
+			},
+			{
+				Name:   "Bred For",
+				Value:  checkIfEmpty(doggoObj[0].Breeds[0].BredFor),
+				Inline: true,
+			},
+			{
+				Name:   "Breed Group",
+				Value:  checkIfEmpty(doggoObj[0].Breeds[0].BreedGroup),
+				Inline: true,
+			},
+			{
+				Name:   "Life Span",
+				Value:  checkIfEmpty(doggoObj[0].Breeds[0].LifeSpan),
+				Inline: true,
+			},
+		},
+	}
+
+	return embed, nil
+}
+
 func getAdviceEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	res, err := http.Get(cfg.Configs.Keys.AdviceAPI)
 	if err != nil {
@@ -258,14 +344,22 @@ func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
 	)
 
 	// this is ugly, and I'd like to do away with it eventually
-	current := time.Now()
-	timeFormat := current.Format("Jan 2, 2006")
+	today := time.Now()
+	todayFormat := today.Format("Jan 2, 2006")
+
+	yesterday := time.Now().AddDate(0, 0, -1)
+	yesterdayFormat := yesterday.Format("Jan 2, 2006")
 
 	// On every p element which has style attribute call callback
 	c.OnHTML(
 		"p", func(e *colly.HTMLElement) {
 			if !found {
-				if strings.Contains(e.Text, timeFormat) {
+				if strings.Contains(e.Text, todayFormat) {
+					horoscope = e.Text
+					found = true
+
+					// website hasn't updated yet
+				} else if strings.Contains(e.Text, yesterdayFormat) {
 					horoscope = e.Text
 					found = true
 				}

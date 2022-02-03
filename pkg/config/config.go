@@ -29,6 +29,7 @@ type Configuration struct {
 		AffirmationAPI string `yaml:"affirmationAPI"`
 		KanyeAPI       string `yaml:"kanyeAPI"`
 		AdviceAPI      string `yaml:"adviceAPI"`
+		DoggoAPI       string `yaml:"doggoAPI"`
 	} `yaml:"keys"`
 
 	DiscordIDs struct {
@@ -63,33 +64,42 @@ type Configuration struct {
 
 type Command struct {
 	Name struct {
-		Tuuck     string `yaml:"list-tuuck"`
-		CoinFlip  string `yaml:"list-coin-flip"`
-		Horoscope string `yaml:"list-horoscope"`
-		Version   string `yaml:"list-version"`
-		Insult    string `yaml:"list-insult"`
-		Play      string `yaml:"list-play"`
-		Stop      string `yaml:"list-stop"`
-		Queue     string `yaml:"list-queue"`
-		Clear     string `yaml:"list-clear"`
-		Pick      string `yaml:"list-pick"`
+		Tuuck            string `yaml:"list-tuuck"`
+		CoinFlip         string `yaml:"list-coin-flip"`
+		Version          string `yaml:"list-version"`
+		Insult           string `yaml:"list-insult"`
+		Play             string `yaml:"list-play"`
+		Stop             string `yaml:"list-stop"`
+		Queue            string `yaml:"list-queue"`
+		Clear            string `yaml:"list-clear"`
+		Pick             string `yaml:"list-pick"`
+		AnimalsDoggo     string `yaml:"list-animals-doggo"`
+		DailyHoroscope   string `yaml:"list-daily-horoscope"`
+		DailyAffirmation string `yaml:"list-daily-affirmation"`
+		DailyAdvice      string `yaml:"list-daily-advice"`
+		DailyKanye       string `yaml:"list-daily-kanye"`
 	} `yaml:"name"`
 
 	Desc struct {
-		Tuuck        string `yaml:"desc-tuuck"`
-		StartServer  string `yaml:"desc-start-server"`
-		StopServer   string `yaml:"desc-stop-server"`
-		CoinFlip     string `yaml:"desc-coin-flip"`
-		Horoscope    string `yaml:"desc-horoscope"`
-		ServerStatus string `yaml:"desc-server-status"`
-		Version      string `yaml:"desc-version"`
-		LMGTFY       string `yaml:"desc-lmgtfy"`
-		Insult       string `yaml:"desc-insult"`
-		Play         string `yaml:"desc-play"`
-		Stop         string `yaml:"desc-stop"`
-		Queue        string `yaml:"desc-queue"`
-		Clear        string `yaml:"desc-clear"`
-		Pick         string `yaml:"desc-pick"`
+		Tuuck            string `yaml:"desc-tuuck"`
+		StartServer      string `yaml:"desc-start-server"`
+		StopServer       string `yaml:"desc-stop-server"`
+		CoinFlip         string `yaml:"desc-coin-flip"`
+		ServerStatus     string `yaml:"desc-server-status"`
+		Version          string `yaml:"desc-version"`
+		LMGTFY           string `yaml:"desc-lmgtfy"`
+		Insult           string `yaml:"desc-insult"`
+		Play             string `yaml:"desc-play"`
+		Stop             string `yaml:"desc-stop"`
+		Queue            string `yaml:"desc-queue"`
+		Clear            string `yaml:"desc-clear"`
+		PickChoices      string `yaml:"desc-pick-choices"`
+		PickSteam        string `yaml:"desc-pick-steam"`
+		AnimalsDoggo     string `yaml:"desc-animals-doggo"`
+		DailyHoroscope   string `yaml:"desc-daily-horoscope"`
+		DailyAffirmation string `yaml:"desc-daily-affirmation"`
+		DailyAdvice      string `yaml:"desc-daily-advice"`
+		DailyKanye       string `yaml:"desc-daily-kanye"`
 	} `yaml:"description"`
 
 	Msg struct {

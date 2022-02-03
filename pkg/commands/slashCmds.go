@@ -40,6 +40,18 @@ var (
 			Description: "Gets the current song queue",
 		},
 		{
+			Name:        "animals",
+			Description: "So CUTE",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "doggo",
+					Description: "🐕",
+					Required:    false,
+				},
+			},
+		},
+		{
 			Name:        "daily",
 			Description: "Receive daily quotes, horoscopes, affirmations, etc.",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -335,6 +347,31 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+			switch i.ApplicationCommandData().Options[0].Name {
+			case "doggo":
+				embed, err := getDoggoEmbed(cfg)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+
+				err = s.InteractionRespond(
+					i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Embeds: []*discordgo.MessageEmbed{
+								embed,
+							},
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+			}
+		},
 		"daily": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			switch i.ApplicationCommandData().Options[0].Name {
 			case "advice":
@@ -539,10 +576,8 @@ var (
 		},
 		"tuuck": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
 			cmd := ""
-			if i.ApplicationCommandData().Options != nil {
+			if len(i.ApplicationCommandData().Options) > 0 {
 				cmd = i.ApplicationCommandData().Options[0].StringValue()
-			} else {
-				cmd = ""
 			}
 			embed := getTuuckEmbed(cmd, cfg)
 

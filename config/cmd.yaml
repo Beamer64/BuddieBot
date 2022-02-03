@@ -1,7 +1,6 @@
 # Displayed when the '/tuuck' cmd is called
 name:
   list-tuuck: "/tuuck"
-  list-horoscope: "/horoscope"
   list-version: "/version"
   list-coin-flip: "/coin-flip"
   list-insult: "/insult"
@@ -9,13 +8,18 @@ name:
   list-stop: "/stop"
   list-queue: "/queue"
   list-clear: "/clear"
-  list-pick: "/pick"
+  list-pick-choices: "/pick choices"
+  list-pick-steam: "/pick steam"
+  list-animals-doggo: "/animals doggo"
+  list-daily-horoscope: "/daily horoscope"
+  list-daily-affirmation: "/daily affirmation"
+  list-daily-advice: "/daily advice"
+  list-daily-kanye: "/daily kanye"
 
 description:
   desc-tuuck: Lists available commands."
   desc-start-server: "Starts Minecraft Server."
   desc-stop-server: "Stops Minecraft Server."
-  desc-horoscope: "Gives daily horoscope."
   desc-server-status: "Gives the current status of the MC server."
   desc-version: "Gives the Git SHA of the current bot version running"
   desc-coin-flip: "Flips a coin, sends gif for results"
@@ -25,7 +29,12 @@ description:
   desc-stop: "Stops the audio link playback"
   desc-queue: "Gets the current song queue"
   desc-clear: "Clears the audio queue"
-  desc-pick: "Chooses between 2 or more things. Can even pick a random steam game to play"
+  desc-pick: "Chooses between 2 or more things."
+  desc-animals-doggo: "Gives doggo."
+  desc-daily-horoscope: "Gives daily horoscope."
+  desc-daily-affirmation: "Gives daily affirmation."
+  desc-daily-advice: "Gives daily advice."
+  desc-daily-kanye: "Gives daily kanye."
 
 # Static cmd related messages
 message:
