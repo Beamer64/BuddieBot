@@ -19,7 +19,8 @@ type ConfigStructs struct {
 
 type Configuration struct {
 	Keys struct {
-		BotToken       string `yaml:"botToken"`
+		ProdBotToken   string `yaml:"prodBotToken"`
+		TestBotToken   string `yaml:"testBotToken"`
 		WebHookToken   string `yaml:"webHookToken"`
 		BotPublicKey   string `yaml:"botPublicKey"`
 		TenorAPIkey    string `yaml:"tenorAPIkey"`

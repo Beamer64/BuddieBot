@@ -91,7 +91,7 @@ func getAffirmationEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, er
 		}
 	}(res.Body)
 
-	current := time.Now().UTC()
+	current := time.Now()
 	timeFormat := current.Format("Jan 2, 2006")
 
 	embed := &discordgo.MessageEmbed{
@@ -229,7 +229,7 @@ func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
 	)
 
 	// this is ugly, and I'd like to do away with it eventually
-	current := time.Now().UTC()
+	current := time.Now()
 	timeFormat := current.Format("Jan 2, 2006")
 
 	// On every p element which has style attribute call callback

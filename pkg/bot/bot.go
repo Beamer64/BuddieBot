@@ -10,9 +10,22 @@ import (
 )
 
 func Init(cfg *config.ConfigStructs) error {
-	botSession, err := discordgo.New("Bot " + cfg.Configs.Keys.BotToken)
-	if err != nil {
-		return err
+	var botSession *discordgo.Session
+	botENV := ""
+	if events.IsLaunchedByDebugger() {
+		bs, err := discordgo.New("Bot " + cfg.Configs.Keys.TestBotToken)
+		if err != nil {
+			return err
+		}
+		botSession = bs
+		botENV = "BB Test is running!"
+	} else {
+		bs, err := discordgo.New("Bot " + cfg.Configs.Keys.ProdBotToken)
+		if err != nil {
+			return err
+		}
+		botSession = bs
+		botENV = "BuddieBot is running!"
 	}
 
 	user, err := botSession.User("@me")
@@ -31,7 +44,7 @@ func Init(cfg *config.ConfigStructs) error {
 		return err
 	}
 
-	fmt.Println("BuddieBot is running!")
+	fmt.Println(botENV)
 	return nil
 }
 
