@@ -72,7 +72,8 @@ type Command struct {
 		Stop             string `yaml:"list-stop"`
 		Queue            string `yaml:"list-queue"`
 		Clear            string `yaml:"list-clear"`
-		Pick             string `yaml:"list-pick"`
+		PickChoices      string `yaml:"list-pick-choices"`
+		PickSteam        string `yaml:"list-pick-steam"`
 		AnimalsDoggo     string `yaml:"list-animals-doggo"`
 		DailyHoroscope   string `yaml:"list-daily-horoscope"`
 		DailyAffirmation string `yaml:"list-daily-affirmation"`
