@@ -19,6 +19,7 @@ func Init(cfg *config.ConfigStructs) error {
 		}
 		botSession = bs
 		botENV = "BB Test is running!"
+		_, _ = botSession.ChannelMessageSend(cfg.Configs.DiscordIDs.EventNotifChannelID, botENV)
 	} else {
 		bs, err := discordgo.New("Bot " + cfg.Configs.Keys.ProdBotToken)
 		if err != nil {
@@ -26,6 +27,7 @@ func Init(cfg *config.ConfigStructs) error {
 		}
 		botSession = bs
 		botENV = "BuddieBot is running!"
+		_, _ = botSession.ChannelMessageSend(cfg.Configs.DiscordIDs.EventNotifChannelID, botENV)
 	}
 
 	user, err := botSession.User("@me")
