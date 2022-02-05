@@ -64,6 +64,8 @@ jobs:
         run: |
           echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
           echo "${GITHUB_SHA}" > config/version.txt
+          echo >> config/version.txt
+          echo date >> config/version.txt
           
           gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config"
           gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config

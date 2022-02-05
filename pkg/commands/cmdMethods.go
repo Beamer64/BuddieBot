@@ -37,7 +37,7 @@ func getErrorEmbed(err error) *discordgo.MessageEmbed {
 	return embed
 }
 
-func callDoggoAPI(cfg *config.ConfigStructs) (doggo, error) {
+func callDoggoAPI(cfg *config.Configs) (doggo, error) {
 	res, err := http.Get(cfg.Configs.Keys.DoggoAPI)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func callDoggoAPI(cfg *config.ConfigStructs) (doggo, error) {
 	return doggoObj, nil
 }
 
-func getDoggoEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+func getDoggoEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	// a data scientist had to fix this...
 	doggoObj, err := callDoggoAPI(cfg)
 	if err != nil {
@@ -123,7 +123,7 @@ func getDoggoEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func getAdviceEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+func getAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	res, err := http.Get(cfg.Configs.Keys.AdviceAPI)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func getAdviceEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) 
 	return embed, nil
 }
 
-func getKanyeEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+func getKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	res, err := http.Get(cfg.Configs.Keys.KanyeAPI)
 	if err != nil {
 		return nil, err
@@ -186,7 +186,7 @@ func getKanyeEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func getAffirmationEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+func getAffirmationEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	res, err := http.Get(cfg.Configs.Keys.AffirmationAPI)
 	if err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func getAffirmationEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, er
 	return embed, nil
 }
 
-func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	choice := ""
 	switch strings.ToLower(options[0].Name) {
 	case "steam":
@@ -264,42 +264,118 @@ func getPickEmbed(options []*discordgo.ApplicationCommandInteractionDataOption, 
 	return embed, nil
 }
 
-func getTuuckEmbed(cmd string, cfg *config.ConfigStructs) *discordgo.MessageEmbed {
-	n := reflect.ValueOf(&cfg.Cmd.Name).Elem()
+func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	n := reflect.ValueOf(&cfg.Cmd.SlashName).Elem()
 	d := reflect.ValueOf(&cfg.Cmd.Desc).Elem()
+	e := reflect.ValueOf(&cfg.Cmd.Example).Elem()
 
-	desc := ""
-	title := "A list of current Slash commands:"
-	cmd = strings.ToLower(cmd)
-
-	if cmd == "" {
-		for i := 0; i < n.NumField(); i++ {
-			desc = desc + fmt.Sprintf("%s \n", n.Field(i).Interface())
+	if len(i.ApplicationCommandData().Options) > 0 {
+		cmdOption := strings.ToLower(i.ApplicationCommandData().Options[0].StringValue())
+		slashCmd := ""
+		cmdName := ""
+		if strings.Contains(cmdOption, "/") {
+			slashCmd = cmdOption
+			cmdName = strings.ReplaceAll(slashCmd, "/", "")
+		} else {
+			slashCmd = fmt.Sprintf("/%s", cmdOption)
+			cmdName = cmdOption
 		}
+
+		title := ""
+		for t := 0; t < n.NumField(); t++ {
+			if strings.Contains(fmt.Sprintf("%s", n.Field(t).Interface()), cmdName) {
+				title = fmt.Sprintf("%s info", n.Field(t).Interface())
+				break
+			}
+		}
+
+		desc := ""
+		for de := 0; de < d.NumField(); de++ {
+			cmdDesc := strings.ReplaceAll(cmdName, " ", "")
+			lowerDesc := strings.ToLower(d.Type().Field(de).Name)
+			if strings.Contains(lowerDesc, cmdDesc) {
+				desc = fmt.Sprintf("%s", d.Field(de).Interface())
+				break
+			}
+		}
+
+		example := ""
+		for ex := 0; ex < e.NumField(); ex++ {
+			cmdExample := strings.ReplaceAll(cmdName, " ", "")
+			lowerExample := strings.ToLower(e.Type().Field(ex).Name)
+			if strings.Contains(lowerExample, cmdExample) {
+				example = fmt.Sprintf("%s", e.Field(ex).Interface())
+				break
+			}
+		}
+		usage := fmt.Sprintf("`%s`", slashCmd)
+
+		if title == "" {
+			title = fmt.Sprintf("Invalid Command: %s", cmdOption)
+		} else if desc == "" {
+			desc = "Command not found"
+			usage = "N/A"
+		} else if example == "" {
+			example = "Command not found"
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Title: title,
+			Color: rangeIn(1, 16777215),
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   "Description",
+					Value:  desc,
+					Inline: false,
+				},
+				{
+					Name:   "Usage",
+					Value:  usage,
+					Inline: false,
+				},
+				{
+					Name:   "Example",
+					Value:  example,
+					Inline: false,
+				},
+			},
+		}
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{
+						embed,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
 	} else {
+		content := "A list of current Slash commands\n```\n"
+
 		for i := 0; i < n.NumField(); i++ {
-			if strings.Contains(fmt.Sprintf("%s", n.Field(i).Interface()), cmd) {
-				title = fmt.Sprintf("%s", n.Field(i).Interface())
-				break
-			}
+			content = content + fmt.Sprintf("%s \n", n.Field(i).Interface())
 		}
+		content = content + "```\nYou can get more information about a command by using /tuuck <command_name>"
 
-		for i := 0; i < d.NumField(); i++ {
-			name := strings.ToLower(d.Type().Field(i).Name)
-			if strings.Contains(name, cmd) {
-				desc = fmt.Sprintf("%s", d.Field(i).Interface())
-				break
-			}
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
+			},
+		)
+		if err != nil {
+			return err
 		}
 	}
 
-	embed := &discordgo.MessageEmbed{
-		Title:       title,
-		Color:       rangeIn(1, 16777215),
-		Description: desc,
-	}
-
-	return embed
+	return nil
 }
 
 func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
@@ -386,7 +462,7 @@ func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func getCoinFlipEmbed(cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	gifURL, err := api.RequestGifURL("Coin Flip", cfg.Configs.Keys.TenorAPIkey)
 	if err != nil {
 		return nil, err

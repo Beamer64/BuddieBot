@@ -35,7 +35,7 @@ func GetInsult(insultURL string) (string, error) {
 	return insultObj.Insult, nil
 }
 
-func GetInsultEmbed(randColorInt int, cfg *config.ConfigStructs) (*discordgo.MessageEmbed, error) {
+func GetInsultEmbed(randColorInt int, cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	retVal := ""
 	if cfg.Configs.Keys.InsultAPI != "" { // check if insult API is set up
 		insult, err := GetInsult(cfg.Configs.Keys.InsultAPI)

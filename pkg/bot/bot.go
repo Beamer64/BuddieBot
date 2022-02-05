@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func Init(cfg *config.ConfigStructs) error {
+func Init(cfg *config.Configs) error {
 	var botSession *discordgo.Session
 	botENV := ""
 	if events.IsLaunchedByDebugger() {
@@ -19,7 +19,6 @@ func Init(cfg *config.ConfigStructs) error {
 		}
 		botSession = bs
 		botENV = "BB Test is running!"
-		_, _ = botSession.ChannelMessageSend(cfg.Configs.DiscordIDs.EventNotifChannelID, botENV)
 	} else {
 		bs, err := discordgo.New("Bot " + cfg.Configs.Keys.ProdBotToken)
 		if err != nil {
@@ -27,7 +26,6 @@ func Init(cfg *config.ConfigStructs) error {
 		}
 		botSession = bs
 		botENV = "BuddieBot is running!"
-		_, _ = botSession.ChannelMessageSend(cfg.Configs.DiscordIDs.EventNotifChannelID, botENV)
 	}
 
 	user, err := botSession.User("@me")
@@ -50,7 +48,7 @@ func Init(cfg *config.ConfigStructs) error {
 	return nil
 }
 
-func registerEvents(s *discordgo.Session, cfg *config.ConfigStructs, u *discordgo.User) {
+func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User) {
 	s.AddHandler(events.NewReadyHandler(cfg).ReadyHandler)
 
 	s.AddHandler(events.NewGuildCreateHandler(cfg).GuildCreateHandler)

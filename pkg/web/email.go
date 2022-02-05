@@ -6,7 +6,7 @@ import (
 	gomail "gopkg.in/mail.v2"
 )
 
-func SendEmail(toEmail string, fromEmail string, subject string, body string, cfg *config.ConfigStructs) error {
+func SendEmail(toEmail string, fromEmail string, subject string, body string, cfg *config.Configs) error {
 	m := gomail.NewMessage()
 
 	// receivers

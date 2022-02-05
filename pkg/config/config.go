@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type ConfigStructs struct {
+type Configs struct {
 	Configs         *Configuration
 	Cmd             *Command
 	LoadingMessages []string
@@ -63,45 +63,73 @@ type Configuration struct {
 }
 
 type Command struct {
-	Name struct {
-		Tuuck            string `yaml:"list-tuuck"`
-		CoinFlip         string `yaml:"list-coin-flip"`
-		Version          string `yaml:"list-version"`
-		Insult           string `yaml:"list-insult"`
-		Play             string `yaml:"list-play"`
-		Stop             string `yaml:"list-stop"`
-		Queue            string `yaml:"list-queue"`
-		Clear            string `yaml:"list-clear"`
-		PickChoices      string `yaml:"list-pick-choices"`
-		PickSteam        string `yaml:"list-pick-steam"`
-		AnimalsDoggo     string `yaml:"list-animals-doggo"`
-		DailyHoroscope   string `yaml:"list-daily-horoscope"`
-		DailyAffirmation string `yaml:"list-daily-affirmation"`
-		DailyAdvice      string `yaml:"list-daily-advice"`
-		DailyKanye       string `yaml:"list-daily-kanye"`
-	} `yaml:"name"`
+	SlashName struct {
+		Tuuck            string `yaml:"tuuck"`
+		CoinFlip         string `yaml:"coin-flip"`
+		Version          string `yaml:"version"`
+		Insult           string `yaml:"insult"`
+		Play             string `yaml:"play"`
+		Stop             string `yaml:"stop"`
+		Queue            string `yaml:"queue"`
+		Clear            string `yaml:"clear"`
+		PickChoices      string `yaml:"pick-choices"`
+		PickSteam        string `yaml:"pick-steam"`
+		AnimalsDoggo     string `yaml:"animals-doggo"`
+		DailyHoroscope   string `yaml:"daily-horoscope"`
+		DailyAffirmation string `yaml:"daily-affirmation"`
+		DailyAdvice      string `yaml:"daily-advice"`
+		DailyKanye       string `yaml:"daily-kanye"`
+	} `yaml:"slash-name"`
+
+	PrefixName struct {
+		StartServer  string `yaml:"start-server"`
+		StopServer   string `yaml:"stop-server"`
+		ServerStatus string `yaml:"server-status"`
+	} `yaml:"prefix-name"`
 
 	Desc struct {
-		Tuuck            string `yaml:"desc-tuuck"`
-		StartServer      string `yaml:"desc-start-server"`
-		StopServer       string `yaml:"desc-stop-server"`
-		CoinFlip         string `yaml:"desc-coin-flip"`
-		ServerStatus     string `yaml:"desc-server-status"`
-		Version          string `yaml:"desc-version"`
-		LMGTFY           string `yaml:"desc-lmgtfy"`
-		Insult           string `yaml:"desc-insult"`
-		Play             string `yaml:"desc-play"`
-		Stop             string `yaml:"desc-stop"`
-		Queue            string `yaml:"desc-queue"`
-		Clear            string `yaml:"desc-clear"`
-		PickChoices      string `yaml:"desc-pick-choices"`
-		PickSteam        string `yaml:"desc-pick-steam"`
-		AnimalsDoggo     string `yaml:"desc-animals-doggo"`
-		DailyHoroscope   string `yaml:"desc-daily-horoscope"`
-		DailyAffirmation string `yaml:"desc-daily-affirmation"`
-		DailyAdvice      string `yaml:"desc-daily-advice"`
-		DailyKanye       string `yaml:"desc-daily-kanye"`
+		Tuuck            string `yaml:"tuuck"`
+		StartServer      string `yaml:"start-server"`
+		StopServer       string `yaml:"stop-server"`
+		CoinFlip         string `yaml:"coin-flip"`
+		ServerStatus     string `yaml:"server-status"`
+		Version          string `yaml:"version"`
+		LMGTFY           string `yaml:"lmgtfy"`
+		Insult           string `yaml:"insult"`
+		Play             string `yaml:"play"`
+		Stop             string `yaml:"stop"`
+		Queue            string `yaml:"queue"`
+		Clear            string `yaml:"clear"`
+		PickChoices      string `yaml:"pick-choices"`
+		PickSteam        string `yaml:"pick-steam"`
+		AnimalsDoggo     string `yaml:"animals-doggo"`
+		DailyHoroscope   string `yaml:"daily-horoscope"`
+		DailyAffirmation string `yaml:"daily-affirmation"`
+		DailyAdvice      string `yaml:"daily-advice"`
+		DailyKanye       string `yaml:"daily-kanye"`
 	} `yaml:"description"`
+
+	Example struct {
+		Tuuck            string `yaml:"tuuck"`
+		StartServer      string `yaml:"start-server"`
+		StopServer       string `yaml:"stop-server"`
+		CoinFlip         string `yaml:"coin-flip"`
+		ServerStatus     string `yaml:"server-status"`
+		Version          string `yaml:"version"`
+		LMGTFY           string `yaml:"lmgtfy"`
+		Insult           string `yaml:"insult"`
+		Play             string `yaml:"play"`
+		Stop             string `yaml:"stop"`
+		Queue            string `yaml:"queue"`
+		Clear            string `yaml:"clear"`
+		PickChoices      string `yaml:"pick-choices"`
+		PickSteam        string `yaml:"pick-steam"`
+		AnimalsDoggo     string `yaml:"animals-doggo"`
+		DailyHoroscope   string `yaml:"daily-horoscope"`
+		DailyAffirmation string `yaml:"daily-affirmation"`
+		DailyAdvice      string `yaml:"daily-advice"`
+		DailyKanye       string `yaml:"daily-kanye"`
+	} `yaml:"example"`
 
 	Msg struct {
 		Invalid          string `yaml:"invalid"`
@@ -137,7 +165,7 @@ type ServerCommandOut struct {
 	Status       string `json:"Status"`
 }
 
-func ReadConfig(possibleConfigPaths ...string) (*ConfigStructs, error) {
+func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 
 	var configDir string
 	for _, cp := range possibleConfigPaths {
@@ -231,7 +259,7 @@ func ReadConfig(possibleConfigPaths ...string) (*ConfigStructs, error) {
 		fv = fv[0:7]
 	}
 
-	return &ConfigStructs{
+	return &Configs{
 		Configs:         cfg,
 		Cmd:             command,
 		LoadingMessages: msgs,

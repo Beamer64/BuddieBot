@@ -176,8 +176,8 @@ var (
 	}
 
 	// ComponentHandlers for handling components in interactions. Eg. Buttons, Dropdowns, Searchbars Etc.
-	ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs){
-		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+	ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
+		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			sign := i.MessageComponentData().Values[0]
 			embed, err := getHoroscopeEmbed(sign)
 			if err != nil {
@@ -215,8 +215,8 @@ var (
 	}
 
 	// CommandHandlers for handling the commands themselves. Main interaction response here.
-	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs){
-		"version": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
+		"version": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			embed := &discordgo.MessageEmbed{
 				Title:       fmt.Sprintf("Version: %s", cfg.Version),
 				Color:       62033,
@@ -238,7 +238,7 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"coin-flip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"coin-flip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			embed, err := getCoinFlipEmbed(cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -260,7 +260,7 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"stop": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"stop": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := stopAudioPlayback()
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -280,7 +280,7 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"clear": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"clear": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := web.RunMpFileCleanUp(fmt.Sprintf("%s/Audio", i.GuildID))
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -300,7 +300,7 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"skip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"skip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			audio := ""
 			if len(web.MpFileQueue) > 0 {
 				audio = fmt.Sprintf("Skipping %s", web.MpFileQueue[0])
@@ -326,7 +326,7 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"queue": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"queue": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			queue := ""
 			if len(web.MpFileQueue) > 0 {
 				queue = strings.Join(web.MpFileQueue, "\n")
@@ -347,7 +347,7 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			switch i.ApplicationCommandData().Options[0].Name {
 			case "doggo":
 				embed, err := getDoggoEmbed(cfg)
@@ -372,7 +372,7 @@ var (
 				}
 			}
 		},
-		"daily": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"daily": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			switch i.ApplicationCommandData().Options[0].Name {
 			case "advice":
 				embed, err := getAdviceEmbed(cfg)
@@ -539,7 +539,7 @@ var (
 				}
 			}
 		},
-		"pick": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"pick": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			embed, err := getPickEmbed(i.ApplicationCommandData().Options, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -574,29 +574,14 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"tuuck": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
-			cmd := ""
-			if len(i.ApplicationCommandData().Options) > 0 {
-				cmd = i.ApplicationCommandData().Options[0].StringValue()
-			}
-			embed := getTuuckEmbed(cmd, cfg)
-
-			err := s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							embed,
-						},
-					},
-				},
-			)
+		"tuuck": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			err := sendTuuckResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"play": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"play": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			link := i.ApplicationCommandData().Options[0].StringValue()
 			err := s.InteractionRespond(
 				i.Interaction, &discordgo.InteractionResponse{
@@ -617,7 +602,7 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"insult": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.ConfigStructs) {
+		"insult": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			user := i.ApplicationCommandData().Options[0].UserValue(s)
 			randColorInt := rangeIn(1, 16777215)
 			embed, err := api.GetInsultEmbed(randColorInt, cfg)

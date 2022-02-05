@@ -8,29 +8,29 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GuildJoinLeaveHandler struct{ cfg *config.ConfigStructs }
-type ReactionHandler struct{ cfg *config.ConfigStructs }
-type ReadyHandler struct{ cfg *config.ConfigStructs }
-type GuildCreateHandler struct{ cfg *config.ConfigStructs }
-type CommandHandler struct{ cfg *config.ConfigStructs }
+type GuildJoinLeaveHandler struct{ cfg *config.Configs }
+type ReactionHandler struct{ cfg *config.Configs }
+type ReadyHandler struct{ cfg *config.Configs }
+type GuildCreateHandler struct{ cfg *config.Configs }
+type CommandHandler struct{ cfg *config.Configs }
 
-func NewCommandHandler(cfg *config.ConfigStructs) *CommandHandler {
+func NewCommandHandler(cfg *config.Configs) *CommandHandler {
 	return &CommandHandler{cfg: cfg}
 }
 
-func NewGuildCreateHandler(cfg *config.ConfigStructs) *GuildCreateHandler {
+func NewGuildCreateHandler(cfg *config.Configs) *GuildCreateHandler {
 	return &GuildCreateHandler{cfg: cfg}
 }
 
-func NewGuildJoinLeaveHandler(cfg *config.ConfigStructs) *GuildJoinLeaveHandler {
+func NewGuildJoinLeaveHandler(cfg *config.Configs) *GuildJoinLeaveHandler {
 	return &GuildJoinLeaveHandler{cfg: cfg}
 }
 
-func NewReactionHandler(cfg *config.ConfigStructs) *ReactionHandler {
+func NewReactionHandler(cfg *config.Configs) *ReactionHandler {
 	return &ReactionHandler{cfg: cfg}
 }
 
-func NewReadyHandler(cfg *config.ConfigStructs) *ReadyHandler {
+func NewReadyHandler(cfg *config.Configs) *ReadyHandler {
 	return &ReadyHandler{cfg: cfg}
 }
 

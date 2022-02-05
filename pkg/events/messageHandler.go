@@ -10,11 +10,11 @@ import (
 )
 
 type MessageCreateHandler struct {
-	cfg   *config.ConfigStructs
+	cfg   *config.Configs
 	botID string
 }
 
-func NewMessageCreateHandler(cfg *config.ConfigStructs, u *discordgo.User) *MessageCreateHandler {
+func NewMessageCreateHandler(cfg *config.Configs, u *discordgo.User) *MessageCreateHandler {
 	return &MessageCreateHandler{
 		cfg:   cfg,
 		botID: u.ID,
