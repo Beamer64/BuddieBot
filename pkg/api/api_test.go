@@ -84,10 +84,11 @@ func TestPostInsult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	insult, err := GetInsult(cfg.Configs.Keys.InsultAPI)
+	/*insult, err := commands.getInsult(cfg.Configs.Keys.InsultAPI)
 	if err != nil {
 		t.Fatal(err)
-	}
+	}*/
+	insult := ""
 
 	memberName := "me"
 	if !strings.HasPrefix(memberName, "<@") {
@@ -113,6 +114,10 @@ func TestPostInsult(t *testing.T) {
 func TestGetInsult(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}
+
+	type insult struct {
+		Insult string `json:"insult"`
 	}
 
 	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")

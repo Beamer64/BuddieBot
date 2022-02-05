@@ -165,7 +165,7 @@ func sendInsultResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cf
 
 	retVal := ""
 	if cfg.Configs.Keys.InsultAPI != "" { // check if insult API is set up
-		insultStr, err := GetInsult(cfg.Configs.Keys.InsultAPI)
+		insultStr, err := getInsult(cfg.Configs.Keys.InsultAPI)
 		if err != nil {
 			return err
 		}
@@ -199,7 +199,7 @@ func sendInsultResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cf
 	return nil
 }
 
-func GetInsult(insultURL string) (string, error) {
+func getInsult(insultURL string) (string, error) {
 	res, err := http.Get(insultURL)
 	if err != nil {
 		return "", err
