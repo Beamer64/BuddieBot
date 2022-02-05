@@ -1,6 +1,9 @@
 package commands
 
 import (
+	"fmt"
+	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/errors"
 	"math/rand"
 )
 
@@ -51,6 +54,27 @@ type doggo []struct {
 	URL    string `json:"url"`
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
+}
+
+type insult struct {
+	Insult string `json:"insult"`
+}
+
+func getErrorEmbed(err error) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title:       "ERROR",
+		Description: "(ノಠ益ಠ)ノ彡┻━┻",
+		Color:       16726843,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Stack",
+				Value:  fmt.Sprintf("%+v", errors.WithStack(err)),
+				Inline: true,
+			},
+		},
+	}
+
+	return embed
 }
 
 // Returns pseudo rand num between low and high.

@@ -2,12 +2,9 @@ package commands
 
 import (
 	"fmt"
-	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 var (
@@ -178,38 +175,10 @@ var (
 	// ComponentHandlers for handling components in interactions. Eg. Buttons, Dropdowns, Searchbars Etc.
 	ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
 		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			sign := i.MessageComponentData().Values[0]
-			embed, err := getHoroscopeEmbed(sign)
+			err := sendHoroscopeCompResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
-
-			msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
-			msgContent := ""
-			msgEdit.Content = &msgContent
-			msgEdit.Embeds = []*discordgo.MessageEmbed{embed}
-
-			// edit response (i.Interaction) and replace with embed
-			_, err = s.ChannelMessageEditComplex(msgEdit)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
-
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "",
-					},
-				},
-			)
-			if err != nil {
-				if !strings.Contains(err.Error(), "Cannot send an empty message") {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
 			}
 		},
 	}
@@ -217,363 +186,77 @@ var (
 	// CommandHandlers for handling the commands themselves. Main interaction response here.
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
 		"version": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			embed := &discordgo.MessageEmbed{
-				Title:       fmt.Sprintf("Version: %s", cfg.Version),
-				Color:       62033,
-				Description: "You see it up there.",
-			}
-
-			err := s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							embed,
-						},
-					},
-				},
-			)
+			err := sendVersionResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"coin-flip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			embed, err := getCoinFlipEmbed(cfg)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
-
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							embed,
-						},
-					},
-				},
-			)
+			err := sendCoinFlipResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"stop": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			err := stopAudioPlayback()
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
-
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "Okay Dad",
-					},
-				},
-			)
+			err := sendStopResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"clear": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			err := web.RunMpFileCleanUp(fmt.Sprintf("%s/Audio", i.GuildID))
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
-
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "This house is clean.",
-					},
-				},
-			)
+			err := sendClearResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"skip": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			audio := ""
-			if len(web.MpFileQueue) > 0 {
-				audio = fmt.Sprintf("Skipping %s", web.MpFileQueue[0])
-			} else {
-				audio = "Queue is empty, my guy"
-			}
-			err := s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: audio,
-					},
-				},
-			)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
-
-			err = skipPlayback(s, i)
+			err := sendSkipResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"queue": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			queue := ""
-			if len(web.MpFileQueue) > 0 {
-				queue = strings.Join(web.MpFileQueue, "\n")
-			} else {
-				queue = "Uh owh, song queue is wempty (>.<)"
-			}
-
-			err := s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: queue,
-					},
-				},
-			)
+			err := sendQueueResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			switch i.ApplicationCommandData().Options[0].Name {
-			case "doggo":
-				embed, err := getDoggoEmbed(cfg)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
-
-				err = s.InteractionRespond(
-					i.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Embeds: []*discordgo.MessageEmbed{
-								embed,
-							},
-						},
-					},
-				)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
+			err := sendAnimalsResponse(s, i, cfg)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"daily": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			switch i.ApplicationCommandData().Options[0].Name {
-			case "advice":
-				embed, err := getAdviceEmbed(cfg)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
-
-				err = s.InteractionRespond(
-					i.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Embeds: []*discordgo.MessageEmbed{
-								embed,
-							},
-						},
-					},
-				)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
-
-			case "kanye":
-				embed, err := getKanyeEmbed(cfg)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
-
-				err = s.InteractionRespond(
-					i.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Embeds: []*discordgo.MessageEmbed{
-								embed,
-							},
-						},
-					},
-				)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
-
-			case "affirmation":
-				embed, err := getAffirmationEmbed(cfg)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
-
-				err = s.InteractionRespond(
-					i.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Embeds: []*discordgo.MessageEmbed{
-								embed,
-							},
-						},
-					},
-				)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
-
-			case "horoscope":
-				err := s.InteractionRespond(
-					i.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Content: "Choose a zodiac sign",
-							Components: []discordgo.MessageComponent{
-								discordgo.ActionsRow{
-									Components: []discordgo.MessageComponent{
-										discordgo.SelectMenu{
-											CustomID:    "horo-select",
-											Placeholder: "Zodiac",
-											Options: []discordgo.SelectMenuOption{
-												{
-													Label:   "Aquarius",
-													Value:   "aquarius",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🌊"},
-												},
-												{
-													Label:   "Aries",
-													Value:   "aries",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🐏"},
-												},
-												{
-													Label:   "Cancer",
-													Value:   "cancer",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🦀"},
-												},
-												{
-													Label:   "Capricorn",
-													Value:   "capricorn",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🐐"},
-												},
-												{
-													Label:   "Gemini",
-													Value:   "gemini",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "♊"},
-												},
-												{
-													Label:   "Leo",
-													Value:   "leo",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🦁"},
-												},
-												{
-													Label:   "Libra",
-													Value:   "libra",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "⚖️"},
-												},
-												{
-													Label:   "Pisces",
-													Value:   "pisces",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🐠"},
-												},
-												{
-													Label:   "Sagittarius",
-													Value:   "sagittarius",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🏹"},
-												},
-												{
-													Label:   "Scorpio",
-													Value:   "scorpio",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🦂"},
-												},
-												{
-													Label:   "Taurus",
-													Value:   "taurus",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "🐃"},
-												},
-												{
-													Label:   "Virgo",
-													Value:   "virgo",
-													Default: false,
-													Emoji:   discordgo.ComponentEmoji{Name: "♍"},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-				}
+			err := sendDailyResponse(s, i, cfg)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"pick": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			embed, err := getPickEmbed(i.ApplicationCommandData().Options, cfg)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
-
-			content := ""
-			switch strings.ToLower(i.ApplicationCommandData().Options[0].Name) {
-			case "steam":
-				content = "Choosing Steam Game"
-			case "choices":
-				for _, v := range i.ApplicationCommandData().Options[0].Options {
-					content = content + fmt.Sprintf("[%s] ", v.StringValue())
-				}
-				content = strings.TrimSpace(content)
-				content = fmt.Sprintf("*%s*", content)
-			}
-
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: content,
-						Embeds: []*discordgo.MessageEmbed{
-							embed,
-						},
-					},
-				},
-			)
+			err := sendPickResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
+
 		"tuuck": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendTuuckResponse(s, i, cfg)
 			if err != nil {
@@ -581,47 +264,17 @@ var (
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"play": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			link := i.ApplicationCommandData().Options[0].StringValue()
-			err := s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: fmt.Sprintf("Playing: %s", link),
-					},
-				},
-			)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
 
-			err = playYoutubeLink(s, i, link)
+		"play": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			err := sendPlayResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
 			}
 		},
-		"insult": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			user := i.ApplicationCommandData().Options[0].UserValue(s)
-			randColorInt := rangeIn(1, 16777215)
-			embed, err := api.GetInsultEmbed(randColorInt, cfg)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
-			}
 
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: fmt.Sprintf("An ode to: <@%s>", user.ID),
-						Embeds: []*discordgo.MessageEmbed{
-							embed,
-						},
-					},
-				},
-			)
+		"insult": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			err := sendInsultResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
