@@ -22,7 +22,7 @@
 
 <div align="center">
   <a target="_blank">
-    <img src="https://img.shields.io/tokei/lines/github/Beamer64/DiscordBot?color=maroon" alt="shield.png">
+    <img src="https://img.shields.io/badge/Total%20Lines-8092-maroon.svg" alt="shield.png">
   </a>
 </div>
 
@@ -38,6 +38,8 @@
   <a href="#setting-up">Setting Up</a>
   •
   <a href="#terms">Terms</a>
+  •
+  <a href="#release">Release Notes</a>
   •
   <a href="#license">License</a>
   •
@@ -182,6 +184,13 @@ BuddieBot is in a continuous state of development. New features/updates may come
 
 †† **You will need to [Create a Webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) in Discord first. Then the ID and Token respectively can be found in the Webhook
 URL. E.g. `https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN`**
+
+---
+
+## Release Notes
+
+Release notes (when updated) can be found in the res folder of the project or at:
+https://github.com/Beamer64/DiscordBot/blob/master/res/release.md
 
 ---
 
