@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/commands"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/godagpi/dagpi"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 )
@@ -83,11 +84,13 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
 		if h, ok := commands.CommandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i, c.cfg)
+			client := dagpi.Client{Auth: c.cfg.Configs.Keys.DagpiAPIkey}
+			h(s, i, c.cfg, client)
 		}
 	case discordgo.InteractionMessageComponent:
 		if h, ok := commands.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
-			h(s, i, c.cfg)
+			client := dagpi.Client{Auth: c.cfg.Configs.Keys.DagpiAPIkey}
+			h(s, i, c.cfg, client)
 		}
 	}
 }

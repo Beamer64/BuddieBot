@@ -1,14 +1,15 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/voice_chat"
-	"github.com/beamer64/discordBot/pkg/web"
+	"github.com/beamer64/godagpi/dagpi"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"io"
 	"math/rand"
@@ -113,7 +114,7 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 		}
 
 	} else {
-		content := "A list of current Slash commands\n```\n"
+		content := "A list of current Slash command groups\n```\n"
 
 		for i := 0; i < n.NumField(); i++ {
 			content = content + fmt.Sprintf("%s \n", n.Field(i).Interface())
@@ -160,76 +161,99 @@ func sendVersionResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 	return nil
 }
 
-func sendInsultResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	user := i.ApplicationCommandData().Options[0].UserValue(s)
+//endregion
 
-	retVal := ""
-	if cfg.Configs.Keys.InsultAPI != "" { // check if insult API is set up
-		insultStr, err := getInsult(cfg.Configs.Keys.InsultAPI)
+//region Game Commands
+
+func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) error {
+	options := i.ApplicationCommandData().Options[0]
+
+	switch options.Name {
+	case "coin-flip":
+		embed, err := getCoinFlipEmbed(cfg)
 		if err != nil {
 			return err
 		}
 
-		retVal = insultStr
-	} else {
-		retVal = cfg.Cmd.Msg.InsultAPIError
-	}
-
-	embed := &discordgo.MessageEmbed{
-		Title:       "(ง ͠° ͟ل͜ ͡°)ง",
-		Color:       rangeIn(1, 16777215),
-		Description: retVal,
-	}
-
-	err := s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("An ode to: <@%s>", user.ID),
-				Embeds: []*discordgo.MessageEmbed{
-					embed,
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{
+						embed,
+					},
 				},
 			},
-		},
-	)
-	if err != nil {
-		return err
+		)
+		if err != nil {
+			return err
+		}
+
+	case "typeracer":
+
+	case "gtl":
+
+	case "wtp":
+		data, err := client.WTP()
+		if err != nil {
+			return err
+		}
+
+		embed, err := getWTPembed(data, false)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{
+						embed,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		timer := time.NewTimer(60 * time.Second)
+		go func() {
+			<-timer.C
+			fmt.Println("You took too long to respond!")
+		}()
 	}
 
 	return nil
 }
 
-func getInsult(insultURL string) (string, error) {
-	res, err := http.Get(insultURL)
+func getWTPembed(data interface{}, isAnswer bool) (*discordgo.MessageEmbed, error) {
+	var wtpObj wtp
+	err := mapstructure.Decode(data, &wtpObj)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var insultObj insult
+	embed := &discordgo.MessageEmbed{}
 
-	err = json.NewDecoder(res.Body).Decode(&insultObj)
-	if err != nil {
-		return "", err
-	}
+	if isAnswer {
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-			return
+	} else {
+		embed = &discordgo.MessageEmbed{
+			Image: &discordgo.MessageEmbedImage{
+				URL: wtpObj.Question,
+			},
 		}
-	}(res.Body)
+	}
 
-	return insultObj.Insult, nil
+	return embed, nil
 }
 
-//endregion
-
-//region Game Commands
-
-func sendCoinFlipResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	gifURL, err := api.RequestGifURL("Coin Flip", cfg.Configs.Keys.TenorAPIkey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	embed := &discordgo.MessageEmbed{
@@ -251,7 +275,7 @@ func sendCoinFlipResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		results = "Heads"
 		gifURL, err = api.RequestGifURL(search, cfg.Configs.Keys.TenorAPIkey)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 	} else {
@@ -259,7 +283,7 @@ func sendCoinFlipResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		results = "Tails"
 		gifURL, err = api.RequestGifURL(search, cfg.Configs.Keys.TenorAPIkey)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -268,201 +292,7 @@ func sendCoinFlipResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		URL: gifURL,
 	}
 
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{
-					embed,
-				},
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-//endregion
-
-//region Audio Playback
-
-func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	link := i.ApplicationCommandData().Options[0].StringValue()
-	err := s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("Playing: %s", link),
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	msg, err := s.ChannelMessageSend(i.ChannelID, "Prepping vidya...")
-	if err != nil {
-		return err
-	}
-
-	//yas
-	if i.Member.User.ID == "932843527870742538" {
-		link = "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
-	}
-
-	link, fileName, err := web.GetYtAudioLink(s, msg, link)
-	if err != nil {
-		return err
-	}
-
-	err = web.DownloadMpFile(i, link, fileName)
-	if err != nil {
-		return err
-	}
-
-	dgv, err := voice_chat.ConnectVoiceChannel(s, i.Member.User.ID, i.GuildID)
-	if err != nil {
-		return err
-	}
-
-	err = web.PlayAudioFile(dgv, fileName, i, s)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func sendStopResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	err := stopAudioPlayback()
-	if err != nil {
-		return err
-	}
-
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Okay Dad",
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func stopAudioPlayback() error {
-	//vc := voice_chat.VoiceConnection{}
-
-	if web.StopPlaying != nil {
-		close(web.StopPlaying)
-		web.IsPlaying = false
-
-		/*if vc.Dgv != nil {
-			vc.Dgv.Close()
-
-		}*/
-	}
-
-	return nil
-}
-
-func sendClearResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	err := web.RunMpFileCleanUp(fmt.Sprintf("%s/Audio", i.GuildID))
-	if err != nil {
-		return err
-	}
-
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "This house is clean.",
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func sendSkipResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	audio := ""
-	if len(web.MpFileQueue) > 0 {
-		audio = fmt.Sprintf("Skipping %s", web.MpFileQueue[0])
-	} else {
-		audio = "Queue is empty, my guy"
-	}
-	err := s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: audio,
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	err = skipPlayback(s, i)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func skipPlayback(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	if len(web.MpFileQueue) > 0 {
-		err := stopAudioPlayback()
-		if err != nil {
-			return err
-		}
-
-		dgv, err := voice_chat.ConnectVoiceChannel(s, i.Member.User.ID, i.GuildID)
-		if err != nil {
-			return err
-		}
-
-		err = web.PlayAudioFile(dgv, "", i, s)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func sendQueueResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	queue := ""
-	if len(web.MpFileQueue) > 0 {
-		queue = strings.Join(web.MpFileQueue, "\n")
-	} else {
-		queue = "Uh owh, song queue is wempty (>.<)"
-	}
-
-	err := s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: queue,
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return embed, nil
 }
 
 //endregion
@@ -583,9 +413,3039 @@ func callDoggoAPI(cfg *config.Configs) (doggo, error) {
 
 //endregion
 
+//region Response Commands
+
+func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, client dagpi.Client) error {
+	options := i.ApplicationCommandData().Options[0]
+
+	switch options.Name {
+
+	case "insult":
+		insultMsg, err := client.Roast()
+		if err != nil {
+			return err
+		}
+
+		content := ""
+		switch len(options.Options) {
+		case 0:
+			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, insultMsg)
+
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			content = fmt.Sprintf("<@!%s>\n%s", user.ID, insultMsg)
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s\n(ง ͠° ͟ل͜ ͡°)ง", content),
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "joke":
+		data, err := client.Joke()
+		if err != nil {
+			return err
+		}
+
+		var jokeObj joke
+		err = mapstructure.Decode(data, &jokeObj)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s", jokeObj.Joke),
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "8ball":
+		data, err := client.Eightball()
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s", data),
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "yomomma":
+		data, err := client.Yomama()
+		if err != nil {
+			return err
+		}
+
+		content := ""
+		switch len(options.Options) {
+		case 0:
+			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, data)
+
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			content = fmt.Sprintf("<@!%s>\n%s", user.ID, data)
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "pickup-line":
+		data, err := client.PickupLine()
+		if err != nil {
+			return err
+		}
+
+		var pickupObj pickupLine
+		err = mapstructure.Decode(data, &pickupObj)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s", pickupObj.Joke),
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		/*case "captcha":
+		data, err := client.WTP()
+		if err != nil {
+			return err
+		}*/
+
+	}
+
+	return nil
+}
+
+//endregion
+
+//region Img Commands
+
+func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, client dagpi.Client) error {
+	options := i.ApplicationCommandData().Options[0]
+
+	switch options.Name {
+	case "pixelate":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Pixelate(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Pixelate(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Pixelate.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "mirror":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Mirror(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Mirror(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Mirror.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "flip-image":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.FlipImage(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.FlipImage(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "FlipImage.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "colors":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Colors(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Colors(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Colors.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "murica":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.America(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.America(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "America.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "communism":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Communism(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Communism(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Communism.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "triggered":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Triggered(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Triggered(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Triggered.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "expand":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.ExpandImage(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.ExpandImage(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "ExpandImage.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "wasted":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Wasted(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Wasted(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Wasted.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "sketch":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Sketch(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Sketch(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Sketch.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "spin":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.SpinImage(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.SpinImage(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "SpinImage.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "petpet":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.PetPet(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.PetPet(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "PetPet.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "bonk":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Bonk(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Bonk(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Bonk.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "bomb":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Bomb(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Bomb(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Bomb.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "shake":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Shake(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Shake(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Shake.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "invert":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Invert(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Invert(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Invert.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "sobel":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Sobel(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Sobel(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Sobel.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "hog":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Hog(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Hog(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Hog.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "triangle":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Triangle(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Triangle(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Triangle.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "blur":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Blur(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Blur(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Blur.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "rgb":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.RGB(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.RGB(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "RGB.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "angel":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Angel(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Angel(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Angel.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "satan":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Satan(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Satan(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Satan.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "delete":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Delete(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Delete(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Delete.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "fedora":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Fedora(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Fedora(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Fedora.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "hitler":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Hitler(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Hitler(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Hitler.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "lego":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Lego(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Lego(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Lego.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "wanted":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Wanted(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Wanted(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Wanted.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "stringify":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Stringify(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Stringify(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Stringify.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "burn":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Burn(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Burn(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Burn.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "earth":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Earth(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Earth(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Earth.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "freeze":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Freeze(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Freeze(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Freeze.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "ground":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Ground(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Ground(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Ground.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "mosiac":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Mosiac(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Mosiac(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Mosiac.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "sithlord":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Sithlord(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Sithlord(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Sithlord.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "jail":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Jail(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Jail(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Jail.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "shatter":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Shatter(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Shatter(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Shatter.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "pride":
+		var buffer []byte
+		flag := options.Options[0].StringValue()
+
+		switch len(options.Options) {
+		case 1:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			buffer, err = client.Pride(user.AvatarURL("300"), flag)
+			if err != nil {
+				return err
+			}
+
+		case 2:
+			user := options.Options[1].UserValue(s)
+
+			bufferImg, err := client.Pride(user.AvatarURL("300"), flag)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImg
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "pride.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "trash":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Trash(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Trash(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Trash.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "deepfry":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Deepfry(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Deepfry(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "deepfry.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "ascii":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Ascii(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Ascii(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Ascii.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "charcoal":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Charcoal(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Charcoal(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Charcoal.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "posterize":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Posterize(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Posterize(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Posterize.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "sepia":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Sepia(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Sepia(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Sepia.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "swirl":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Swirl(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Swirl(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Swirl.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "paint":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Paint(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Paint(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Paint.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "night":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Night(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Night(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "night.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "rainbow":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Rainbow(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Rainbow(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Rainbow.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "magik":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Magik(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Magik(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "Magik.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "5guys1girl":
+		guy := options.Options[0].UserValue(s)
+		girl := options.Options[1].UserValue(s)
+
+		buffer, err := client.FivegOneg(guy.AvatarURL("300"), girl.AvatarURL("300"))
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "fiveGuys.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "slap":
+		slapped := options.Options[0].UserValue(s)
+		slapper := options.Options[1].UserValue(s)
+
+		buffer, err := client.Slap(slapper.AvatarURL("300"), slapped.AvatarURL("300"))
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "slap.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "obama":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Obama(user.AvatarURL("300"), user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Obama(user.AvatarURL("300"), user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "obama.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "tweet":
+		var buffer []byte
+		tweet := options.Options[0].StringValue()
+
+		switch len(options.Options) {
+		case 1:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			buffer, err = client.Tweet(user.AvatarURL("300"), user.Username, tweet)
+			if err != nil {
+				return err
+			}
+
+		case 2:
+			user := options.Options[1].UserValue(s)
+
+			bufferImage, err := client.Tweet(user.AvatarURL("300"), user.Username, tweet)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "tweet.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "youtube":
+		comment := options.Options[0].StringValue()
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 1:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			buffer, err = client.YouTubeComment(user.AvatarURL("300"), user.Username, comment, false)
+			if err != nil {
+				return err
+			}
+
+		case 2:
+			user := options.Options[1].UserValue(s)
+
+			bufferImage, err := client.YouTubeComment(user.AvatarURL("300"), user.Username, comment, false)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "youtube.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "discord":
+		msg := options.Options[0].StringValue()
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 1:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			buffer, err = client.Discord(user.AvatarURL("300"), user.Username, msg, true)
+			if err != nil {
+				return err
+			}
+
+		case 2:
+			user := options.Options[1].UserValue(s)
+
+			bufferImage, err := client.Discord(user.AvatarURL("300"), user.Username, msg, true)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "discord.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "retro-meme":
+		var buffer []byte
+		topText := options.Options[0].StringValue()
+		bottomText := options.Options[1].StringValue()
+
+		switch len(options.Options) {
+		case 2:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Retromeme(user.AvatarURL("300"), topText, bottomText)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+
+		case 3:
+			user := options.Options[2].UserValue(s)
+
+			bufferImage, err := client.Retromeme(user.AvatarURL("300"), topText, bottomText)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "retro-meme.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "motivational":
+		var buffer []byte
+		topText := options.Options[0].StringValue()
+		bottomText := options.Options[1].StringValue()
+
+		switch len(options.Options) {
+		case 2:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Motivational(user.AvatarURL("300"), topText, bottomText)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+
+		case 3:
+			user := options.Options[2].UserValue(s)
+
+			bufferImage, err := client.Motivational(user.AvatarURL("300"), topText, bottomText)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "motivational.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "modern-meme":
+		var buffer []byte
+		text := options.Options[0].StringValue()
+
+		switch len(options.Options) {
+		case 1:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Modernmeme(user.AvatarURL("300"), text)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+
+		case 2:
+			user := options.Options[1].UserValue(s)
+
+			bufferImage, err := client.Modernmeme(user.AvatarURL("300"), text)
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "modern-meme.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "why_are_you_gay":
+		user1 := options.Options[0].UserValue(s)
+		user2 := options.Options[1].UserValue(s)
+
+		buffer, err := client.WhyAreYouGay(user1.AvatarURL("300"), user2.AvatarURL("300"))
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "why_are_you_gay.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "elmo":
+		var buffer []byte
+
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Elmo(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Elmo(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "elmo.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "tv-static":
+		var buffer []byte
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.TvStatic(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.TvStatic(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "static.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "rain":
+		var buffer []byte
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Rain(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Rain(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "rain.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "glitch":
+		var buffer []byte
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Glitch(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Glitch(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "glitch.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "sȶǟȶɨƈ-ɢʟɨȶƈɦ":
+		var buffer []byte
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.GlitchStatic(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.GlitchStatic(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "static.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "album":
+		var buffer []byte
+		switch len(options.Options) {
+		case 0:
+			user, err := s.User(i.Member.User.ID)
+			if err != nil {
+				return err
+			}
+
+			bufferImage, err := client.Album(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		case 1:
+			user := options.Options[0].UserValue(s)
+
+			bufferImage, err := client.Album(user.AvatarURL("300"))
+			if err != nil {
+				return err
+			}
+
+			buffer = bufferImage
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Files: []*discordgo.File{
+						{
+							Name:        "album.png",
+							ContentType: "image",
+							Reader:      bytes.NewReader(buffer),
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+//endregion
+
 //region Daily Commands
 
-func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) error {
 	switch i.ApplicationCommandData().Options[0].Name {
 	case "advice":
 		embed, err := getDailyAdviceEmbed(cfg)
@@ -743,6 +3603,24 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 		if err != nil {
 			fmt.Printf("%+v", errors.WithStack(err))
 			_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+		}
+
+	case "fact":
+		data, err := client.Fact()
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s", data),
+				},
+			},
+		)
+		if err != nil {
+			return err
 		}
 	}
 

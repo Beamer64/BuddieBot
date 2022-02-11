@@ -5,6 +5,8 @@ import (
 	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
+	"github.com/beamer64/discordBot/pkg/voice_chat"
+	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 	"github.com/subosito/shorturl"
 	"net/url"
@@ -17,6 +19,77 @@ import (
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if IsLaunchedByDebugger() {
 
+	}
+	return nil
+}
+
+func (d *MessageCreateHandler) sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
+	embed := &discordgo.MessageEmbed{
+		Title: "Release Notes!",
+		URL:   "https://github.com/Beamer64/DiscordBot/blob/master/res/release.md",
+		Description: "SUM BIG BOI CHANGES\n\nDetailed list can be found in the Title link above." +
+			"\nPlease check it out...please..\n-----------------------------------------------------------------------------\n\n- Command changes:",
+		Color: 11091696,
+		Author: &discordgo.MessageEmbedAuthor{
+			Name:    m.Author.Username,
+			IconURL: m.Author.AvatarURL(""),
+		},
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "New Commands: /daily",
+				Value:  "Some daily info like facts, affirmations, horoscopes",
+				Inline: false,
+			},
+			{
+				Name:   "New Commands: /animals",
+				Value:  "Command group for more animal related commands",
+				Inline: false,
+			},
+			{
+				Name:   "New Commands: /img-set{1/2/3}",
+				Value:  "ALOT of image commands. Some might be janky since I haven't tested them all yet so just let me know if any arent working at all.",
+				Inline: false,
+			},
+			{
+				Name:   "New Commands: /play",
+				Value:  "This will hold all the game commands for the foreseeable future.",
+				Inline: false,
+			},
+			{
+				Name:   "New Commands: /get",
+				Value:  "This will be some vague collection of one liners like jokes, pickup lines etc..",
+				Inline: false,
+			},
+			{
+				Name:   "Prefix Commands:",
+				Value:  "The commands Play, Stop, Skip, Clear and Queue have been moved to prefix commands",
+				Inline: false,
+			},
+		},
+	}
+
+	msg := &discordgo.MessageSend{
+		Content: "@everyone",
+		Embed:   embed,
+	}
+
+	if IsLaunchedByDebugger() {
+		_, err := s.ChannelMessageSendComplex(m.ChannelID, msg)
+		if err != nil {
+			return err
+		}
+	} else {
+		for _, guild := range s.State.Guilds {
+			for _, channel := range guild.Channels {
+				if channel.Type == discordgo.ChannelTypeGuildText {
+					_, err := s.ChannelMessageSendComplex(channel.ID, msg)
+					if err != nil {
+						return err
+					}
+					break
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -212,5 +285,118 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 			return err
 		}
 	}
+	return nil
+}
+
+func (d *MessageCreateHandler) playAudio(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
+	_, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Playing: %s", link))
+	if err != nil {
+		return err
+	}
+
+	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
+	if err != nil {
+		return err
+	}
+
+	//yas
+	if m.Author.ID == "932843527870742538" {
+		link = "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
+	}
+
+	link, fileName, err := web.GetYtAudioLink(s, msg, link)
+	if err != nil {
+		return err
+	}
+
+	err = web.DownloadMpFile(m, link, fileName)
+	if err != nil {
+		return err
+	}
+
+	dgv, err := voice_chat.ConnectVoiceChannel(s, m.Author.ID, m.GuildID)
+	if err != nil {
+		return err
+	}
+
+	err = web.PlayAudioFile(dgv, fileName, m, s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *MessageCreateHandler) stopAudioPlayback() error {
+	//vc := voice_chat.VoiceConnection{}
+
+	if web.StopPlaying != nil {
+		close(web.StopPlaying)
+		web.IsPlaying = false
+
+		/*if vc.Dgv != nil {
+			vc.Dgv.Close()
+
+		}*/
+	}
+
+	return nil
+}
+
+func (d *MessageCreateHandler) sendQueue(s *discordgo.Session, m *discordgo.MessageCreate) error {
+	queue := ""
+	if len(web.MpFileQueue) > 0 {
+		queue = strings.Join(web.MpFileQueue, "\n")
+	} else {
+		queue = "Uh owh, song queue is wempty (>.<)"
+	}
+
+	_, err := s.ChannelMessageSend(m.ChannelID, queue)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *MessageCreateHandler) sendSkipMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
+	audio := ""
+	if len(web.MpFileQueue) > 0 {
+		audio = fmt.Sprintf("Skipping %s", web.MpFileQueue[0])
+	} else {
+		audio = "Queue is empty, my guy"
+	}
+
+	_, err := s.ChannelMessageSend(m.ChannelID, audio)
+	if err != nil {
+		return err
+	}
+
+	err = d.skipPlayback(s, m)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *MessageCreateHandler) skipPlayback(s *discordgo.Session, m *discordgo.MessageCreate) error {
+	if len(web.MpFileQueue) > 0 {
+		err := d.stopAudioPlayback()
+		if err != nil {
+			return err
+		}
+
+		dgv, err := voice_chat.ConnectVoiceChannel(s, m.Author.ID, m.GuildID)
+		if err != nil {
+			return err
+		}
+
+		err = web.PlayAudioFile(dgv, "", m, s)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

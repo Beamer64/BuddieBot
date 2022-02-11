@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/pkg/errors"
 	"strings"
 
@@ -42,6 +43,18 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+			}
+			return
+
+		case "$release":
+			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
+				if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
+					err := d.sendReleaseNotes(s, m)
+					if err != nil {
+						fmt.Printf("%+v", errors.WithStack(err))
+						_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+					}
 				}
 			}
 			return
@@ -97,6 +110,63 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+			}
+			return
+
+			// Play audio
+		case "$play":
+			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
+				err := d.playAudio(s, m, param)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+			}
+			return
+
+		case "$stop":
+			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
+				err := d.stopAudioPlayback()
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+			}
+			return
+
+		case "$queue":
+			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
+				err := d.sendQueue(s, m)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+			}
+			return
+
+		case "$skip":
+			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
+				err := d.sendSkipMessage(s, m)
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+			}
+			return
+
+		case "$clear":
+			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
+				err := web.MpFileCleanUp(fmt.Sprintf("%s/Audio", m.GuildID))
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
+
+				_, err = s.ChannelMessageSend(m.ChannelID, "\"This house is clean.\"")
+				if err != nil {
+					fmt.Printf("%+v", errors.WithStack(err))
+					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				}
 			}
 			return
 

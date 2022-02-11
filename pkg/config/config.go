@@ -24,6 +24,7 @@ type Configuration struct {
 		WebHookToken   string `yaml:"webHookToken"`
 		BotPublicKey   string `yaml:"botPublicKey"`
 		TenorAPIkey    string `yaml:"tenorAPIkey"`
+		DagpiAPIkey    string `yaml:"dagpiAPIkey"`
 		InsultAPI      string `yaml:"insultAPI"`
 		SteamAPI       string `yaml:"steamAPI"`
 		AffirmationAPI string `yaml:"affirmationAPI"`
@@ -33,6 +34,8 @@ type Configuration struct {
 	} `yaml:"keys"`
 
 	DiscordIDs struct {
+		MasterGuildID       string `yaml:"masterGuildID"`
+		TestGuildID         string `yaml:"testGuildID"`
 		WebHookID           string `yaml:"webHookID"`
 		ErrorLogChannelID   string `yaml:"errorLogChannelID"`
 		EventNotifChannelID string `yaml:"eventNotifChannelID"`
@@ -64,21 +67,14 @@ type Configuration struct {
 
 type Command struct {
 	SlashName struct {
-		Tuuck            string `yaml:"tuuck"`
-		CoinFlip         string `yaml:"coin-flip"`
-		Version          string `yaml:"version"`
-		Insult           string `yaml:"insult"`
-		Play             string `yaml:"play"`
-		Stop             string `yaml:"stop"`
-		Queue            string `yaml:"queue"`
-		Clear            string `yaml:"clear"`
-		PickChoices      string `yaml:"pick-choices"`
-		PickSteam        string `yaml:"pick-steam"`
-		AnimalsDoggo     string `yaml:"animals-doggo"`
-		DailyHoroscope   string `yaml:"daily-horoscope"`
-		DailyAffirmation string `yaml:"daily-affirmation"`
-		DailyAdvice      string `yaml:"daily-advice"`
-		DailyKanye       string `yaml:"daily-kanye"`
+		Tuuck   string `yaml:"tuuck"`
+		Version string `yaml:"version"`
+		Pick    string `yaml:"pick"`
+		Animals string `yaml:"animals"`
+		Daily   string `yaml:"daily"`
+		ImgSet  string `yaml:"img-set"`
+		Play    string `yaml:"play"`
+		Get     string `yaml:"get"`
 	} `yaml:"slash-name"`
 
 	PrefixName struct {
@@ -88,47 +84,35 @@ type Command struct {
 	} `yaml:"prefix-name"`
 
 	Desc struct {
-		Tuuck            string `yaml:"tuuck"`
-		StartServer      string `yaml:"start-server"`
-		StopServer       string `yaml:"stop-server"`
-		CoinFlip         string `yaml:"coin-flip"`
-		ServerStatus     string `yaml:"server-status"`
-		Version          string `yaml:"version"`
-		LMGTFY           string `yaml:"lmgtfy"`
-		Insult           string `yaml:"insult"`
-		Play             string `yaml:"play"`
-		Stop             string `yaml:"stop"`
-		Queue            string `yaml:"queue"`
-		Clear            string `yaml:"clear"`
-		PickChoices      string `yaml:"pick-choices"`
-		PickSteam        string `yaml:"pick-steam"`
-		AnimalsDoggo     string `yaml:"animals-doggo"`
-		DailyHoroscope   string `yaml:"daily-horoscope"`
-		DailyAffirmation string `yaml:"daily-affirmation"`
-		DailyAdvice      string `yaml:"daily-advice"`
-		DailyKanye       string `yaml:"daily-kanye"`
+		Tuuck        string `yaml:"tuuck"`
+		StartServer  string `yaml:"start-server"`
+		StopServer   string `yaml:"stop-server"`
+		CoinFlip     string `yaml:"coin-flip"`
+		ServerStatus string `yaml:"server-status"`
+		Version      string `yaml:"version"`
+		LMGTFY       string `yaml:"lmgtfy"`
+		Pick         string `yaml:"pick"`
+		Animals      string `yaml:"animals"`
+		Daily        string `yaml:"daily"`
+		ImgSet       string `yaml:"img-set"`
+		Play         string `yaml:"play"`
+		Get          string `yaml:"get"`
 	} `yaml:"description"`
 
 	Example struct {
-		Tuuck            string `yaml:"tuuck"`
-		StartServer      string `yaml:"start-server"`
-		StopServer       string `yaml:"stop-server"`
-		CoinFlip         string `yaml:"coin-flip"`
-		ServerStatus     string `yaml:"server-status"`
-		Version          string `yaml:"version"`
-		LMGTFY           string `yaml:"lmgtfy"`
-		Insult           string `yaml:"insult"`
-		Play             string `yaml:"play"`
-		Stop             string `yaml:"stop"`
-		Queue            string `yaml:"queue"`
-		Clear            string `yaml:"clear"`
-		PickChoices      string `yaml:"pick-choices"`
-		PickSteam        string `yaml:"pick-steam"`
-		AnimalsDoggo     string `yaml:"animals-doggo"`
-		DailyHoroscope   string `yaml:"daily-horoscope"`
-		DailyAffirmation string `yaml:"daily-affirmation"`
-		DailyAdvice      string `yaml:"daily-advice"`
-		DailyKanye       string `yaml:"daily-kanye"`
+		Tuuck        string `yaml:"tuuck"`
+		StartServer  string `yaml:"start-server"`
+		StopServer   string `yaml:"stop-server"`
+		CoinFlip     string `yaml:"coin-flip"`
+		ServerStatus string `yaml:"server-status"`
+		Version      string `yaml:"version"`
+		LMGTFY       string `yaml:"lmgtfy"`
+		Pick         string `yaml:"pick"`
+		Animals      string `yaml:"animals"`
+		Daily        string `yaml:"daily"`
+		ImgSet       string `yaml:"img-set"`
+		Play         string `yaml:"play"`
+		Get          string `yaml:"get"`
 	} `yaml:"example"`
 
 	Msg struct {
