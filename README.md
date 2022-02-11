@@ -39,7 +39,7 @@
   •
   <a href="#terms">Terms</a>
   •
-  <a href="#release">Release Notes</a>
+  <a href="#release-notes">Release Notes</a>
   •
   <a href="#license">License</a>
   •
