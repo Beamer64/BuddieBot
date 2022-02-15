@@ -1,17 +1,7 @@
 package commands
 
 import (
-	"bytes"
-	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/pkg/errors"
-	"io"
-	"io/ioutil"
 	"math/rand"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 var ResponseTimer chan bool
@@ -98,23 +88,6 @@ type wtp struct {
 	Question string `json:"question"`
 }
 
-func getErrorEmbed(err error) *discordgo.MessageEmbed {
-	embed := &discordgo.MessageEmbed{
-		Title:       "ERROR",
-		Description: "(ノಠ益ಠ)ノ彡┻━┻",
-		Color:       16726843,
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "Stack",
-				Value:  fmt.Sprintf("%+v", errors.WithStack(err)),
-				Inline: true,
-			},
-		},
-	}
-
-	return embed
-}
-
 // Returns pseudo rand num between low and high.
 // For random embed color: rangeIn(1, 16777215)
 func rangeIn(low, hi int) int {
@@ -128,67 +101,4 @@ func checkIfEmpty(value string) string {
 		return value
 	}
 	return "N/A"
-}
-
-// ImageCleanUp Clear out Image directory
-func ImageCleanUp(dir string) error {
-	fmt.Println("Running Cleanup")
-
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return err
-	}
-
-	for _, f := range files {
-		if strings.Contains(filepath.Join(dir, filepath.Base(f.Name())), ".png") {
-			err = os.Remove(filepath.Join(dir, filepath.Base(f.Name())))
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// saveResponseImage saves []byte data to .png file
-func saveResponseImage(byte []byte, guildID string) (string, error) {
-	// setting image name to written time
-	wrTime := time.Now().Format("2006-01-02 15:04:05")
-	wrTimeName := strings.Replace(wrTime, " ", "-", -1)
-	wrTimeName = strings.Replace(wrTimeName, ":", "-", -1)
-
-	// Create the dir
-	dir := fmt.Sprintf("%s/Image", guildID)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		// does not exist
-		err = os.MkdirAll(dir, 0777)
-		if err != nil {
-			return "", err
-		}
-
-		fmt.Println(fmt.Sprintf("Dir created: %s", dir))
-	}
-
-	imagePath := filepath.Join(dir, filepath.Base(wrTimeName+".png"))
-
-	//open a file for writing
-	file, err := os.Create(imagePath)
-	if err != nil {
-		return "", err
-	}
-
-	defer func(file *os.File) {
-		err = file.Close()
-	}(file)
-	if err != nil {
-		return "", err
-	}
-
-	// Use io.Copy to just dump the response body to the file.
-	_, err = io.Copy(file, bytes.NewReader(byte))
-	if err != nil {
-		return "", err
-	}
-
-	return imagePath, nil
 }

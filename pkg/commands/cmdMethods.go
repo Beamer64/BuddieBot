@@ -10,7 +10,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 	"io"
 	"math/rand"
 	"net/http"
@@ -3601,8 +3600,7 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 			},
 		)
 		if err != nil {
-			fmt.Printf("%+v", errors.WithStack(err))
-			_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+			return err
 		}
 
 	case "fact":

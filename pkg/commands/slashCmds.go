@@ -1276,7 +1276,7 @@ var (
 			err := sendHoroscopeCompResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 	}
@@ -1287,7 +1287,7 @@ var (
 			err := sendVersionResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1295,7 +1295,7 @@ var (
 			err := sendAnimalsResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1303,7 +1303,7 @@ var (
 			err := sendGetResponse(s, i, client)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1311,7 +1311,7 @@ var (
 			err := sendImgResponse(s, i, client)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1319,7 +1319,7 @@ var (
 			err := sendImgResponse(s, i, client)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1327,7 +1327,7 @@ var (
 			err := sendImgResponse(s, i, client)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1335,7 +1335,7 @@ var (
 			err := sendDailyResponse(s, i, cfg, client)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1343,7 +1343,7 @@ var (
 			err := sendPickResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1351,7 +1351,7 @@ var (
 			err := sendTuuckResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 
@@ -1359,7 +1359,7 @@ var (
 			err := sendPlayResponse(s, i, cfg, client)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, getErrorEmbed(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
 			}
 		},
 	}

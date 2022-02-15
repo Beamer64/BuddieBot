@@ -289,11 +289,6 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 }
 
 func (d *MessageCreateHandler) playAudio(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
-	_, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Playing: %s", link))
-	if err != nil {
-		return err
-	}
-
 	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
 	if err != nil {
 		return err
