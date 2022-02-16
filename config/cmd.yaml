@@ -1,7 +1,6 @@
 # List of slash (/) commands
 slash-name:
   tuuck:   "/tuuck"
-  version: "/version"
   pick:    "/pick"
   animals: "/animals"
   daily:   "/daily"
@@ -21,7 +20,6 @@ description:
   start-server:  "Starts Minecraft Server."
   stop-server:   "Stops Minecraft Server."
   server-status: "Gives the current status of the MC server."
-  version:       "Gives the Git SHA of the current bot version running"
   lmgtfy:        "Add the :grey_question: Reaction to a message and get a LMGTFY link"
   pick:          "Chooses between 2 or more things."
   animals:       "Look at some cutes."
@@ -36,7 +34,6 @@ example:
   start-server:  "$startServer"
   stop-server:   "$stopServer"
   server-status: "$serverStatus"
-  version:       "/version"
   lmgtfy:        "Add the :grey_question: Reaction to a channel message"
   pick:          "/pick choices `1st: option1` `2nd: option2`"
   animals:       "/animals doggo"

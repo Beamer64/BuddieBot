@@ -136,30 +136,6 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	return nil
 }
 
-func sendVersionResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("Version: %s", cfg.Version),
-		Color:       62033,
-		Description: "You see it up there.",
-	}
-
-	err := s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{
-					embed,
-				},
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 //endregion
 
 //region Game Commands

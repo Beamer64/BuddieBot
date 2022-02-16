@@ -15,7 +15,6 @@ type Configs struct {
 	Configs         *Configuration
 	Cmd             *Command
 	LoadingMessages []string
-	Version         string
 }
 
 type Configuration struct {
@@ -69,7 +68,6 @@ type Configuration struct {
 type Command struct {
 	SlashName struct {
 		Tuuck   string `yaml:"tuuck"`
-		Version string `yaml:"version"`
 		Pick    string `yaml:"pick"`
 		Animals string `yaml:"animals"`
 		Daily   string `yaml:"daily"`
@@ -90,7 +88,6 @@ type Command struct {
 		StopServer   string `yaml:"stop-server"`
 		CoinFlip     string `yaml:"coin-flip"`
 		ServerStatus string `yaml:"server-status"`
-		Version      string `yaml:"version"`
 		LMGTFY       string `yaml:"lmgtfy"`
 		Pick         string `yaml:"pick"`
 		Animals      string `yaml:"animals"`
@@ -106,7 +103,6 @@ type Command struct {
 		StopServer   string `yaml:"stop-server"`
 		CoinFlip     string `yaml:"coin-flip"`
 		ServerStatus string `yaml:"server-status"`
-		Version      string `yaml:"version"`
 		LMGTFY       string `yaml:"lmgtfy"`
 		Pick         string `yaml:"pick"`
 		Animals      string `yaml:"animals"`
@@ -165,7 +161,7 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 			continue
 		}
 
-		// build a map of neccesary files
+		// build a map of necessary files
 		fmap := make(map[string]bool)
 		fmap["config.yaml"] = false
 		fmap["cmd.yaml"] = false
@@ -229,30 +225,14 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		return nil, err
 	}
 
-	fmt.Println("Looking for version.txt")
-	file, err := os.Open(configDir + "version.txt")
-	if err != nil {
-		fmt.Println("WARNING didn't find version.txt in directory")
-	}
-	contents, err := ioutil.ReadAll(file)
-	if err != nil {
-		fmt.Println("WARNING couldn't read version.txt")
-	}
-
-	fv := strings.Replace(string(contents), "\n", "", -1)
-	if len(fv) > 8 {
-		fv = fv[0:7]
-	}
-
 	return &Configs{
 		Configs:         cfg,
 		Cmd:             command,
 		LoadingMessages: msgs,
-		Version:         fv,
 	}, nil
 }
 
-// dont move this out (circular dependency)
+// don't move this out (circular dependency)
 func grabLoadingMessages(loadingMessagesPath string) ([]string, error) {
 	file, err := os.Open(loadingMessagesPath)
 	if err != nil {

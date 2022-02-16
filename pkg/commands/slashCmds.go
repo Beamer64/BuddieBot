@@ -15,10 +15,6 @@ var (
 	// of the command.
 	Commands = []*discordgo.ApplicationCommand{
 		{
-			Name:        "version",
-			Description: "Gives the Git SHA of the current bot version running",
-		},
-		{
 			Name:        "animals",
 			Description: "So CUTE",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -1283,14 +1279,6 @@ var (
 
 	// CommandHandlers for handling the commands themselves. Main interaction response here.
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client){
-		"version": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) {
-			err := sendVersionResponse(s, i, cfg)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
-			}
-		},
-
 		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) {
 			err := sendAnimalsResponse(s, i, cfg)
 			if err != nil {

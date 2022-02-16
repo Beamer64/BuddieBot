@@ -20,18 +20,18 @@ jobs:
           go-version: 1.16
 
       - name: Pull secrets
-        run: |
-          echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
+        run:  |
+              echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
 
       - name: Test
-        run: |
-          go test -v ./...
+        run:  |
+              go test -v ./...
 
       - name: Build
-        run: |
-          go get ./...
-          go get -u layeh.com/gopus
-          go build -o discord_server cmd/discord-bot/main.go
+        run:  |
+              go get ./...
+              go get -u layeh.com/gopus
+              go build -o discord_server cmd/discord-bot/main.go
 
       # Need to reimplement after unit test are seperated from integration tests
       # - name: Test
@@ -40,12 +40,12 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@master
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id:                 ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key:        ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
       - name: Use gcloud CLI
-        run: gcloud info
+        run:  gcloud info
 
         # sudo apt-get install -y g++ libgtk-3-dev libfreetype6-dev libx11-dev libxinerama-dev libxrandr-dev libxcursor-dev mesa-common-dev libasound2-dev freeglut3-dev libxcomposite-dev libcurl4-openssl-dev
         # sudo apt-get install software-properties-common
@@ -56,30 +56,26 @@ jobs:
         # gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf *"
 
       - name: Upload new server binary and install packages
-        run: |
-          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}"
-          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a ./discord_server colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}
+        run:  |
+              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}"
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a ./discord_server colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}
 
       - name: Upload new configs from secret
-        run: |
-          echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
-          echo "${GITHUB_SHA}" > config/version.txt
-          echo >> config/version.txt
-          echo date >> config/version.txt
-          
-          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config"
-          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmd.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-          gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/version.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+        run:  |
+              echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
+              
+              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config"
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmd.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
 
       - name: Stop old service and start new
-        run: |
-          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
-          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="unlink current; ln -s ${GITHUB_SHA} current"
-          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo systemctl restart bot.service"
-          gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo rm -rf $(ls -t -r | head -n 1)" 
+        run:  |
+              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
+              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="unlink current; ln -s ${GITHUB_SHA} current"
+              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo systemctl restart bot.service"
+              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo rm -rf $(ls -t -r | head -n 1)" 
 
         # gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf $(ls -lt | grep '^d' | tail -1  | tr " " "\n" | tail -1)"
 
