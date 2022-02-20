@@ -48,6 +48,13 @@ type Configuration struct {
 		EmailPassword string `yaml:"emailPassword"`
 	} `yaml:"settings"`
 
+	Database struct {
+		TableName string `yaml:"tableName"`
+		Region    string `yaml:"region"`
+		AccessKey string `yaml:"accessKey"`
+		SecretKey string `yaml:"secretKey"`
+	}
+
 	Server struct {
 		SSHKeyBody                  string `yaml:"sshKeyBody"`
 		MachineIP                   string `yaml:"machineIP"`
@@ -257,13 +264,11 @@ func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.Messa
 	var guild *discordgo.Guild
 	guildID := "N/A"
 	guildName := "N/A"
-	guildMembers := "N/A"
 
 	if gID != "" {
 		guild, _ = s.Guild(gID)
 		guildID = gID
 		guildName = guild.Name
-		guildMembers = fmt.Sprintf("%v", guild.ApproximateMemberCount)
 	}
 
 	embed := &discordgo.MessageEmbed{
@@ -279,11 +284,6 @@ func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.Messa
 			{
 				Name:   "Guild Name",
 				Value:  guildName,
-				Inline: true,
-			},
-			{
-				Name:   "Guild Member Count",
-				Value:  guildMembers,
 				Inline: true,
 			},
 			{

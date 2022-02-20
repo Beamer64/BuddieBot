@@ -2,10 +2,15 @@ package bot
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/beamer64/discordBot/pkg/commands"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/beamer64/discordBot/pkg/events"
 	"github.com/bwmarrin/discordgo"
+
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"time"
 )
 
@@ -33,7 +38,19 @@ func Init(cfg *config.Configs) error {
 		return err
 	}
 
-	registerEvents(botSession, cfg, user)
+	sess, err := session.NewSession(
+		&aws.Config{
+			Region:      aws.String(cfg.Configs.Database.Region),
+			Credentials: credentials.NewStaticCredentials(cfg.Configs.Database.AccessKey, cfg.Configs.Database.SecretKey, ""),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	dbClient := dynamodb.New(sess)
+
+	registerEvents(botSession, cfg, user, dbClient)
 
 	if err = botSession.Open(); err != nil {
 		return err
@@ -48,12 +65,15 @@ func Init(cfg *config.Configs) error {
 	return nil
 }
 
-func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User) {
+func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User, dbc *dynamodb.DynamoDB) {
 	s.AddHandler(events.NewReadyHandler(cfg).ReadyHandler)
 
-	s.AddHandler(events.NewGuildCreateHandler(cfg).GuildCreateHandler)
-	s.AddHandler(events.NewGuildJoinLeaveHandler(cfg).GuildJoinHandler)
-	s.AddHandler(events.NewGuildJoinLeaveHandler(cfg).GuildLeaveHandler)
+	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildCreateHandler)
+	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildDeleteHandler)
+	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildJoinHandler)
+	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildLeaveHandler)
+
+	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildMemberUpdateHandler)
 
 	s.AddHandler(events.NewMessageCreateHandler(cfg, u).MessageCreateHandler)
 	s.AddHandler(events.NewReactionHandler(cfg).ReactHandlerAdd)

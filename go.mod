@@ -4,6 +4,8 @@ go 1.16
 
 require (
 	cloud.google.com/go v0.99.0
+	github.com/aws/aws-sdk-go v1.42.53
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.13.0
 	github.com/beamer64/godagpi v0.0.0-20220209065335-4a6defdff5de
 	github.com/bwmarrin/dgvoice v0.0.0-20210225172318-caaac756e02e
 	github.com/bwmarrin/discordgo v0.23.3-0.20211228023845-29269347e820
@@ -15,7 +17,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/subosito/shorturl v1.0.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-	golang.org/x/net v0.0.0-20211215060638-4ddde0e984e9 // indirect
 	golang.org/x/sys v0.0.0-20211214234402-4825e8c3871d // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.62.0 // indirect

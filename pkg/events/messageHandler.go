@@ -104,6 +104,8 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
+			/////////////Games///////////////////
+
 		// Play Nim game
 		case "$nim":
 			err := d.playNIM(s, m, param)
@@ -112,6 +114,8 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
 			}
 			return
+
+			/////////////Audio///////////////////
 
 			// Play audio
 		case "$play":
@@ -169,6 +173,8 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				}
 			}
 			return
+
+			/////////////NSFW///////////////////
 
 		// Sends the "Invalid" command Message
 		default:

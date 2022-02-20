@@ -85,7 +85,7 @@ var (
 			},
 		},
 		{
-			Name:        "img-set1",
+			Name:        "imgset1",
 			Description: "Manipulate some images!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -441,7 +441,7 @@ var (
 			},
 		},
 		{
-			Name:        "img-set2",
+			Name:        "imgset2",
 			Description: "Manipulate some more images!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -855,7 +855,7 @@ var (
 			},
 		},
 		{
-			Name:        "img-set3",
+			Name:        "imgset3",
 			Description: "MOAR!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{

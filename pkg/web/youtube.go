@@ -199,7 +199,11 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 
 		IsPlaying = true
 		for i, v := range MpFileQueue {
-			fmt.Println("PlayAudioFile:", v)
+			fmt.Println("PlayAudioFile: ", v)
+			_, err := s.ChannelMessageSend(m.ChannelID, "Now playing: "+v)
+			if err != nil {
+				return err
+			}
 
 			dgvoice.PlayAudioFile(dgv, v, StopPlaying)
 

@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/beamer64/discordBot/pkg/commands"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/beamer64/godagpi/dagpi"
@@ -9,22 +10,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GuildJoinLeaveHandler struct{ cfg *config.Configs }
 type ReactionHandler struct{ cfg *config.Configs }
 type ReadyHandler struct{ cfg *config.Configs }
-type GuildCreateHandler struct{ cfg *config.Configs }
 type CommandHandler struct{ cfg *config.Configs }
+type GuildHandler struct {
+	cfg      *config.Configs
+	dbClient *dynamodb.DynamoDB
+}
 
 func NewCommandHandler(cfg *config.Configs) *CommandHandler {
 	return &CommandHandler{cfg: cfg}
 }
 
-func NewGuildCreateHandler(cfg *config.Configs) *GuildCreateHandler {
-	return &GuildCreateHandler{cfg: cfg}
-}
-
-func NewGuildJoinLeaveHandler(cfg *config.Configs) *GuildJoinLeaveHandler {
-	return &GuildJoinLeaveHandler{cfg: cfg}
+func NewGuildHandler(cfg *config.Configs, dbc *dynamodb.DynamoDB) *GuildHandler {
+	return &GuildHandler{
+		cfg:      cfg,
+		dbClient: dbc,
+	}
 }
 
 func NewReactionHandler(cfg *config.Configs) *ReactionHandler {
@@ -36,53 +38,6 @@ func NewReadyHandler(cfg *config.Configs) *ReadyHandler {
 }
 
 // Events
-
-var firstRun = true
-
-// GuildCreateHandler joins new guild
-func (g *GuildCreateHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
-	if !IsLaunchedByDebugger() {
-		if !firstRun {
-			desc := "None"
-			if e.Description != "" {
-				desc = e.Description
-			}
-			embed := &discordgo.MessageEmbed{
-				Title: "NEW SERVER JOIN",
-				Color: 1564907,
-				Fields: []*discordgo.MessageEmbedField{
-					{
-						Name:   "ServerID",
-						Value:  e.ID,
-						Inline: true,
-					},
-					{
-						Name:   "Server Name",
-						Value:  e.Name,
-						Inline: true,
-					},
-					{
-						Name:   "Member Count",
-						Value:  fmt.Sprintf("%v", e.MemberCount),
-						Inline: true,
-					},
-					{
-						Name:   "Description",
-						Value:  desc,
-						Inline: false,
-					},
-				},
-			}
-
-			_, err := s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, ""))
-			}
-		}
-		firstRun = false
-	}
-}
 
 // CommandHandler new commands
 func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -126,24 +81,96 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 	}
 }
 
+// GuildMemberUpdateHandler Sent when a guild member is updated.
+func (g *GuildHandler) GuildMemberUpdateHandler(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
+	embed := &discordgo.MessageEmbed{
+		Title: "Hey, GuildMemberUpdateHandler is working now",
+		Color: 1321,
+	}
+	_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
+}
+
 // GuildJoinHandler when someone joins our server
-func (d *GuildJoinLeaveHandler) GuildJoinHandler(s *discordgo.Session, e *discordgo.GuildMemberAdd) {
+func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, e *discordgo.GuildMemberAdd) {
 	guild, err := s.Guild(e.GuildID)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.GuildID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.GuildID))
 	}
 
 	fmt.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", e.Member.User.String(), guild.Name)
 }
 
 // GuildLeaveHandler when someone leaves our server
-func (d *GuildJoinLeaveHandler) GuildLeaveHandler(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
+func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
+	embed := &discordgo.MessageEmbed{
+		Title: "Hey, GuildLeaveHandler is working now",
+		Color: 1321,
+	}
+	_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
+
 	guild, err := s.Guild(e.GuildID)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.GuildID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.GuildID))
 	}
 
 	fmt.Printf("%s left the server %s\n Seacrest OUT..", e.Member.User.String(), guild.Name)
+}
+
+// GuildCreateHandler bot joins new guild
+func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
+	err := g.insertDBguildData(e.Guild)
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.ID))
+	}
+
+	if !IsLaunchedByDebugger() {
+		desc := "None"
+		if e.Description != "" {
+			desc = e.Description
+		}
+		embed := &discordgo.MessageEmbed{
+			Title: "NEW SERVER JOIN",
+			Color: 1564907,
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   "ServerID",
+					Value:  e.ID,
+					Inline: true,
+				},
+				{
+					Name:   "Server Name",
+					Value:  e.Name,
+					Inline: true,
+				},
+				{
+					Name:   "Member Count",
+					Value:  fmt.Sprintf("%v", e.MemberCount),
+					Inline: true,
+				},
+				{
+					Name:   "Description",
+					Value:  desc,
+					Inline: false,
+				},
+			},
+		}
+
+		_, err = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
+		if err != nil {
+			fmt.Printf("%+v", errors.WithStack(err))
+			_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.ID))
+		}
+	}
+}
+
+// GuildDeleteHandler when bot leaves a server
+func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.GuildDelete) {
+	err := g.deleteDBguildData(e.Guild)
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.ID))
+	}
 }

@@ -138,7 +138,7 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 //endregion
 
-//region Game Commands
+//region Play Commands
 
 func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) error {
 	options := i.ApplicationCommandData().Options[0]
@@ -3882,6 +3882,9 @@ func getSteamGame(cfg *config.Configs) (string, error) {
 	}
 
 	randomIndex := rand.Intn(len(steamObj.Applist.Apps))
+	for steamObj.Applist.Apps[randomIndex].Name == "" {
+		randomIndex = rand.Intn(len(steamObj.Applist.Apps))
+	}
 	choice := fmt.Sprintf("%s\nsteam://openurl/https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Name, steamObj.Applist.Apps[randomIndex].Appid)
 
 	return choice, nil

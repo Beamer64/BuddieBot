@@ -65,15 +65,12 @@ func TestPostInsult(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	var err error
-	var session *discordgo.Session
-
 	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	session, err = discordgo.New("Bot " + cfg.Configs.Keys.TestBotToken)
+	session, err := discordgo.New("Bot " + cfg.Configs.Keys.TestBotToken)
 	if err != nil {
 		t.Fatal(err)
 	}
