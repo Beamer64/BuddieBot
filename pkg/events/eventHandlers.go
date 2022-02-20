@@ -86,6 +86,18 @@ func (g *GuildHandler) GuildMemberUpdateHandler(s *discordgo.Session, e *discord
 	embed := &discordgo.MessageEmbed{
 		Title: "Hey, GuildMemberUpdateHandler is working now",
 		Color: 1321,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "User",
+				Value:  e.User.Username,
+				Inline: true,
+			},
+			{
+				Name:   "ID",
+				Value:  e.User.ID,
+				Inline: true,
+			},
+		},
 	}
 	_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
 }
@@ -106,6 +118,18 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, e *discordgo.Guil
 	embed := &discordgo.MessageEmbed{
 		Title: "Hey, GuildLeaveHandler is working now",
 		Color: 1321,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "User",
+				Value:  e.User.Username,
+				Inline: true,
+			},
+			{
+				Name:   "ID",
+				Value:  e.User.ID,
+				Inline: true,
+			},
+		},
 	}
 	_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
 
