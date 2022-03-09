@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/pkg/errors"
@@ -11,14 +12,16 @@ import (
 )
 
 type MessageCreateHandler struct {
-	cfg   *config.Configs
-	botID string
+	cfg      *config.Configs
+	botID    string
+	dbClient *dynamodb.DynamoDB
 }
 
-func NewMessageCreateHandler(cfg *config.Configs, u *discordgo.User) *MessageCreateHandler {
+func NewMessageCreateHandler(cfg *config.Configs, u *discordgo.User, dbc *dynamodb.DynamoDB) *MessageCreateHandler {
 	return &MessageCreateHandler{
-		cfg:   cfg,
-		botID: u.ID,
+		cfg:      cfg,
+		botID:    u.ID,
+		dbClient: dbc,
 	}
 }
 
@@ -37,13 +40,16 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		}
 
 		switch strings.ToLower(command) {
+
+		/////////////Misc///////////////////
+
 		case "$test":
 			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
-				err := d.testMethod(s, m, param)
+				/*err := d.testMethod(s, m, param)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
-				}
+				}*/
 			}
 			return
 
@@ -58,6 +64,15 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				}
 			}
 			return
+
+		case "$weast":
+			err := d.sendWeasterEgg(s, m)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
+			}
+
+		/////////////Misc///////////////////
 
 		// Starts the Minecraft Server
 		case "$startServer":
@@ -104,20 +119,11 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-			/////////////Games///////////////////
+		/////////////Games///////////////////
 
-		// Play Nim game
-		case "$nim":
-			err := d.playNIM(s, m, param)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
-			}
-			return
+		/////////////Audio///////////////////
 
-			/////////////Audio///////////////////
-
-			// Play audio
+		// Play audio
 		case "$play":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				err := d.playAudio(s, m, param)
@@ -174,7 +180,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-			/////////////NSFW///////////////////
+		/////////////NSFW///////////////////
 
 		// Sends the "Invalid" command Message
 		default:

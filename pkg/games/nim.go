@@ -1,13 +1,38 @@
 package games
 
 import (
+	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )
 
-func StartNim(s *discordgo.Session, m *discordgo.MessageCreate, user string, versus bool) error {
+func PlayNIM(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, user string) error {
+	/*if strings.HasPrefix(param, "<@") {
+		err := startNim(s, m, param, true)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		if param == "" {
+			err := startNim(s, m, param, false)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.Invalid)
+			if err != nil {
+				return err
+			}
+		}
+	}*/
+	return nil
+}
+
+func startNim(s *discordgo.Session, m *discordgo.MessageCreate, user string, versus bool) error {
 	if versus {
-		accepted, err := SendPlayerInvite(s, m, user)
+		accepted, err := sendPlayerInvite(s, m, user)
 		if err != nil {
 			return err
 		}
@@ -24,7 +49,7 @@ func StartNim(s *discordgo.Session, m *discordgo.MessageCreate, user string, ver
 	return nil
 }
 
-func SendPlayerInvite(s *discordgo.Session, m *discordgo.MessageCreate, user string) (bool, error) {
+func sendPlayerInvite(s *discordgo.Session, m *discordgo.MessageCreate, user string) (bool, error) {
 	usrID := strings.SplitAfter(user, "!")
 	userID := strings.Split(usrID[1], ">")[0]
 

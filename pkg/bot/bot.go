@@ -38,7 +38,7 @@ func Init(cfg *config.Configs) error {
 		return err
 	}
 
-	sess, err := session.NewSession(
+	dynamodbSess, err := session.NewSession(
 		&aws.Config{
 			Region:      aws.String(cfg.Configs.Database.Region),
 			Credentials: credentials.NewStaticCredentials(cfg.Configs.Database.AccessKey, cfg.Configs.Database.SecretKey, ""),
@@ -48,10 +48,11 @@ func Init(cfg *config.Configs) error {
 		return err
 	}
 
-	dbClient := dynamodb.New(sess)
+	dbClient := dynamodb.New(dynamodbSess)
 
 	registerEvents(botSession, cfg, user, dbClient)
 
+	botSession.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
 	if err = botSession.Open(); err != nil {
 		return err
 	}
@@ -75,7 +76,7 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 
 	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildMemberUpdateHandler)
 
-	s.AddHandler(events.NewMessageCreateHandler(cfg, u).MessageCreateHandler)
+	s.AddHandler(events.NewMessageCreateHandler(cfg, u, dbc).MessageCreateHandler)
 	s.AddHandler(events.NewReactionHandler(cfg).ReactHandlerAdd)
 
 	s.AddHandler(events.NewCommandHandler(cfg).CommandHandler)

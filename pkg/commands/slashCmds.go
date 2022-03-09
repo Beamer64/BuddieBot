@@ -1232,6 +1232,12 @@ var (
 					Description: "Flips a coin...",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "nim",
+					Description: "of the 12 coin variety",
+					Required:    false,
+				},
 				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "typeracer",

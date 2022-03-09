@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/godagpi/dagpi"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
@@ -160,6 +161,13 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 				},
 			},
 		)
+		if err != nil {
+			return err
+		}
+
+	// todo finish this
+	case "nim":
+		err := games.PlayNIM(s, i, cfg, "")
 		if err != nil {
 			return err
 		}
@@ -388,7 +396,7 @@ func callDoggoAPI(cfg *config.Configs) (doggo, error) {
 
 //endregion
 
-//region Response Commands
+//region Get Commands
 
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, client dagpi.Client) error {
 	options := i.ApplicationCommandData().Options[0]
@@ -3827,7 +3835,9 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		content = strings.TrimSpace(content)
 		content = fmt.Sprintf("*%s*", content)
 
-		randomIndex := rand.Intn(len(i.ApplicationCommandData().Options))
+		rand.Seed(time.Now().UnixNano())
+
+		randomIndex := rand.Intn(len(i.ApplicationCommandData().Options[0].Options))
 		choice := i.ApplicationCommandData().Options[0].Options[randomIndex].StringValue()
 
 		embed := &discordgo.MessageEmbed{
@@ -3846,7 +3856,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Choosing Steam Game",
+					Content: content,
 					Embeds: []*discordgo.MessageEmbed{
 						embed,
 					},

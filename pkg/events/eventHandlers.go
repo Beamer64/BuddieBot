@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/beamer64/discordBot/pkg/commands"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/discordBot/pkg/database"
 	"github.com/beamer64/godagpi/dagpi"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
@@ -83,7 +84,7 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 
 // GuildMemberUpdateHandler Sent when a guild member is updated.
 func (g *GuildHandler) GuildMemberUpdateHandler(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
-	embed := &discordgo.MessageEmbed{
+	/*embed := &discordgo.MessageEmbed{
 		Title: "Hey, GuildMemberUpdateHandler is working now",
 		Color: 1321,
 		Fields: []*discordgo.MessageEmbedField{
@@ -99,52 +100,46 @@ func (g *GuildHandler) GuildMemberUpdateHandler(s *discordgo.Session, e *discord
 			},
 		},
 	}
-	_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
+	_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)*/
 }
 
 // GuildJoinHandler when someone joins our server
-func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, e *discordgo.GuildMemberAdd) {
-	guild, err := s.Guild(e.GuildID)
+func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+	guild, err := s.Guild(m.GuildID)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.GuildID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
 	}
 
-	fmt.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", e.Member.User.String(), guild.Name)
+	fmt.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", m.Member.User.String(), guild.Name)
+
+	err = database.InsertDBmemberData(g.dbClient, m.Member, g.cfg)
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
+	}
 }
 
 // GuildLeaveHandler when someone leaves our server
-func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
-	embed := &discordgo.MessageEmbed{
-		Title: "Hey, GuildLeaveHandler is working now",
-		Color: 1321,
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "User",
-				Value:  e.User.Username,
-				Inline: true,
-			},
-			{
-				Name:   "ID",
-				Value:  e.User.ID,
-				Inline: true,
-			},
-		},
-	}
-	_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
-
-	guild, err := s.Guild(e.GuildID)
+func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
+	guild, err := s.Guild(m.GuildID)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.GuildID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
 	}
 
-	fmt.Printf("%s left the server %s\n Seacrest OUT..", e.Member.User.String(), guild.Name)
+	fmt.Printf("%s left the server %s\n Seacrest OUT..", m.Member.User.String(), guild.Name)
+
+	err = database.DeleteDBmemberData(g.dbClient, m.Member, g.cfg)
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
+	}
 }
 
 // GuildCreateHandler bot joins new guild
 func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
-	err := g.insertDBguildData(e.Guild)
+	err := database.InsertDBguildItem(g.dbClient, e.Guild, g.cfg)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
 		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.ID))
@@ -192,7 +187,7 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 
 // GuildDeleteHandler when bot leaves a server
 func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.GuildDelete) {
-	err := g.deleteDBguildData(e.Guild)
+	err := database.DeleteDBguildData(g.dbClient, e.Guild, g.cfg)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
 		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.ID))

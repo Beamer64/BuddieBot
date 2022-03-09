@@ -11,6 +11,7 @@ require (
 	github.com/bwmarrin/discordgo v0.23.3-0.20211228023845-29269347e820
 	github.com/chromedp/cdproto v0.0.0-20211126220118-81fa0469ad77
 	github.com/chromedp/chromedp v0.7.6
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/mitchellh/mapstructure v1.4.3

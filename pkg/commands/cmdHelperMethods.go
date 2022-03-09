@@ -4,8 +4,6 @@ import (
 	"math/rand"
 )
 
-var ResponseTimer chan bool
-
 type steamGames struct {
 	Applist struct {
 		Apps []struct {
@@ -55,10 +53,6 @@ type doggo []struct {
 	Height int    `json:"height"`
 }
 
-type insult struct {
-	Insult string `json:"insult"`
-}
-
 type joke struct {
 	ID   string `json:"id"`
 	Joke string `json:"joke"`
@@ -67,10 +61,6 @@ type joke struct {
 type pickupLine struct {
 	Category string `json:"category"`
 	Joke     string `json:"joke"`
-}
-
-type fact struct {
-	Fact string `json:"fact"`
 }
 
 type wtp struct {

@@ -2,7 +2,6 @@ package events
 
 import (
 	"fmt"
-	"github.com/beamer64/discordBot/pkg/games"
 	"github.com/beamer64/discordBot/pkg/gcp"
 	"github.com/beamer64/discordBot/pkg/ssh"
 	"github.com/beamer64/discordBot/pkg/voice_chat"
@@ -18,7 +17,6 @@ import (
 
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if IsLaunchedByDebugger() {
-
 	}
 	return nil
 }
@@ -108,30 +106,6 @@ func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message)
 		return err
 	}
 
-	return nil
-}
-
-func (d *MessageCreateHandler) playNIM(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	if strings.HasPrefix(param, "<@") {
-		err := games.StartNim(s, m, param, true)
-		if err != nil {
-			return err
-		}
-
-	} else {
-		if param == "" {
-			err := games.StartNim(s, m, param, false)
-			if err != nil {
-				return err
-			}
-
-		} else {
-			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.Invalid)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 
@@ -391,6 +365,20 @@ func (d *MessageCreateHandler) skipPlayback(s *discordgo.Session, m *discordgo.M
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (d *MessageCreateHandler) sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {
+	_, err := s.ChannelMessageSend(
+		m.ChannelID,
+		"Is mayonnaise an instrument?\n───────────────▄████████▄────────\n──────────────██▒▒▒▒▒▒▒▒██───────\n─────────────██▒▒▒▒▒▒▒▒▒██───────\n────────────██▒▒▒▒▒▒▒▒▒▒██───────\n"+
+			"───────────██▒▒▒▒▒▒▒▒▒██▀────────\n"+
+			"──────────██▒▒▒▒▒▒▒▒▒▒██─────────\n─────────██▒▒▒▒▒▒▒▒▒▒▒██─────────\n────────██▒████▒████▒▒██─────────\n────────██▒▒▒▒▒▒▒▒▒▒▒▒██─────────\n────────██▒────▒▒────▒██─────────\n────────██▒─██─▒▒─██─▒██─────────\n────────██▒────▒▒────▒██─────────\n────────██▒▒▒▒▒▒▒▒▒▒▒▒██─────────\n───────██▒▒█▀▀▀▀▀▀▀█▒▒▒▒██───────\n─────██▒▒▒▒▒█▄▄▄▄▄█▒▒▒▒▒▒▒██─────\n───██▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒██───\n─██▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒██─\n█▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒█\n█▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒█\n█▒▒████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒████▒▒█\n▀████▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▒▒▒▒▒▒████▀\n──█▌▌▌▌▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▌▌▌███──\n───█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌█────\n───█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌█────\n────▀█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌██▀─────\n─────█▌▌▌▌▌▌████████▌▌▌▌▌██──────\n──────██▒▒██────────██▒▒██───────\n──────▀████▀────────▀████▀───────",
+	)
+	if err != nil {
+		return err
 	}
 
 	return nil
