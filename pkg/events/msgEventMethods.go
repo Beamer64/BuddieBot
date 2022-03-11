@@ -15,6 +15,7 @@ import (
 
 // functions here should mostly be used for the prefix commands ($)
 
+//region dev commands
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if IsLaunchedByDebugger() {
 	}
@@ -91,6 +92,8 @@ func (d *MessageCreateHandler) sendReleaseNotes(s *discordgo.Session, m *discord
 	}
 	return nil
 }
+
+//endregion
 
 func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message) error {
 	strEnc := url.QueryEscape(m.Content)
@@ -262,6 +265,7 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 	return nil
 }
 
+//region dev commands
 func (d *MessageCreateHandler) playAudio(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
 	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
 	if err != nil {
@@ -369,6 +373,8 @@ func (d *MessageCreateHandler) skipPlayback(s *discordgo.Session, m *discordgo.M
 
 	return nil
 }
+
+//endregion
 
 func (d *MessageCreateHandler) sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	_, err := s.ChannelMessageSend(

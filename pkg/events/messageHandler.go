@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/discordBot/pkg/database"
 	"github.com/beamer64/discordBot/pkg/web"
 	"github.com/pkg/errors"
 	"strings"
@@ -31,19 +32,18 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			return
 		}
 
-		messageSlices := strings.SplitAfterN(m.Content, " ", 2)
-		command := strings.Trim(messageSlices[0], " ")
+		messageSlices := strings.SplitAfterN(m.Content, " ", 2)                                         //split command from param
+		command := strings.Trim(messageSlices[0], fmt.Sprintf("%s ", d.cfg.Configs.Settings.BotPrefix)) //trim spaces and prefix
 
+		//get command parameter
 		param := ""
 		if len(messageSlices) > 1 {
 			param = messageSlices[1]
 		}
 
 		switch strings.ToLower(command) {
-
-		/////////////Misc///////////////////
-
-		case "$test":
+		/////////////Dev///////////////////
+		case "test":
 			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
 				/*err := d.testMethod(s, m, param)
 				if err != nil {
@@ -53,8 +53,8 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-		case "$release":
-			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
+		case "release":
+			if m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
 					err := d.sendReleaseNotes(s, m)
 					if err != nil {
@@ -65,7 +65,22 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-		case "$weast":
+		case "updatedbitems":
+			if m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
+				if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
+					err := database.UpdateDBitems(d.dbClient, d.cfg)
+					if err != nil {
+						fmt.Printf("%+v", errors.WithStack(err))
+						_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
+					}
+				}
+			}
+
+		/////////////Dev///////////////////
+
+		/////////////Misc///////////////////
+
+		case "weast":
 			err := d.sendWeasterEgg(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -75,7 +90,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		/////////////Misc///////////////////
 
 		// Starts the Minecraft Server
-		case "$startServer":
+		case "startServer":
 			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
 				err := d.startServer(s, m)
 				if err != nil {
@@ -93,7 +108,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 
 		// Stops the Minecraft Server
-		case "$stopServer":
+		case "stopServer":
 			if d.memberHasRole(s, m, d.cfg.Configs.Settings.BotAdminRole) {
 				err := d.stopServer(s, m)
 				if err != nil {
@@ -111,7 +126,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 
 		// Stops the Minecraft Server
-		case "$serverStatus":
+		case "serverStatus":
 			err := d.sendServerStatusAsMessage(s, m)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -124,7 +139,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		/////////////Audio///////////////////
 
 		// Play audio
-		case "$play":
+		case "play":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				err := d.playAudio(s, m, param)
 				if err != nil {
@@ -134,7 +149,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-		case "$stop":
+		case "stop":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				err := d.stopAudioPlayback()
 				if err != nil {
@@ -144,7 +159,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-		case "$queue":
+		case "queue":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				err := d.sendQueue(s, m)
 				if err != nil {
@@ -154,7 +169,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-		case "$skip":
+		case "skip":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				err := d.sendSkipMessage(s, m)
 				if err != nil {
@@ -164,7 +179,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			}
 			return
 
-		case "$clear":
+		case "clear":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				err := web.MpFileCleanUp(fmt.Sprintf("%s/Audio", m.GuildID))
 				if err != nil {

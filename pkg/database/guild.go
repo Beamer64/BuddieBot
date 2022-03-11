@@ -7,23 +7,25 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
+	"reflect"
 )
 
 type DBguildSettingsItem struct {
-	ModerateSpam      bool `json:"moderateSpam"`
-	ModerateProfanity bool `json:"moderateProfanity"`
-	DisableNSFW       bool `json:"disableNSFW"`
+	ModerateSpam      bool   `json:"ModerateSpam"`
+	ModerateProfanity bool   `json:"ModerateProfanity"`
+	DisableNSFW       bool   `json:"DisableNSFW"`
+	CommandPrefix     string `json:"CommandPrefix"`
 }
 
 type DBguildItem struct {
 	GuildID       string `json:"guildID"`
-	Name          string `json:"name"`
-	OwnerID       string `json:"ownerID"`
+	Name          string `json:"Name"`
+	OwnerID       string `json:"OwnerID"`
 	GuildSettings DBguildSettingsItem
 	Members       []DBmemberItem
 }
 
-func getGuildItem(dbClient *dynamodb.DynamoDB, cfg *config.Configs, guildID string) (DBguildItem, error) {
+func GetDBguildItemByID(dbClient *dynamodb.DynamoDB, cfg *config.Configs, guildID string) (DBguildItem, error) {
 	var guildObj DBguildItem
 
 	item, err := dbClient.GetItem(
@@ -48,9 +50,64 @@ func getGuildItem(dbClient *dynamodb.DynamoDB, cfg *config.Configs, guildID stri
 	return guildObj, nil
 }
 
+func UpdateDBitems(dbClient *dynamodb.DynamoDB, cfg *config.Configs) error {
+	resp, err := dbClient.Scan(
+		&dynamodb.ScanInput{
+			TableName: aws.String(cfg.Configs.Database.TableName),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range resp.Items {
+		//create guild object
+		var guildObj DBguildItem
+		err = dynamodbattribute.UnmarshalMap(item, &guildObj)
+		if err != nil {
+			return err
+		}
+
+		settingsList := make(map[string]interface{})
+		v := reflect.ValueOf(guildObj.GuildSettings)
+		for i := 0; i < v.NumField(); i++ {
+			settingsList[v.Type().Field(i).Name] = v.Field(i).Interface()
+		}
+
+		//command not set in db
+		if settingsList["CommandPrefix"] == "" {
+			// add command prefix setting
+			input := &dynamodb.UpdateItemInput{
+				Key: map[string]*dynamodb.AttributeValue{
+					"guildID": {
+						S: aws.String(guildObj.GuildID),
+					},
+				},
+				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+					":c": {
+						S: aws.String("$"),
+					},
+				},
+				TableName:        aws.String(cfg.Configs.Database.TableName),
+				ReturnValues:     aws.String("UPDATED_NEW"),
+				UpdateExpression: aws.String("SET GuildSettings.CommandPrefix = :c"),
+			}
+
+			_, err = dbClient.UpdateItem(input)
+			if err != nil {
+				return err
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *config.Configs) error {
 	//check for existing db item
-	item, err := getGuildItem(dbClient, cfg, g.ID)
+	item, err := GetDBguildItemByID(dbClient, cfg, g.ID)
 	if err != nil {
 		return err
 	}
@@ -79,6 +136,7 @@ func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *con
 				ModerateSpam:      false,
 				ModerateProfanity: false,
 				DisableNSFW:       false,
+				CommandPrefix:     "$",
 			},
 			Members: memberList,
 		}
@@ -105,7 +163,7 @@ func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *con
 
 func DeleteDBguildData(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *config.Configs) error {
 	//check for existing db item
-	item, err := getGuildItem(dbClient, cfg, g.ID)
+	item, err := GetDBguildItemByID(dbClient, cfg, g.ID)
 	if err != nil {
 		return err
 	}

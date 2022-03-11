@@ -10,18 +10,18 @@ import (
 )
 
 type DBinventoryItem struct {
-	Currency int `json:"currency"`
+	Currency int `json:"Currency"`
 }
 
 type DBmemberItem struct {
-	UserName  string   `json:"userName"`
-	UserID    string   `json:"userID"`
-	Roles     []string `json:"roles"`
+	UserName  string   `json:"UserName"`
+	UserID    string   `json:"UserID"`
+	Roles     []string `json:"Roles"`
 	Inventory DBinventoryItem
 }
 
 func InsertDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *config.Configs) error {
-	item, err := getGuildItem(dbClient, cfg, m.GuildID)
+	item, err := GetDBguildItemByID(dbClient, cfg, m.GuildID)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func InsertDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *c
 
 func DeleteDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *config.Configs) error {
 	//check for existing db item
-	item, err := getGuildItem(dbClient, cfg, m.GuildID)
+	item, err := GetDBguildItemByID(dbClient, cfg, m.GuildID)
 	if err != nil {
 		return err
 	}

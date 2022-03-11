@@ -1270,6 +1270,38 @@ var (
 				},
 			},
 		},
+		{
+			Name:        "config",
+			Description: "set guild settings",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "list",
+					Description: "list set settings",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "setting",
+					Description: "change specific setting",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "name",
+							Description: "name of setting",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "value",
+							Description: "new value for setting",
+							Required:    true,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	// ComponentHandlers for handling components in interactions. Eg. Buttons, Dropdowns, Searchbars Etc.
@@ -1351,6 +1383,14 @@ var (
 
 		"play": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) {
 			err := sendPlayResponse(s, i, cfg, client)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))
+			}
+		},
+
+		"config": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) {
+			err := sendConfigResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, i.GuildID))

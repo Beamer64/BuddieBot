@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/beamer64/discordBot/pkg/config"
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -139,9 +140,9 @@ func TestInsertDBmemberData(t *testing.T) {
 }
 
 func TestDeleteDBmemberData(t *testing.T) {
-	/*if os.Getenv("INTEGRATION") != "true" {
+	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}*/
+	}
 
 	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
 	if err != nil {
@@ -160,7 +161,7 @@ func TestDeleteDBmemberData(t *testing.T) {
 
 	dbClient := dynamodb.New(dynamodbSess)
 
-	item, err := getGuildItem(dbClient, cfg, cfg.Configs.DiscordIDs.TestGuildID)
+	item, err := GetDBguildItemByID(dbClient, cfg, cfg.Configs.DiscordIDs.TestGuildID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,5 +191,80 @@ func TestDeleteDBmemberData(t *testing.T) {
 		}
 	} else {
 		fmt.Println("No Guild Item found")
+	}
+}
+
+func TestUpdateDBitems(t *testing.T) {
+	/*if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}*/
+
+	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dynamodbSess, err := session.NewSession(
+		&aws.Config{
+			Region:      aws.String(cfg.Configs.Database.Region),
+			Credentials: credentials.NewStaticCredentials(cfg.Configs.Database.AccessKey, cfg.Configs.Database.SecretKey, ""),
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dbClient := dynamodb.New(dynamodbSess)
+
+	resp, err := dbClient.Scan(
+		&dynamodb.ScanInput{
+			TableName: aws.String(cfg.Configs.Database.TableName),
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, item := range resp.Items {
+		//create guild object
+		var guildObj DBguildItem
+		err = dynamodbattribute.UnmarshalMap(item, &guildObj)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		settingsList := make(map[string]interface{})
+		v := reflect.ValueOf(guildObj.GuildSettings)
+		for i := 0; i < v.NumField(); i++ {
+			settingsList[v.Type().Field(i).Name] = v.Field(i).Interface()
+		}
+
+		//command not set in db
+		if settingsList["CommandPrefix"] == "" {
+			fmt.Println("not set")
+
+			input := &dynamodb.UpdateItemInput{
+				Key: map[string]*dynamodb.AttributeValue{
+					"guildID": {
+						S: aws.String(guildObj.GuildID),
+					},
+				},
+				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+					":c": {
+						S: aws.String("$"),
+					},
+				},
+				TableName:        aws.String(cfg.Configs.Database.TableName),
+				ReturnValues:     aws.String("UPDATED_NEW"),
+				UpdateExpression: aws.String("SET GuildSettings.CommandPrefix = :c"),
+			}
+
+			_, err = dbClient.UpdateItem(input)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		fmt.Println(resp)
 	}
 }

@@ -137,6 +137,104 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	return nil
 }
 
+func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	cmdPrefix, err := getConfigSettingValue("CommandPrefix", i.GuildID, cfg)
+	if err != nil {
+		return err
+	}
+	modProfanity, err := getConfigSettingValue("ModerateProfanity", i.GuildID, cfg)
+	if err != nil {
+		return err
+	}
+	disableNSFW, err := getConfigSettingValue("DisableNSFW", i.GuildID, cfg)
+	if err != nil {
+		return err
+	}
+	modSpam, err := getConfigSettingValue("ModerateSpam", i.GuildID, cfg)
+	if err != nil {
+		return err
+	}
+
+	settingListEmbed := &discordgo.MessageEmbed{
+		Title:       "BuddieBot Server Settings",
+		Description: "These are the current settings for the server and can only be changed by holders of the **Bot Admin Role**.",
+		Color:       rangeIn(1, 16777215),
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   cmdPrefix,
+				Value:  "This is the prefix to any non-slash commands. The default prefix is '$'.",
+				Inline: false,
+			},
+			{
+				Name:   modProfanity,
+				Value:  "When enabled, BuddieBot will do it's best to filter out any profane chats.",
+				Inline: false,
+			},
+			{
+				Name:   disableNSFW,
+				Value:  "When disabled, the server will not have access to any NSFW commands/content.",
+				Inline: false,
+			},
+			{
+				Name:   modSpam,
+				Value:  "When enabled, BuddieBot will remove any unwanted chat spamming.",
+				Inline: false,
+			},
+		},
+	}
+
+	if !memberHasRole(s, i, cfg.Configs.Settings.BotAdminRole) {
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{
+						settingListEmbed,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+	} else {
+		switch i.ApplicationCommandData().Options[0].Name {
+		case "list":
+			err = s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Embeds: []*discordgo.MessageEmbed{
+							settingListEmbed,
+						},
+					},
+				},
+			)
+			if err != nil {
+				return err
+			}
+		case "setting":
+
+		default:
+			err = s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Embeds: []*discordgo.MessageEmbed{
+							settingListEmbed,
+						},
+					},
+				},
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 //endregion
 
 //region Play Commands
