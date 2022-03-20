@@ -3,7 +3,6 @@ package config
 import (
 	"bufio"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
@@ -258,41 +257,4 @@ func grabLoadingMessages(loadingMessagesPath string) ([]string, error) {
 	}
 
 	return lines, nil
-}
-
-func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.MessageEmbed {
-	var guild *discordgo.Guild
-	guildID := "N/A"
-	guildName := "N/A"
-
-	if gID != "" {
-		guild, _ = s.Guild(gID)
-		guildID = gID
-		guildName = guild.Name
-	}
-
-	embed := &discordgo.MessageEmbed{
-		Title:       "ERROR",
-		Description: "(ノಠ益ಠ)ノ彡┻━┻",
-		Color:       16726843,
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "Guild ID",
-				Value:  guildID,
-				Inline: true,
-			},
-			{
-				Name:   "Guild Name",
-				Value:  guildName,
-				Inline: true,
-			},
-			{
-				Name:   "Stack",
-				Value:  fmt.Sprintf("%+v", errors.WithStack(err)),
-				Inline: false,
-			},
-		},
-	}
-
-	return embed
 }

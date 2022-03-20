@@ -6,7 +6,7 @@ import (
 	"github.com/beamer64/discordBot/pkg/commands"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/beamer64/discordBot/pkg/database"
-	"github.com/beamer64/godagpi/dagpi"
+	"github.com/beamer64/discordBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 )
@@ -45,13 +45,11 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
 		if h, ok := commands.CommandHandlers[i.ApplicationCommandData().Name]; ok {
-			client := dagpi.Client{Auth: c.cfg.Configs.Keys.DagpiAPIkey}
-			h(s, i, c.cfg, client)
+			h(s, i, c.cfg)
 		}
 	case discordgo.InteractionMessageComponent:
 		if h, ok := commands.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
-			client := dagpi.Client{Auth: c.cfg.Configs.Keys.DagpiAPIkey}
-			h(s, i, c.cfg, client)
+			h(s, i, c.cfg)
 		}
 	}
 }
@@ -61,7 +59,7 @@ func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 	err := s.UpdateGameStatus(0, "try /tuuck")
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(h.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, ""))
+		_, _ = s.ChannelMessageSendEmbed(h.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, ""))
 	}
 
 	// FYI can get all connected Guild list here
@@ -77,7 +75,7 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 		err := r.sendLmgtfy(s, msg)
 		if err != nil {
 			fmt.Printf("%+v", errors.WithStack(err))
-			_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, mr.GuildID))
+			_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, mr.GuildID))
 		}
 	}
 }
@@ -108,7 +106,7 @@ func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.Guild
 	guild, err := s.Guild(m.GuildID)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
 	}
 
 	fmt.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", m.Member.User.String(), guild.Name)
@@ -116,7 +114,7 @@ func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.Guild
 	err = database.InsertDBmemberData(g.dbClient, m.Member, g.cfg)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
 	}
 }
 
@@ -125,7 +123,7 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.Guil
 	guild, err := s.Guild(m.GuildID)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
 	}
 
 	fmt.Printf("%s left the server %s\n Seacrest OUT..", m.Member.User.String(), guild.Name)
@@ -133,7 +131,7 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.Guil
 	err = database.DeleteDBmemberData(g.dbClient, m.Member, g.cfg)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, m.GuildID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
 	}
 }
 
@@ -142,10 +140,10 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 	err := database.InsertDBguildItem(g.dbClient, e.Guild, g.cfg)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.ID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, e.ID))
 	}
 
-	if !IsLaunchedByDebugger() {
+	if !helper.IsLaunchedByDebugger() {
 		desc := "None"
 		if e.Description != "" {
 			desc = e.Description
@@ -180,7 +178,7 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 		_, err = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
 		if err != nil {
 			fmt.Printf("%+v", errors.WithStack(err))
-			_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.ID))
+			_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, e.ID))
 		}
 	}
 }
@@ -190,6 +188,6 @@ func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.Gui
 	err := database.DeleteDBguildData(g.dbClient, e.Guild, g.cfg)
 	if err != nil {
 		fmt.Printf("%+v", errors.WithStack(err))
-		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, config.GetErrorEmbed(err, s, e.ID))
+		_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, e.ID))
 	}
 }

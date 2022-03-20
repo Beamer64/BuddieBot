@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/api"
 	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/discordBot/pkg/database"
 	"github.com/beamer64/discordBot/pkg/games"
+	"github.com/beamer64/discordBot/pkg/helper"
 	"github.com/beamer64/godagpi/dagpi"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
@@ -80,7 +82,7 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 		embed := &discordgo.MessageEmbed{
 			Title: title,
-			Color: rangeIn(1, 16777215),
+			Color: helper.RangeIn(1, 16777215),
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "Description",
@@ -138,27 +140,94 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 }
 
 func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	cmdPrefix, err := getConfigSettingValue("CommandPrefix", i.GuildID, cfg)
+	settingListEmbed, err := getSettingsListEmbed(i.GuildID, cfg)
 	if err != nil {
 		return err
 	}
-	modProfanity, err := getConfigSettingValue("ModerateProfanity", i.GuildID, cfg)
-	if err != nil {
-		return err
+
+	if !helper.MemberHasRole(s, i.Member, cfg.Configs.Settings.BotAdminRole) {
+		//send setting list
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{
+						settingListEmbed,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+	} else {
+		switch i.ApplicationCommandData().Options[0].Name {
+		case "list":
+			//send setting list
+			err = s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Embeds: []*discordgo.MessageEmbed{
+							settingListEmbed,
+						},
+					},
+				},
+			)
+			if err != nil {
+				return err
+			}
+		case "setting":
+			settingName := i.ApplicationCommandData().Options[0].Options[0].StringValue()
+			newSettingValue := i.ApplicationCommandData().Options[0].Options[1].StringValue()
+
+			err = database.ChangeConfigSettingValueByName(settingName, newSettingValue, i.GuildID, cfg)
+			if err != nil {
+				return err
+			}
+
+		default:
+			//send setting list
+			err = s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Embeds: []*discordgo.MessageEmbed{
+							settingListEmbed,
+						},
+					},
+				},
+			)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	disableNSFW, err := getConfigSettingValue("DisableNSFW", i.GuildID, cfg)
+	return nil
+}
+
+func getSettingsListEmbed(guildID string, cfg *config.Configs) (*discordgo.MessageEmbed, error) {
+	cmdPrefix, err := database.GetConfigSettingValueByName("CommandPrefix", guildID, cfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	modSpam, err := getConfigSettingValue("ModerateSpam", i.GuildID, cfg)
+	modProfanity, err := database.GetConfigSettingValueByName("ModerateProfanity", guildID, cfg)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	disableNSFW, err := database.GetConfigSettingValueByName("DisableNSFW", guildID, cfg)
+	if err != nil {
+		return nil, err
+	}
+	modSpam, err := database.GetConfigSettingValueByName("ModerateSpam", guildID, cfg)
+	if err != nil {
+		return nil, err
 	}
 
 	settingListEmbed := &discordgo.MessageEmbed{
 		Title:       "BuddieBot Server Settings",
 		Description: "These are the current settings for the server and can only be changed by holders of the **Bot Admin Role**.",
-		Color:       rangeIn(1, 16777215),
+		Color:       helper.RangeIn(1, 16777215),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   cmdPrefix,
@@ -182,64 +251,16 @@ func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cf
 			},
 		},
 	}
-
-	if !memberHasRole(s, i, cfg.Configs.Settings.BotAdminRole) {
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						settingListEmbed,
-					},
-				},
-			},
-		)
-		if err != nil {
-			return err
-		}
-	} else {
-		switch i.ApplicationCommandData().Options[0].Name {
-		case "list":
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							settingListEmbed,
-						},
-					},
-				},
-			)
-			if err != nil {
-				return err
-			}
-		case "setting":
-
-		default:
-			err = s.InteractionRespond(
-				i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							settingListEmbed,
-						},
-					},
-				},
-			)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return settingListEmbed, nil
 }
 
 //endregion
 
 //region Play Commands
 
-func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) error {
+func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
+
 	options := i.ApplicationCommandData().Options[0]
 
 	switch options.Name {
@@ -420,14 +441,14 @@ func getDoggoEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 		}
 	}
 
-	impWeight := checkIfEmpty(doggoObj[0].Breeds[0].Weight.Imperial)
-	metWeight := checkIfEmpty(doggoObj[0].Breeds[0].Weight.Metric)
-	impHeight := checkIfEmpty(doggoObj[0].Breeds[0].Height.Imperial)
-	metHeight := checkIfEmpty(doggoObj[0].Breeds[0].Height.Metric)
+	impWeight := helper.CheckIfEmpty(doggoObj[0].Breeds[0].Weight.Imperial)
+	metWeight := helper.CheckIfEmpty(doggoObj[0].Breeds[0].Weight.Metric)
+	impHeight := helper.CheckIfEmpty(doggoObj[0].Breeds[0].Height.Imperial)
+	metHeight := helper.CheckIfEmpty(doggoObj[0].Breeds[0].Height.Metric)
 
 	embed := &discordgo.MessageEmbed{
 		Title:       doggoObj[0].Breeds[0].Name,
-		Color:       rangeIn(1, 16777215),
+		Color:       helper.RangeIn(1, 16777215),
 		Description: doggoObj[0].Breeds[0].Temperament,
 		Image: &discordgo.MessageEmbedImage{
 			URL: doggoObj[0].URL,
@@ -445,22 +466,22 @@ func getDoggoEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 			},
 			{
 				Name:   "Origin",
-				Value:  checkIfEmpty(doggoObj[0].Breeds[0].Origin),
+				Value:  helper.CheckIfEmpty(doggoObj[0].Breeds[0].Origin),
 				Inline: true,
 			},
 			{
 				Name:   "Bred For",
-				Value:  checkIfEmpty(doggoObj[0].Breeds[0].BredFor),
+				Value:  helper.CheckIfEmpty(doggoObj[0].Breeds[0].BredFor),
 				Inline: true,
 			},
 			{
 				Name:   "Breed Group",
-				Value:  checkIfEmpty(doggoObj[0].Breeds[0].BreedGroup),
+				Value:  helper.CheckIfEmpty(doggoObj[0].Breeds[0].BreedGroup),
 				Inline: true,
 			},
 			{
 				Name:   "Life Span",
-				Value:  checkIfEmpty(doggoObj[0].Breeds[0].LifeSpan),
+				Value:  helper.CheckIfEmpty(doggoObj[0].Breeds[0].LifeSpan),
 				Inline: true,
 			},
 		},
@@ -496,7 +517,8 @@ func callDoggoAPI(cfg *config.Configs) (doggo, error) {
 
 //region Get Commands
 
-func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, client dagpi.Client) error {
+func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
 	options := i.ApplicationCommandData().Options[0]
 
 	switch options.Name {
@@ -640,7 +662,8 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, clien
 
 //region Img Commands
 
-func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, client dagpi.Client) error {
+func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
 	options := i.ApplicationCommandData().Options[0]
 
 	switch options.Name {
@@ -3526,7 +3549,9 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, clien
 
 //region Daily Commands
 
-func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, client dagpi.Client) error {
+func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
+
 	switch i.ApplicationCommandData().Options[0].Name {
 	case "advice":
 		embed, err := getDailyAdviceEmbed(cfg)
@@ -3729,7 +3754,7 @@ func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	embed := &discordgo.MessageEmbed{
 		Title:       "( ಠ ͜ʖರೃ)",
-		Color:       rangeIn(1, 16777215),
+		Color:       helper.RangeIn(1, 16777215),
 		Description: adviceObj.Slip.Advice,
 	}
 
@@ -3758,7 +3783,7 @@ func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	embed := &discordgo.MessageEmbed{
 		Title: "(▀̿Ĺ̯▀̿ ̿)",
-		Color: rangeIn(1, 16777215),
+		Color: helper.RangeIn(1, 16777215),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:  fmt.Sprintf("\"%s\"", kanyeObj.Quote),
@@ -3795,7 +3820,7 @@ func getDailyAffirmationEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, err
 
 	embed := &discordgo.MessageEmbed{
 		Title:       timeFormat,
-		Color:       rangeIn(1, 16777215),
+		Color:       helper.RangeIn(1, 16777215),
 		Description: affirmObj.Affirmation,
 	}
 
@@ -3876,7 +3901,7 @@ func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
 	embed := &discordgo.MessageEmbed{
 		Title:       sign,
 		Description: horoscope,
-		Color:       rangeIn(1, 16777215),
+		Color:       helper.RangeIn(1, 16777215),
 		Footer: &discordgo.MessageEmbedFooter{
 			Text:    "Via Horoscopes.com",
 			IconURL: "https://www.horoscope.com/images-US/horoscope-logo.svg",
@@ -3900,7 +3925,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 
 		embed := &discordgo.MessageEmbed{
 			Title: "I have Chosen...",
-			Color: rangeIn(1, 16777215),
+			Color: helper.RangeIn(1, 16777215),
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   choice,
@@ -3940,7 +3965,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 
 		embed := &discordgo.MessageEmbed{
 			Title: "I have chosen...",
-			Color: rangeIn(1, 16777215),
+			Color: helper.RangeIn(1, 16777215),
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   choice,

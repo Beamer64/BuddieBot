@@ -8,6 +8,7 @@ import (
 	"github.com/beamer64/discordBot/pkg/commands"
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/beamer64/discordBot/pkg/events"
+	"github.com/beamer64/discordBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -17,7 +18,7 @@ import (
 func Init(cfg *config.Configs) error {
 	var botSession *discordgo.Session
 	botENV := ""
-	if events.IsLaunchedByDebugger() {
+	if helper.IsLaunchedByDebugger() {
 		bs, err := discordgo.New("Bot " + cfg.Configs.Keys.TestBotToken)
 		if err != nil {
 			return err

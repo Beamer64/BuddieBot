@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"github.com/beamer64/discordBot/pkg/gcp"
+	"github.com/beamer64/discordBot/pkg/helper"
 	"github.com/beamer64/discordBot/pkg/ssh"
 	"github.com/beamer64/discordBot/pkg/voice_chat"
 	"github.com/beamer64/discordBot/pkg/web"
@@ -17,7 +18,7 @@ import (
 
 //region dev commands
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
-	if IsLaunchedByDebugger() {
+	if helper.IsLaunchedByDebugger() {
 	}
 	return nil
 }
@@ -72,7 +73,7 @@ func (d *MessageCreateHandler) sendReleaseNotes(s *discordgo.Session, m *discord
 		Embed:   embed,
 	}
 
-	if IsLaunchedByDebugger() {
+	if helper.IsLaunchedByDebugger() {
 		_, err := s.ChannelMessageSendComplex(m.ChannelID, msg)
 		if err != nil {
 			return err
@@ -116,7 +117,7 @@ func (d *MessageCreateHandler) sendStartUpMessages(s *discordgo.Session, m *disc
 	// sleep for 1 minute while saying funny things and to wait for instance to start up
 	sm := 0
 	for i := 1; i < 5; i++ {
-		loadingMessage := getRandomLoadingMessage(d.cfg.LoadingMessages)
+		loadingMessage := helper.GetRandomLoadingMessage(d.cfg.LoadingMessages)
 		time.Sleep(3 * time.Second)
 
 		_, err := s.ChannelMessageSend(m.ChannelID, loadingMessage)
