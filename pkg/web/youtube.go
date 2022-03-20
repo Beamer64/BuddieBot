@@ -22,7 +22,9 @@ var IsPlaying bool
 var MpFileQueue []string
 
 func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mpFileLink string, fileName string, err error) {
-	url := strings.Replace(link, "youtube", "youtubex2", 1)
+	replacer := strings.NewReplacer("m.", "", "youtube", "youtubex2")
+	url := replacer.Replace(link)
+	//url := strings.Replace(link, "youtube", "youtubex2", 1)
 
 	ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf))
 	ctx, cancel = context.WithTimeout(ctx, 45*time.Second)
@@ -263,5 +265,7 @@ func MpFileCleanUp(dir string) error {
 			}
 		}
 	}
+
+	fmt.Println("Cleanup Finished")
 	return nil
 }
