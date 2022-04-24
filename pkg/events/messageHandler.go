@@ -142,7 +142,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		// Play audio
 		case "play":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
-				err := d.playAudio(s, m, param)
+				err := d.playAudioLink(s, m, param)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
 					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))

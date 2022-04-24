@@ -163,7 +163,7 @@ func TestDeleteDBmemberData(t *testing.T) {
 
 	dbClient := dynamodb.New(dynamodbSess)
 
-	item, err := GetDBguildItemByID(dbClient, cfg, cfg.Configs.DiscordIDs.TestGuildID)
+	item, err := GetDBguildItemByGuildID(dbClient, cfg, cfg.Configs.DiscordIDs.TestGuildID)
 	if err != nil {
 		t.Fatal(err)
 	}

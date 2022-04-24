@@ -27,7 +27,7 @@ type DBguildItem struct {
 	Members       []DBmemberItem
 }
 
-func GetDBguildItemByID(dbClient *dynamodb.DynamoDB, cfg *config.Configs, guildID string) (DBguildItem, error) {
+func GetDBguildItemByGuildID(dbClient *dynamodb.DynamoDB, cfg *config.Configs, guildID string) (DBguildItem, error) {
 	var guildObj DBguildItem
 
 	item, err := dbClient.GetItem(
@@ -109,7 +109,7 @@ func UpdateDBitems(dbClient *dynamodb.DynamoDB, cfg *config.Configs) error {
 
 func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *config.Configs) error {
 	//check for existing db item
-	item, err := GetDBguildItemByID(dbClient, cfg, g.ID)
+	item, err := GetDBguildItemByGuildID(dbClient, cfg, g.ID)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *con
 
 func DeleteDBguildData(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *config.Configs) error {
 	//check for existing db item
-	item, err := GetDBguildItemByID(dbClient, cfg, g.ID)
+	item, err := GetDBguildItemByGuildID(dbClient, cfg, g.ID)
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func GetConfigSettingValueByName(settingName string, guildID string, cfg *config
 
 	dbClient := dynamodb.New(dynamodbSess)
 
-	item, err := GetDBguildItemByID(dbClient, cfg, guildID)
+	item, err := GetDBguildItemByGuildID(dbClient, cfg, guildID)
 	if err != nil {
 		return "", err
 	}

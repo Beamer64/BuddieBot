@@ -24,7 +24,6 @@ var MpFileQueue []string
 func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mpFileLink string, fileName string, err error) {
 	replacer := strings.NewReplacer("m.", "", "youtube", "youtubex2")
 	url := replacer.Replace(link)
-	//url := strings.Replace(link, "youtube", "youtubex2", 1)
 
 	ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf))
 	ctx, cancel = context.WithTimeout(ctx, 45*time.Second)
@@ -123,8 +122,10 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 
 	// run getLinkTasks list
 	err = chromedp.Run(ctx, getLinkTasks)
-	if !strings.Contains(err.Error(), "net::ERR_ABORTED") {
-		return "", "", err
+	if err != nil {
+		if !strings.Contains(err.Error(), "net::ERR_ABORTED") {
+			return "", "", err
+		}
 	}
 
 	msg, err = s.ChannelMessageEdit(msg.ChannelID, msg.ID, "Prepping vidya...90% [######### ]")

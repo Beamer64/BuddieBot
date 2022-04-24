@@ -21,7 +21,7 @@ type DBmemberItem struct {
 }
 
 func InsertDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *config.Configs) error {
-	item, err := GetDBguildItemByID(dbClient, cfg, m.GuildID)
+	item, err := GetDBguildItemByGuildID(dbClient, cfg, m.GuildID)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func InsertDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *c
 
 func DeleteDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *config.Configs) error {
 	//check for existing db item
-	item, err := GetDBguildItemByID(dbClient, cfg, m.GuildID)
+	item, err := GetDBguildItemByGuildID(dbClient, cfg, m.GuildID)
 	if err != nil {
 		return err
 	}

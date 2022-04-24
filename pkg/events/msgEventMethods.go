@@ -267,15 +267,10 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 }
 
 //region dev commands
-func (d *MessageCreateHandler) playAudio(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
+func (d *MessageCreateHandler) playAudioLink(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
 	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
 	if err != nil {
 		return err
-	}
-
-	//yas
-	if m.Author.ID == "932843527870742538" {
-		link = "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
 	}
 
 	link, fileName, err := web.GetYtAudioLink(s, msg, link)
