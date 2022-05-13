@@ -19,6 +19,10 @@ import (
 //region dev commands
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if helper.IsLaunchedByDebugger() {
+		err := d.playAudioLink(s, m, param)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -47,7 +51,7 @@ func (d *MessageCreateHandler) sendReleaseNotes(s *discordgo.Session, m *discord
 			},
 			{
 				Name:   "New Commands: /img-set{1/2/3}",
-				Value:  "ALOT of image commands. Some might be janky since I haven't tested them all yet so just let me know if any arent working at all.",
+				Value:  "A LOT of image commands. Some might be janky since I haven't tested them all yet so just let me know if any arent working at all.",
 				Inline: false,
 			},
 			{
