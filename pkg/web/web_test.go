@@ -7,9 +7,12 @@ import (
 	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	gomail "gopkg.in/mail.v2"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -64,6 +67,35 @@ func TestAudioLink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}*/
+}
+
+func TestFormatAudioFileName(t *testing.T) {
+	/*if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}*/
+
+	fileName := "293416960237240320/Audio/welcome_to_the_internet_bo_burnham_frominside-7031555991360336165.mp3"
+
+	//split at "/"
+	splitName := strings.SplitAfterN(fileName, "/", 3)
+	fileName = splitName[2]
+
+	//replace characters
+	replacer := strings.NewReplacer("/", "", "_", " ", "-", "", ".mp3", "")
+	fileName = replacer.Replace(fileName)
+
+	//remove numbers
+	numRegex, err := regexp.Compile("[0-9]")
+	fileName = numRegex.ReplaceAllString(fileName, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//capitalize first letters
+	caser := cases.Title(language.AmericanEnglish)
+	fileName = caser.String(fileName)
+
+	fmt.Println(fileName)
 }
 
 func TestScrapeHoroscope(t *testing.T) {

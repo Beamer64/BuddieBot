@@ -7,12 +7,15 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -203,7 +206,12 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 		IsPlaying = true
 		for i, v := range MpFileQueue {
 			fmt.Println("PlayAudioFile: ", v)
-			_, err := s.ChannelMessageSend(m.ChannelID, "Now playing: "+v)
+			cleanFileName, err := FormatAudioFileName(v)
+			if err != nil {
+				return err
+			}
+
+			_, err = s.ChannelMessageSend(m.ChannelID, "Now playing: "+cleanFileName)
 			if err != nil {
 				return err
 			}
@@ -246,6 +254,30 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 	}
 
 	return nil
+}
+
+// FormatAudioFileName formats audio file name to look better
+func FormatAudioFileName(fileName string) (string, error) {
+	//split at "/"
+	splitName := strings.SplitAfterN(fileName, "/", 3)
+	fileName = splitName[2]
+
+	//replace characters
+	replacer := strings.NewReplacer("/", "", "_", " ", "-", "", ".mp3", "")
+	fileName = replacer.Replace(fileName)
+
+	//remove numbers
+	numRegex, err := regexp.Compile("[0-9]")
+	fileName = numRegex.ReplaceAllString(fileName, "")
+	if err != nil {
+		return "", err
+	}
+
+	//capitalize first letters
+	caser := cases.Title(language.AmericanEnglish)
+	fileName = caser.String(fileName)
+
+	return fileName, nil
 }
 
 // MpFileCleanUp clear out Audio directory
