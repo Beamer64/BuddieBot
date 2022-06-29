@@ -24,14 +24,14 @@ func Init(cfg *config.Configs) error {
 			return err
 		}
 		botSession = bs
-		botENV = "BB Test is running!"
+		botENV = "BB Test is ready to go!"
 	} else {
 		bs, err := discordgo.New("Bot " + cfg.Configs.Keys.ProdBotToken)
 		if err != nil {
 			return err
 		}
 		botSession = bs
-		botENV = "BuddieBot is running!"
+		botENV = "BuddieBot is ready to go!"
 	}
 
 	user, err := botSession.User("@me")
