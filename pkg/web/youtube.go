@@ -142,7 +142,7 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 		},
 	)
 
-	fileName = strings.SplitAfterN(mpLink, "/", 12)[11]
+	fileName = strings.SplitAfterN(mpLink, "/", 12)[7]
 
 	return mpLink, fileName, nil
 }
@@ -259,7 +259,7 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 // FormatAudioFileName formats audio file name to look better
 func FormatAudioFileName(fileName string) (string, error) {
 	//split at "/"
-	splitName := strings.SplitAfterN(fileName, "/", 3)
+	splitName := strings.SplitAfterN(fileName, "\\", 3)
 	fileName = splitName[2]
 
 	//replace characters
