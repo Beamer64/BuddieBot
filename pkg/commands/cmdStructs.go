@@ -59,6 +59,11 @@ type pickupLine struct {
 	Joke     string `json:"joke"`
 }
 
+type wyr struct {
+	ID   string `json:"id"`
+	Data string `json:"data"`
+}
+
 type wtp struct {
 	Data struct {
 		Type      []string `json:"Type"`

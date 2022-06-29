@@ -326,9 +326,69 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			<-timer.C
 			fmt.Println("You took too long to respond!")
 		}()
+
+	case "wyr":
+		embed, err := getWYREmbed(cfg)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{
+						embed,
+					},
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.Button{
+									Label:    "Another One! (▀̿Ĺ̯▀̿ ̿)",
+									Style:    1,
+									CustomID: "wyr-button",
+								},
+							},
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func getWYREmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
+	res, err := http.Get(cfg.Configs.Keys.WYRAPI)
+	if err != nil {
+		return nil, err
+	}
+
+	var wyrObj wyr
+
+	err = json.NewDecoder(res.Body).Decode(&wyrObj)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "Would You Rather?",
+		Color:       helper.RangeIn(1, 16777215),
+		Description: wyrObj.Data,
+	}
+
+	return embed, nil
 }
 
 func getWTPembed(data interface{}, isAnswer bool) (*discordgo.MessageEmbed, error) {
@@ -4120,7 +4180,7 @@ func getAlbumPickerEmbed(tags string, cfg *config.Configs) (*discordgo.MessageEm
 			URL: albumPickerObj[index].URL,
 		},
 		Footer: &discordgo.MessageEmbedFooter{
-			Text: "http://www.albumrecommender.com/",
+			Text: "http://www.albumrecommender.com",
 		},
 		Fields: []*discordgo.MessageEmbedField{
 			{
@@ -4227,6 +4287,42 @@ func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 func sendAlbumPickCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	tags := i.MessageComponentData().Values[0]
 	embed, err := getAlbumPickerEmbed(tags, cfg)
+	if err != nil {
+		return err
+	}
+
+	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
+	msgContent := ""
+	msgEdit.Content = &msgContent
+	msgEdit.Embeds = []*discordgo.MessageEmbed{embed}
+
+	// edit response (i.Interaction) and replace with embed
+	_, err = s.ChannelMessageEditComplex(msgEdit)
+	if err != nil {
+		return err
+	}
+
+	// 'This interaction failed' will show if not included
+	// todo fix later
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "",
+			},
+		},
+	)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Cannot send an empty message") {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func sendWYRCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	embed, err := getWYREmbed(cfg)
 	if err != nil {
 		return err
 	}

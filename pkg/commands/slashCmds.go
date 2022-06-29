@@ -1282,6 +1282,12 @@ var (
 					Description: "of the 12 coin variety",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "wyr",
+					Description: "Would You Rather??",
+					Required:    false,
+				},
 				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "typeracer",
@@ -1360,6 +1366,14 @@ var (
 
 		"album-suggest": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendAlbumPickCompResponse(s, i, cfg)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+			}
+		},
+
+		"wyr-button": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			err := sendWYRCompResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
