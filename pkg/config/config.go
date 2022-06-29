@@ -30,6 +30,7 @@ type Configuration struct {
 		KanyeAPI       string `yaml:"kanyeAPI"`
 		AdviceAPI      string `yaml:"adviceAPI"`
 		DoggoAPI       string `yaml:"doggoAPI"`
+		AlbumPickerAPI string `yaml:"albumPickerAPI"`
 	} `yaml:"keys"`
 
 	DiscordIDs struct {

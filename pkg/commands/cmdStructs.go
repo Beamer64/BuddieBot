@@ -73,3 +73,12 @@ type wtp struct {
 	Answer   string `json:"answer"`
 	Question string `json:"question"`
 }
+
+type albumPicker struct {
+	Genres      string `json:"Genres"`
+	Descriptors string `json:"Descriptors"`
+	Artist      string `json:"Artist"`
+	AlbumName   string `json:"Album_Name"`
+	SecGenres   string `json:"Sec_Genres"`
+	URL         string `json:"url"`
+}

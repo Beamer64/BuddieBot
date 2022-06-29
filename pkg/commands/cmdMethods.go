@@ -16,6 +16,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -441,10 +442,10 @@ func getDoggoEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 		}
 	}
 
-	impWeight := helper.CheckIfEmpty(doggoObj[0].Breeds[0].Weight.Imperial)
-	metWeight := helper.CheckIfEmpty(doggoObj[0].Breeds[0].Weight.Metric)
-	impHeight := helper.CheckIfEmpty(doggoObj[0].Breeds[0].Height.Imperial)
-	metHeight := helper.CheckIfEmpty(doggoObj[0].Breeds[0].Height.Metric)
+	impWeight := helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Weight.Imperial)
+	metWeight := helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Weight.Metric)
+	impHeight := helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Height.Imperial)
+	metHeight := helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Height.Metric)
 
 	embed := &discordgo.MessageEmbed{
 		Title:       doggoObj[0].Breeds[0].Name,
@@ -466,22 +467,22 @@ func getDoggoEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 			},
 			{
 				Name:   "Origin",
-				Value:  helper.CheckIfEmpty(doggoObj[0].Breeds[0].Origin),
+				Value:  helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Origin),
 				Inline: true,
 			},
 			{
 				Name:   "Bred For",
-				Value:  helper.CheckIfEmpty(doggoObj[0].Breeds[0].BredFor),
+				Value:  helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].BredFor),
 				Inline: true,
 			},
 			{
 				Name:   "Breed Group",
-				Value:  helper.CheckIfEmpty(doggoObj[0].Breeds[0].BreedGroup),
+				Value:  helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].BreedGroup),
 				Inline: true,
 			},
 			{
 				Name:   "Life Span",
-				Value:  helper.CheckIfEmpty(doggoObj[0].Breeds[0].LifeSpan),
+				Value:  helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].LifeSpan),
 				Inline: true,
 			},
 		},
@@ -3776,10 +3777,10 @@ func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	defer func(Body io.ReadCloser) {
 		err = Body.Close()
-		if err != nil {
-			return
-		}
 	}(res.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	embed := &discordgo.MessageEmbed{
 		Title: "(▀̿Ĺ̯▀̿ ̿)",
@@ -3989,9 +3990,168 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		if err != nil {
 			return err
 		}
+
+	case "album":
+		var tags []string
+		for _, v := range i.ApplicationCommandData().Options[0].Options {
+			tags = append(tags, v.StringValue())
+		}
+
+		albums, err := callAlbumPickerAPI(cfg, tags, "")
+		if err != nil {
+			return err
+		}
+
+		tagsStr := strings.Join(tags, ", ")
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Here are some hand-picked albums",
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.SelectMenu{
+									CustomID:    "album-suggest",
+									Placeholder: "Album",
+									Options: []discordgo.SelectMenuOption{
+										{
+											Label:   albums[0].AlbumName,
+											Value:   tagsStr + "*{1}*",
+											Default: false,
+										},
+										{
+											Label:   albums[1].AlbumName,
+											Value:   tagsStr + "*{2}*",
+											Default: false,
+										},
+										{
+											Label:   albums[2].AlbumName,
+											Value:   tagsStr + "*{3}*",
+											Default: false,
+										},
+										{
+											Label:   albums[3].AlbumName,
+											Value:   tagsStr + "*{4}*",
+											Default: false,
+										},
+										{
+											Label:   albums[4].AlbumName,
+											Value:   tagsStr + "*{5}*",
+											Default: false,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func callAlbumPickerAPI(cfg *config.Configs, tagSlice []string, tagStr string) ([]albumPicker, error) {
+	var albumPickerObjs []albumPicker
+
+	urlTags := ""
+	if tagStr == "" {
+		//we need to separate by commas and spaces and add brackets because API bad
+		urlTags = strings.Join(tagSlice, ", ")
+	} else {
+		urlTags = tagStr
+	}
+
+	URL := cfg.Configs.Keys.AlbumPickerAPI + url.PathEscape("["+urlTags+"]")
+
+	res, err := http.Get(URL)
+	if err != nil {
+		return albumPickerObjs, err
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&albumPickerObjs)
+	if err != nil {
+		return albumPickerObjs, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+	}(res.Body)
+	if err != nil {
+		return albumPickerObjs, err
+	}
+
+	return albumPickerObjs, nil
+}
+
+func getAlbumPickerEmbed(tags string, cfg *config.Configs) (*discordgo.MessageEmbed, error) {
+	index := 0
+	switch {
+	case strings.Contains(tags, "*{1}*"):
+		index = 0
+	case strings.Contains(tags, "*{2}*"):
+		index = 1
+	case strings.Contains(tags, "*{3}*"):
+		index = 2
+	case strings.Contains(tags, "*{4}*"):
+		index = 3
+	case strings.Contains(tags, "*{5}*"):
+		index = 4
+	}
+
+	replacer := strings.NewReplacer("*{1}*", "", "*{2}*", "", "*{3}*", "", "*{4}*", "", "*{5}*", "")
+	tags = replacer.Replace(tags)
+
+	albumPickerObj, err := callAlbumPickerAPI(cfg, nil, tags)
+	if err != nil {
+		return nil, err
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title: "Check out these albums!",
+		Color: helper.RangeIn(1, 16777215),
+		Image: &discordgo.MessageEmbedImage{
+			URL: albumPickerObj[index].URL,
+		},
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "http://www.albumrecommender.com/",
+		},
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Album Name",
+				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].AlbumName),
+				Inline: true,
+			},
+			{
+				Name:   "Album Artist",
+				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].Artist),
+				Inline: true,
+			},
+			{
+				Name:   "Genres",
+				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].Genres),
+				Inline: false,
+			},
+			{
+				Name:   "Secondary Genres",
+				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].SecGenres),
+				Inline: false,
+			},
+			{
+				Name:   "Descriptors",
+				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].Descriptors),
+				Inline: false,
+			},
+		},
+	}
+
+	return embed, nil
 }
 
 func getSteamGame(cfg *config.Configs) (string, error) {
@@ -4030,6 +4190,43 @@ func getSteamGame(cfg *config.Configs) (string, error) {
 func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	sign := i.MessageComponentData().Values[0]
 	embed, err := getHoroscopeEmbed(sign)
+	if err != nil {
+		return err
+	}
+
+	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
+	msgContent := ""
+	msgEdit.Content = &msgContent
+	msgEdit.Embeds = []*discordgo.MessageEmbed{embed}
+
+	// edit response (i.Interaction) and replace with embed
+	_, err = s.ChannelMessageEditComplex(msgEdit)
+	if err != nil {
+		return err
+	}
+
+	// 'This interaction failed' will show if not included
+	// todo fix later
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "",
+			},
+		},
+	)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Cannot send an empty message") {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func sendAlbumPickCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	tags := i.MessageComponentData().Values[0]
+	embed, err := getAlbumPickerEmbed(tags, cfg)
 	if err != nil {
 		return err
 	}

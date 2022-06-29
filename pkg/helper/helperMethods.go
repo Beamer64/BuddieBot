@@ -147,10 +147,10 @@ func RangeIn(low, hi int) int {
 	return low + rand.Intn(hi-low)
 }
 
-// CheckIfEmpty Checks if the value is empty and returns it if not.
+// CheckIfStringEmpty Checks if the value is empty and returns it if not.
 // Otherwise, return 'N/A'
-func CheckIfEmpty(value string) string {
-	if value != "" {
+func CheckIfStringEmpty(value string) string {
+	if value != "" && value != " " {
 		return value
 	}
 	return "N/A"

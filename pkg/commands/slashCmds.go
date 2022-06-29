@@ -1216,6 +1216,50 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "album",
+					Description: "I can recommend an album for you to listen to!",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "1st",
+							Description: "First tag",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "2nd",
+							Description: "Second tag",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "3rd",
+							Description: "Third tag",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "4th",
+							Description: "Fourth tag",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "5th",
+							Description: "Fifth tag",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "6th",
+							Description: "Sixth tag",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "steam",
 					Description: "Will choose a random Steam game to play.",
 					Required:    false,
@@ -1308,6 +1352,14 @@ var (
 	ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
 		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendHoroscopeCompResponse(s, i)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+			}
+		},
+
+		"album-suggest": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			err := sendAlbumPickCompResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))

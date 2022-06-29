@@ -70,9 +70,9 @@ func TestAudioLink(t *testing.T) {
 }
 
 func TestFormatAudioFileName(t *testing.T) {
-	/*if os.Getenv("INTEGRATION") != "true" {
+	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}*/
+	}
 
 	fileName := "293416960237240320/Audio/welcome_to_the_internet_bo_burnham_frominside-7031555991360336165.mp3"
 
