@@ -31,7 +31,7 @@ type Configuration struct {
 		AdviceAPI      string `yaml:"adviceAPI"`
 		DoggoAPI       string `yaml:"doggoAPI"`
 		AlbumPickerAPI string `yaml:"albumPickerAPI"`
-		WYRAPI         string `yaml:"WYRAPI"`
+		WYRAPI         string `yaml:"wyrAPI"`
 	} `yaml:"keys"`
 
 	DiscordIDs struct {
