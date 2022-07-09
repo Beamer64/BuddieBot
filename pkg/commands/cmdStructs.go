@@ -79,7 +79,7 @@ type wtp struct {
 	Question string `json:"question"`
 }
 
-type albumPicker []struct {
+type albumPicker struct {
 	Genres          string `json:"Genres"`
 	Descriptors     string `json:"Descriptors"`
 	Artist          string `json:"Artist"`

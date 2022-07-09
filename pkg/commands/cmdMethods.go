@@ -4221,7 +4221,7 @@ func getAlbumPickerEmbed(tags string, cfg *config.Configs) (*discordgo.MessageEm
 		Title: "Check out these albums!",
 		Color: helper.RangeIn(1, 16777215),
 		Image: &discordgo.MessageEmbedImage{
-			URL: albumPickerObj[index].URL,
+			URL: albumPickerObj[index].AlbumArtURL,
 		},
 		Footer: &discordgo.MessageEmbedFooter{
 			Text: "http://www.albumrecommender.com",
