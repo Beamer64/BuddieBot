@@ -69,6 +69,7 @@ jobs:
               gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmd.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
               gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
               gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/emojis.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
 
       - name: Stop old service and start new
         run:  |
