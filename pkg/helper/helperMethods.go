@@ -81,8 +81,13 @@ func IsLaunchedByDebugger() bool {
 }
 
 func GetRandomLoadingMessage(possibleMessages []string) string {
-	rand.Seed(time.Now().Unix())
 	return possibleMessages[rand.Intn(len(possibleMessages))]
+}
+
+func GetRandomEmoji(possibleEmojis []string) string {
+	emoji := possibleEmojis[rand.Intn(len(possibleEmojis))]
+	time.Sleep(1 * time.Millisecond)
+	return emoji
 }
 
 // GetGuildMembers Discordgo and the discord api are broken atm so niether will get member list
@@ -156,9 +161,9 @@ func CheckIfStringEmpty(value string) string {
 	return "N/A"
 }
 
-func StringInSlice(a string, list []string) bool {
-	for _, v := range list {
-		if v == a {
+func StringInSlice(s string, slice []string) bool {
+	for _, v := range slice {
+		if s == v {
 			return true
 		}
 	}

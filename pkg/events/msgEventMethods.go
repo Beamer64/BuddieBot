@@ -19,7 +19,8 @@ import (
 //region dev commands
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if helper.IsLaunchedByDebugger() {
-		err := d.playAudioLink(s, m, param)
+		//err := d.playAudioLink(s, m, param)
+		err := d.sendStartUpMessages(s, m)
 		if err != nil {
 			return err
 		}
@@ -270,7 +271,7 @@ func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m
 	return nil
 }
 
-//region dev commands
+//region audio commands
 func (d *MessageCreateHandler) playAudioLink(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
 	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
 	if err != nil {

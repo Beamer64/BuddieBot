@@ -45,12 +45,10 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		switch strings.ToLower(command) {
 		/////////////Dev///////////////////
 		case "test":
-			if helper.MemberHasRole(s, m.Member, d.cfg.Configs.Settings.BotAdminRole) {
-				err := d.testMethod(s, m, param)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
-				}
+			err := d.testMethod(s, m, param)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
 			}
 			return
 

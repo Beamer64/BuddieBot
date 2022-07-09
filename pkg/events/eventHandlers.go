@@ -11,7 +11,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ReactionHandler struct{ cfg *config.Configs }
+type ReactionHandler struct {
+	cfg   *config.Configs
+	botID string
+}
+
 type ReadyHandler struct{ cfg *config.Configs }
 type CommandHandler struct{ cfg *config.Configs }
 type GuildHandler struct {
@@ -30,8 +34,11 @@ func NewGuildHandler(cfg *config.Configs, dbc *dynamodb.DynamoDB) *GuildHandler 
 	}
 }
 
-func NewReactionHandler(cfg *config.Configs) *ReactionHandler {
-	return &ReactionHandler{cfg: cfg}
+func NewReactionHandler(cfg *config.Configs, u *discordgo.User) *ReactionHandler {
+	return &ReactionHandler{
+		cfg:   cfg,
+		botID: u.ID,
+	}
 }
 
 func NewReadyHandler(cfg *config.Configs) *ReadyHandler {
@@ -69,13 +76,37 @@ func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 
 // ReactHandlerAdd when reactions are added to messages
 func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.MessageReactionAdd) {
-	if mr.MessageReaction.Emoji.Name == "grey_question" {
-		msg, _ := s.ChannelMessage(mr.ChannelID, mr.MessageID)
+	channel, err := s.Channel(mr.ChannelID)
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+		_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, mr.GuildID))
+	}
 
-		err := r.sendLmgtfy(s, msg)
-		if err != nil {
-			fmt.Printf("%+v", errors.WithStack(err))
-			_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, mr.GuildID))
+	msg, err := s.ChannelMessage(channel.ID, mr.MessageID)
+	if err != nil {
+		fmt.Printf("%+v", errors.WithStack(err))
+		_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, mr.GuildID))
+	}
+
+	if mr.UserID != r.botID {
+		if msg.Content == "Poll Time!" {
+			for _, v := range msg.Reactions {
+				if v.Emoji.Name == mr.Emoji.Name && v.Count < 2 {
+					err = s.MessageReactionRemove(channel.ID, msg.ID, mr.MessageReaction.Emoji.Name, mr.UserID)
+					if err != nil {
+						fmt.Printf("%+v", errors.WithStack(err))
+						_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, mr.GuildID))
+					}
+				}
+			}
+		} else if mr.MessageReaction.Emoji.Name == "grey_question" {
+			msg, _ = s.ChannelMessage(mr.ChannelID, mr.MessageID)
+
+			err = r.sendLmgtfy(s, msg)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, mr.GuildID))
+			}
 		}
 	}
 }

@@ -78,7 +78,7 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildMemberUpdateHandler)
 
 	s.AddHandler(events.NewMessageCreateHandler(cfg, u, dbc).MessageCreateHandler)
-	s.AddHandler(events.NewReactionHandler(cfg).ReactHandlerAdd)
+	s.AddHandler(events.NewReactionHandler(cfg, u).ReactHandlerAdd)
 
 	s.AddHandler(events.NewCommandHandler(cfg).CommandHandler)
 }

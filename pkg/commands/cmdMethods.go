@@ -4112,6 +4112,50 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		if err != nil {
 			return err
 		}
+
+	case "poll":
+		question := i.ApplicationCommandData().Options[0].Options[0]
+		var fields []*discordgo.MessageEmbedField
+		var emojis []string
+
+		for _, v := range i.ApplicationCommandData().Options[0].Options {
+			emoji := helper.GetRandomEmoji(cfg.Emojis)
+			if v.Name != "request" {
+				f := &discordgo.MessageEmbedField{
+					Name:   v.StringValue(),
+					Value:  emoji,
+					Inline: false,
+				}
+				fields = append(fields, f)
+				emojis = append(emojis, emoji)
+			}
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Title:  question.StringValue(),
+			Color:  helper.RangeIn(1, 16777215),
+			Fields: fields,
+		}
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Poll Time!",
+					Embeds: []*discordgo.MessageEmbed{
+						embed,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		err = addPollReactions(emojis, i, s)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -4241,6 +4285,25 @@ func getSteamGame(cfg *config.Configs) (string, error) {
 	choice := fmt.Sprintf("%s\nsteam://openurl/https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Name, steamObj.Applist.Apps[randomIndex].Appid)
 
 	return choice, nil
+}
+
+func addPollReactions(emojis []string, i *discordgo.InteractionCreate, s *discordgo.Session) error {
+	channel, err := s.Channel(i.ChannelID)
+	if err != nil {
+		return err
+	}
+
+	pollMsgID := channel.LastMessageID
+
+	for _, v := range emojis {
+		err = s.MessageReactionAdd(channel.ID, pollMsgID, v)
+		if err != nil {
+			err = fmt.Errorf("Emoji: %s \n %s", v, err)
+			return err
+		}
+	}
+
+	return nil
 }
 
 //endregion

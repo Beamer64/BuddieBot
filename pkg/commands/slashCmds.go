@@ -1264,6 +1264,44 @@ var (
 					Description: "Will choose a random Steam game to play.",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "poll",
+					Description: "Gauge the room!",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "request",
+							Description: "Post the Question",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "1st_poll_item",
+							Description: "First Choice",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "2nd_poll_item",
+							Description: "Second Choice",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "3rd_poll_item",
+							Description: "Third Choice",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "4th_poll_item",
+							Description: "Fourth Choice",
+							Required:    false,
+						},
+					},
+				},
 			},
 		},
 		{

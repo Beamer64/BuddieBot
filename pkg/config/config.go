@@ -14,6 +14,7 @@ type Configs struct {
 	Configs         *Configuration
 	Cmd             *Command
 	LoadingMessages []string
+	Emojis          []string
 }
 
 type Configuration struct {
@@ -174,8 +175,9 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		fmap["config.yaml"] = false
 		fmap["cmd.yaml"] = false
 		fmap["loadingMessages.txt"] = false
+		fmap["emojis.txt"] = false
 
-		// loops thru all files in dir, check if any of them are required
+		// loops through all files in dir, check if any of them are required
 		for _, f := range files {
 			for reqFile := range fmap {
 				if reqFile == f.Name() {
@@ -228,7 +230,13 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 	}
 
 	fmt.Println("Reading from loading messages file...")
-	msgs, err := grabLoadingMessages(configDir + "loadingMessages.txt")
+	msgs, err := grabStringLists(configDir + "loadingMessages.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Reading from emojis file...")
+	emojis, err := grabStringLists(configDir + "emojis.txt")
 	if err != nil {
 		return nil, err
 	}
@@ -237,12 +245,14 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		Configs:         cfg,
 		Cmd:             command,
 		LoadingMessages: msgs,
+		Emojis:          emojis,
 	}, nil
 }
 
 // don't move this out (circular dependency)
-func grabLoadingMessages(loadingMessagesPath string) ([]string, error) {
-	file, err := os.Open(loadingMessagesPath)
+// finds and returns []string from txt file
+func grabStringLists(strListPath string) ([]string, error) {
+	file, err := os.Open(strListPath)
 	if err != nil {
 		return nil, err
 	}
