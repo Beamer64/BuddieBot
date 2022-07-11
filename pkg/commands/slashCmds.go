@@ -27,6 +27,194 @@ var (
 			},
 		},
 		{
+			Name:        "ratethis",
+			Description: "Rate this ...",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "simp",
+					Description: "Simp Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User simp score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "epicgamer",
+					Description: "Epic Gamer Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Epic Gamer score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "dank",
+					Description: "Dank Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Dank score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "gay",
+					Description: "Gay Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Gay score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "schmeat",
+					Description: "Schmeat Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Schmeat score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "stinky",
+					Description: "Stinky Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Stinky score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "thot",
+					Description: "Thot Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Thot score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "neckbeard",
+					Description: "Neck Beard Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Neck Beard score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "pickme",
+					Description: "Pick Me Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Pick Me score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "looks",
+					Description: "Looks Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Looks score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "smarts",
+					Description: "Smarts Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Smarts score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "nerd",
+					Description: "Nerd Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Nerd score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "geek",
+					Description: "Geek Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Geek score",
+							Required:    false,
+						},
+					},
+				},
+			},
+		},
+		{
 			Name:        "get",
 			Description: "Get a text based response like a joke or pickup line",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -1316,16 +1504,16 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "nim",
-					Description: "of the 12 coin variety",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "wyr",
 					Description: "Would You Rather??",
 					Required:    false,
 				},
+				/*{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "nim",
+					Description: "of the 12 coin variety",
+					Required:    false,
+				},*/
 				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "typeracer",
@@ -1423,6 +1611,14 @@ var (
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
 		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendAnimalsResponse(s, i, cfg)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+			}
+		},
+
+		"ratethis": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			err := sendRateThisResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))

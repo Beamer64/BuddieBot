@@ -6,6 +6,7 @@ import (
 	gomail "gopkg.in/mail.v2"
 )
 
+// SendEmail can email the toEmail from the fromEmail
 func SendEmail(toEmail string, fromEmail string, subject string, body string, cfg *config.Configs) error {
 	m := gomail.NewMessage()
 

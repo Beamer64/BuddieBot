@@ -7,6 +7,8 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -36,6 +38,9 @@ type Configuration struct {
 	} `yaml:"keys"`
 
 	DiscordIDs struct {
+		CurrentBotAppID     string `yaml:"currentBotAppID"`
+		ProdBotAppID        string `yaml:"prodBotAppID"`
+		TestBotAppID        string `yaml:"testBotAppID"`
 		MasterGuildID       string `yaml:"masterGuildID"`
 		TestGuildID         string `yaml:"testGuildID"`
 		WebHookID           string `yaml:"webHookID"`
@@ -224,6 +229,13 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		return nil, err
 	}
 
+	// set AppID to test or prod
+	if isLaunchedByDebugger() {
+		cfg.DiscordIDs.CurrentBotAppID = cfg.DiscordIDs.TestBotAppID
+	} else {
+		cfg.DiscordIDs.CurrentBotAppID = cfg.DiscordIDs.ProdBotAppID
+	}
+
 	err = yaml.Unmarshal(commandFile, &command)
 	if err != nil {
 		return nil, err
@@ -249,7 +261,9 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 	}, nil
 }
 
-// don't move this out (circular dependency)
+//Todo fix these
+
+// don't move these out (circular dependency)
 // finds and returns []string from txt file
 func grabStringLists(strListPath string) ([]string, error) {
 	file, err := os.Open(strListPath)
@@ -269,4 +283,15 @@ func grabStringLists(strListPath string) ([]string, error) {
 	}
 
 	return lines, nil
+}
+
+// IsLaunchedByDebugger Determines if application is being run by the debugger.
+func isLaunchedByDebugger() bool {
+	// gops executable must be in the path. See https://github.com/google/gops
+	gopsOut, err := exec.Command("gops", strconv.Itoa(os.Getppid())).Output()
+	if err == nil && strings.Contains(string(gopsOut), "\\dlv.exe") {
+		// our parent process is (probably) the Delve debugger
+		return true
+	}
+	return false
 }

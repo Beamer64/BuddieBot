@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -377,10 +378,10 @@ func getWYREmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	defer func(Body io.ReadCloser) {
 		err = Body.Close()
-		if err != nil {
-			return
-		}
 	}(res.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	embed := &discordgo.MessageEmbed{
 		Title:       "Would You Rather?",
@@ -3604,6 +3605,104 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	}
 
 	return nil
+}
+
+//endregion
+
+//region RateThis Commands
+
+func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	options := i.ApplicationCommandData().Options[0]
+	user := ""
+
+	//if they include a user or not
+	switch len(options.Options) {
+	case 0:
+		user = fmt.Sprintf("<@!%s>", i.Member.User.ID)
+	case 1:
+		userName := options.Options[0].UserValue(s)
+		user = fmt.Sprintf("<@!%s>", userName.ID)
+	}
+
+	embed, err := getRateThisEmbed(options.Name, user)
+	if err != nil {
+		return err
+	}
+
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{
+					embed,
+				},
+			},
+		},
+	)
+
+	return nil
+}
+
+func getRateThisEmbed(ratingName string, user string) (*discordgo.MessageEmbed, error) {
+	rateTitle := ""
+	rateDesc := ""
+	score := strconv.Itoa(rand.Intn(100))
+
+	switch ratingName {
+	case "simp":
+		rateTitle = "Rate This Simp"
+		rateDesc = fmt.Sprintf("%s's Simp Score: %s/100", user, score)
+	case "dank":
+		rateTitle = "Dank Rating"
+		rateDesc = fmt.Sprintf("%s's Dank Score: %s/100", user, score)
+	case "epicgamer":
+		rateTitle = "Rate This Epic Gamer"
+		rateDesc = fmt.Sprintf("%s's Epic Gamer Score: %s/100", user, score)
+	case "gay":
+		rateTitle = "Gay Rating"
+		rateDesc = fmt.Sprintf("%s's Gay Score: %s/100", user, score)
+	case "schmeat":
+		rateTitle = "Schmeat Size"
+		size := helper.RangeIn(1, 10)
+		schmeat := "C"
+		for i := 0; i < size; i++ {
+			schmeat = schmeat + "="
+		}
+		schmeat = schmeat + "8"
+		rateDesc = fmt.Sprintf("%s's Thang Thanging \n%s", user, schmeat)
+	case "stinky":
+		rateTitle = "Rate This Stinky"
+		rateDesc = fmt.Sprintf("%s's Stinky Score: %s/100", user, score)
+	case "thot":
+		rateTitle = "Rate This Thot"
+		rateDesc = fmt.Sprintf("%s's Thot Score: %s/100", user, score)
+	case "pickme":
+		rateTitle = "Rate This Pick-Me"
+		rateDesc = fmt.Sprintf("%s's Pick-Me Score: %s/100", user, score)
+	case "neckbeard":
+		rateTitle = "Rate This Neck Beard"
+		rateDesc = fmt.Sprintf("%s's Neck Beard Score: %s/100", user, score)
+	case "looks":
+		rateTitle = "Rate These Looks"
+		rateDesc = fmt.Sprintf("%s's Looks Score: %s/100", user, score)
+	case "smarts":
+		rateTitle = "Rate These Smarts"
+		rateDesc = fmt.Sprintf("%s's Smarts Score: %s/100", user, score)
+	case "nerd":
+		rateTitle = "Rate This Nerd"
+		rateDesc = fmt.Sprintf("%s's Nerd Score: %s/100", user, score)
+	case "geek":
+		rateTitle = "Rate This Geek"
+		rateDesc = fmt.Sprintf("%s's Geek Score: %s/100", user, score)
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       rateTitle,
+		Description: rateDesc,
+		Color:       helper.RangeIn(1, 16777215),
+	}
+
+	return embed, nil
 }
 
 //endregion
