@@ -129,8 +129,10 @@ func GetGuildMembers(guildID string, cfg *config.Configs) ([]*discordgo.Member, 
 	return memberObj, nil
 }
 
-func MemberHasRole(session *discordgo.Session, m *discordgo.Member, roleName string) bool {
-	guildID := m.GuildID
+func MemberHasRole(session *discordgo.Session, m *discordgo.Member, guildID string, roleName string) bool {
+	if guildID == "" {
+		guildID = m.GuildID
+	}
 	roleName = strings.ToLower(roleName)
 
 	for _, roleID := range m.Roles {

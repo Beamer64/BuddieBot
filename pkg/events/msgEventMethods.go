@@ -32,8 +32,8 @@ func (d *MessageCreateHandler) sendReleaseNotes(s *discordgo.Session, m *discord
 	embed := &discordgo.MessageEmbed{
 		Title: "Release Notes!",
 		URL:   "https://github.com/Beamer64/DiscordBot/blob/master/res/release.md",
-		Description: "SUM BIG BOI CHANGES\n\nDetailed list can be found in the Title link above." +
-			"\nPlease check it out...please..\n-----------------------------------------------------------------------------\n\n- Command changes:",
+		Description: "SUM MOAR BIG BOI CHANGES\n\nDetailed list can be found in the Title link above." +
+			"\nCheck it out\n-----------------------------------------------------------------------------\n\n- Command changes:",
 		Color: 11091696,
 		Author: &discordgo.MessageEmbedAuthor{
 			Name:    m.Author.Username,
@@ -41,33 +41,33 @@ func (d *MessageCreateHandler) sendReleaseNotes(s *discordgo.Session, m *discord
 		},
 		Fields: []*discordgo.MessageEmbedField{
 			{
-				Name:   "New Commands: /daily",
-				Value:  "Some daily info like facts, affirmations, horoscopes",
+				Name:   "New Command Group: /ratethis",
+				Value:  "Give/Get some new ratings",
 				Inline: false,
 			},
 			{
-				Name:   "New Commands: /animals",
-				Value:  "Command group for more animal related commands",
+				Name:   "New Commands: /pick album",
+				Value:  "<@!282722418093719556>'s Album recommender api. Recommends a music album based on liked tags.",
 				Inline: false,
 			},
 			{
-				Name:   "New Commands: /img-set{1/2/3}",
-				Value:  "A LOT of image commands. Some might be janky since I haven't tested them all yet so just let me know if any arent working at all.",
+				Name:   "New Commands: /pick poll",
+				Value:  "Poll command...for polling things..",
 				Inline: false,
 			},
 			{
-				Name:   "New Commands: /play",
-				Value:  "This will hold all the game commands for the foreseeable future.",
+				Name:   "New Commands: ${COMMAND} SpongeBob easter egg",
+				Value:  "It's my bot, I can do what I want.",
 				Inline: false,
 			},
 			{
-				Name:   "New Commands: /get",
-				Value:  "This will be some vague collection of one liners like jokes, pickup lines etc..",
+				Name:   "Bug Fix: Youtube mobile links",
+				Value:  "(When working..) Audio will play with the mobile link 'm.youtube.com...'",
 				Inline: false,
 			},
 			{
-				Name:   "Prefix Commands:",
-				Value:  "The commands Play, Stop, Skip, Clear and Queue have been moved to prefix commands",
+				Name:   "Enhancement: Audio Queue",
+				Value:  "The Audio Queue will show a cleaned title from the old 'Name-Title-Sum_Numbers.mp3'.",
 				Inline: false,
 			},
 		},

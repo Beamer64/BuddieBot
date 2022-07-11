@@ -147,7 +147,7 @@ func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cf
 		return err
 	}
 
-	if !helper.MemberHasRole(s, i.Member, cfg.Configs.Settings.BotAdminRole) {
+	if !helper.MemberHasRole(s, i.Member, i.GuildID, cfg.Configs.Settings.BotAdminRole) {
 		//send setting list
 		err = s.InteractionRespond(
 			i.Interaction, &discordgo.InteractionResponse{

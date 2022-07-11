@@ -54,7 +54,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 		case "release":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
-				if helper.MemberHasRole(s, m.Member, d.cfg.Configs.Settings.BotAdminRole) {
+				if helper.MemberHasRole(s, m.Member, m.GuildID, d.cfg.Configs.Settings.BotAdminRole) {
 					err := d.sendReleaseNotes(s, m)
 					if err != nil {
 						fmt.Printf("%+v", errors.WithStack(err))
@@ -66,7 +66,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 		case "updatedbitems":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
-				if helper.MemberHasRole(s, m.Member, d.cfg.Configs.Settings.BotAdminRole) {
+				if helper.MemberHasRole(s, m.Member, m.GuildID, d.cfg.Configs.Settings.BotAdminRole) {
 					err := database.UpdateDBitems(d.dbClient, d.cfg)
 					if err != nil {
 						fmt.Printf("%+v", errors.WithStack(err))
@@ -90,7 +90,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 		// Starts the Minecraft Server
 		case "startServer":
-			if helper.MemberHasRole(s, m.Member, d.cfg.Configs.Settings.BotAdminRole) {
+			if helper.MemberHasRole(s, m.Member, m.GuildID, d.cfg.Configs.Settings.BotAdminRole) {
 				err := d.startServer(s, m)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
@@ -108,7 +108,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 
 		// Stops the Minecraft Server
 		case "stopServer":
-			if helper.MemberHasRole(s, m.Member, d.cfg.Configs.Settings.BotAdminRole) {
+			if helper.MemberHasRole(s, m.Member, m.GuildID, d.cfg.Configs.Settings.BotAdminRole) {
 				err := d.stopServer(s, m)
 				if err != nil {
 					fmt.Printf("%+v", errors.WithStack(err))
