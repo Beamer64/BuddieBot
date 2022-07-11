@@ -1,4 +1,4 @@
-# release Notes 2/11/2022
+# release Notes 7/10/2022
 
 <h2> Here is a more detailed look at the most recent release notes.</h2>
 These notes may include any changes from bot behavior to commands to comment and future changes.
@@ -18,8 +18,9 @@ Thanks big bunches luv u.
 
 \- Harley
 
-<h3> Slash Command Changes: </h3>
-In the most recent update, I have added a large list of data and image manipulation related commands. The full list is as follows:
+<h3> New Slash Commands: </h3>
+
+**This is a short list of any added or removed commands to either the slash (/) or prefix ($) commands list. Details about each change can be found down below:**
 
 &nbsp;
 
@@ -27,92 +28,44 @@ The Command for "/tuuck" has changed to show command groups and a detailed descr
 
 **Commands found under the "/animals" command group:**
 
-* doggo
+* N/A
+
+**Commands found under the "/ratethis" command group:**
+
+* Simp
+* EpicGamer
+* Dank
+* Gay
+* Schmeat
+* Stinky
+* Thot
+* NeckBeard
+* PickMe
+* Looks
+* Smarts
+* Nerd
+* Geek
 
 **Commands found under the "/daily" command group:**
 
-* Kanye
-* Affirmations
-* Horoscopes
-* Advice
+* N/A
 
 **Commands found under the "/get" command group:**
 
-* Insult
-* Joke
-* Fact
-* Eightball
-* Yomama
-* PickupLine
-* Captcha (not yet implimented)
+* N/A
 
 **Commands found under the "/img-set{1/2/3}" command groups:**
 
-* Pixelate
-* Mirror
-* Flip
-* Colors
-* America
-* Communism
-* Triggered
-* Expand
-* Wasted
-* Sketch
-* Spin
-* PetPet
-* Bonk
-* Bomb
-* Shake
-* Invert
-* Sobel
-* Hog
-* Triangle
-* Blur
-* RGB
-* Angel
-* Satan
-* Delete
-* Fedora
-* Hitler
-* Lego
-* Wanted
-* Stringify
-* Burn
-* Earth
-* Freeze
-* Ground
-* Mosiac
-* Sithlord
-* Jail
-* Shatter
-* Pride
-* Trash
-* Deepfry
-* Ascii
-* Charcoal
-* Posterize
-* Sepia
-* Swirl
-* Paint
-* Night
-* Rainbow
-* Magik
-* Elmo
-* TVStatic
-* Rain
-* Glitch
-* StaticGlitch
+* N/A
+
+**Commands found under the "/pick" command group:**
+
 * Album
-* FivegOneg
-* WhyAreYouGay
-* Slap
-* Oboma
-* Tweet
-* Youtube
-* Discord
-* Retromeme
-* Motivational
-* Modernmeme
+* Poll
+
+**Commands found under the "/play" command group:**
+
+* N/A
 
 **Games to be added to the "/play" command group:**
 
@@ -120,17 +73,73 @@ The Command for "/tuuck" has changed to show command groups and a detailed descr
 * Typeracer
 * GTL / Guess The Logo
 
-<h3> Prefix Command Changes: </h3>
-These changes are limited to any command that needs the designated prefix (Ex '$') to run.
+**Commands found under the "/tuuck" command group:**
+
+* N/A
+
+**Commands found under the "/config" command group:**
+
+* N/A
 
 &nbsp;
 
-**Audio related commands**
+<h3> New Prefix Commands: </h3>
 
-The following commands have been moved to the prefix command group and will only be accessible to test/production servers:
+**These changes are limited to any command that needs the designated prefix (Ex '$') to run.**
 
-* play
-* stop
-* queue
-* skip
-* clear
+* SpongeBod Easter Egg
+
+&nbsp;
+
+<h3> Change Details </h3>
+
+**These are a more detailed look at the new changes to BuddieBot.**
+
+These commands will display a score for each individual rating. Users can be assigned to be scored, otherwise the user typing the command will be scored by default.
+
+* Simp
+* EpicGamer
+* Dank
+* Gay
+* Stinky
+* Thot
+* NeckBeard
+* PickMe
+* Looks
+* Smarts
+* Nerd
+* Geek
+
+---
+
+This command will show how schmeaty a Users Ham Candle is.
+
+* Schmeat
+
+---
+
+The command **/pick poll** will allow you to suggest a request item {request} and then a minimum of 2 poll items {poll_item}. The items are represented by emoji reactions which are used to vote on the different items. NOTE some emojis are pulled from a list and aren't compatible with discord. I'm aware this will case the command to break. I'm logging with emojis are not compaitble and will remove them from the list. In this event, just copy the command and run it again, thx.
+
+---
+
+The command **/pick album** will allow BB to suggest a music album to listen to based off of typed tags. When using the command, type in a maximun of 6 tags for the music you like and BB will produce up to 5 albums for you to try. A list of acceptable tags can be found at https://github.com/Beamer64/DiscordBot/blob/master/res/album_tags.txt (This is a temperary location until we can find a more permanent and effective solution)
+
+---
+
+There is a new prefix command in the bot relating to SpongeBob. It's an old inside joke from the developer and the only hint is that I've used it before in a past project.
+
+&nbsp;
+
+<h3> Enhancements: </h3>
+
+**These are any changes related to existing items.**
+
+* The audio queue used to show some ugly mp3 link when playing audio or putting songs in queue but now its been cleaned up to look more presentable and reasier to read.
+
+&nbsp;
+
+<h3> Bug Fixes: </h3>
+
+**Any bug fixes that have been suggested are posted here.**
+
+* Fixed a bug that wouldn't let you play audio with the youtube mobile links.
