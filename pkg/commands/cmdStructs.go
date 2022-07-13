@@ -80,11 +80,11 @@ type wtp struct {
 }
 
 type albumPicker struct {
-	Genres          string `json:"Genres"`
-	Descriptors     string `json:"Descriptors"`
-	Artist          string `json:"Artist"`
-	AlbumName       string `json:"Album_Name"`
-	SecGenres       string `json:"Sec_Genres"`
-	AlbumArtURL     string `json:"album_art_url"`
-	SpotifyAlbumURL string `json:"spotify_album_url"`
+	Genres      string `json:"Genres"`
+	Descriptors string `json:"Descriptors"`
+	Artist      string `json:"Artist"`
+	AlbumName   string `json:"Album_Name"`
+	SecGenres   string `json:"Sec_Genres"`
+	URL         string `json:"url"`
+	//SpotifyAlbumURL string `json:"spotify_album_url"`
 }

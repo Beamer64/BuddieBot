@@ -35,6 +35,7 @@ type Configuration struct {
 		DoggoAPI       string `yaml:"doggoAPI"`
 		AlbumPickerAPI string `yaml:"albumPickerAPI"`
 		WYRAPI         string `yaml:"wyrAPI"`
+		FancyTextAPI   string `yaml:"fancyTextAPI"`
 	} `yaml:"keys"`
 
 	DiscordIDs struct {

@@ -220,13 +220,13 @@ var (
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "insult",
+					Name:        "rekd",
 					Description: "Insult someone",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "insulted",
+							Name:        "nerd",
 							Description: "Someone to insult",
 							Required:    false,
 						},
@@ -1535,6 +1535,40 @@ var (
 			},
 		},
 		{
+			Name:        "txt",
+			Description: "Funky Texts",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "clapback",
+					Description: "Say it with sass",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "text",
+							Description: "Text to change",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "bubble",
+					Description: "Bubble Text",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "text",
+							Description: "Text to change",
+							Required:    true,
+						},
+					},
+				},
+			},
+		},
+		{
 			Name:        "tuuck",
 			Description: "I've fallen and can't get up!",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -1611,6 +1645,14 @@ var (
 	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
 		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendAnimalsResponse(s, i, cfg)
+			if err != nil {
+				fmt.Printf("%+v", errors.WithStack(err))
+				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+			}
+		},
+
+		"txt": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			err := sendTxtResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))

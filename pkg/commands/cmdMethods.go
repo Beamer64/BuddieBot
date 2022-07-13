@@ -584,7 +584,6 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	options := i.ApplicationCommandData().Options[0]
 
 	switch options.Name {
-
 	case "insult":
 		insultMsg, err := client.Roast()
 		if err != nil {
@@ -3663,13 +3662,13 @@ func getRateThisEmbed(ratingName string, user string) (*discordgo.MessageEmbed, 
 		rateDesc = fmt.Sprintf("%s's Gay Score: %s/100", user, score)
 	case "schmeat":
 		rateTitle = "Schmeat Size"
-		size := helper.RangeIn(1, 10)
+		size := helper.RangeIn(1, 15)
 		schmeat := "C"
 		for i := 0; i < size; i++ {
 			schmeat = schmeat + "="
 		}
 		schmeat = schmeat + "8"
-		rateDesc = fmt.Sprintf("%s's Thang Thanging \n%s", user, schmeat)
+		rateDesc = fmt.Sprintf("%s's Thang Thangin' \n%s", user, schmeat)
 	case "stinky":
 		rateTitle = "Rate This Stinky"
 		rateDesc = fmt.Sprintf("%s's Stinky Score: %s/100", user, score)
@@ -3703,6 +3702,51 @@ func getRateThisEmbed(ratingName string, user string) (*discordgo.MessageEmbed, 
 	}
 
 	return embed, nil
+}
+
+//endregion
+
+//region Txt Commands
+
+func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	options := i.ApplicationCommandData().Options[0]
+
+	switch options.Name {
+	case "clapback":
+		text := options.Options[0].StringValue()
+		text = strings.ReplaceAll(text, " ", " 👏 ") + " 👏"
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: text,
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "bubble":
+		text := options.Options[0].StringValue()
+		//bubbleText := ""
+
+		err := s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: text,
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
 }
 
 //endregion
@@ -4320,7 +4364,7 @@ func getAlbumPickerEmbed(tags string, cfg *config.Configs) (*discordgo.MessageEm
 		Title: "Check out these albums!",
 		Color: helper.RangeIn(1, 16777215),
 		Image: &discordgo.MessageEmbedImage{
-			URL: albumPickerObj[index].AlbumArtURL,
+			URL: albumPickerObj[index].URL,
 		},
 		Footer: &discordgo.MessageEmbedFooter{
 			Text: "http://www.albumrecommender.com",
