@@ -1552,10 +1552,24 @@ var (
 						},
 					},
 				},
-				{
+				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "bubble",
 					Description: "Bubble Text",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "text",
+							Description: "Text to change",
+							Required:    true,
+						},
+					},
+				},*/
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "emojiletters",
+					Description: "Emoji Text",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
