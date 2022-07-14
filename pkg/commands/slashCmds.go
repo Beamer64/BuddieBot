@@ -1552,6 +1552,20 @@ var (
 						},
 					},
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "1337",
+					Description: "1337C0D3",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "text",
+							Description: "73X7 70 CH4N63",
+							Required:    true,
+						},
+					},
+				},
 				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "bubble",
