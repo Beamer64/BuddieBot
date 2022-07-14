@@ -3746,18 +3746,6 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 	case "1337":
 		text := strings.ToLower(options.Options[0].StringValue())
-		/*words := strings.Split(text, " ")
-		content := ""
-
-		for _, v := range words {
-			replacer := strings.NewReplacer(
-				"a", "4", "b", "8", "c", "(", "d", "[)", "e", "3", "f", "|=", "g", "6", "h", "#", "i", "1", "j", "_|", "k", "X", "l", "ℓ", "m", "|V|",
-				"n", "|V", "o", "[]", "p", "|*", "q", "¶", "r", "Я", "s", "5", "t", "7", "u", "µ", "v", "\\/", "w", "vv", "x", "><", "y", "¥", "z", "7_",
-				"0", "o", "1", "I", "2", "Z", "3", "E", "4", "A", "5", "S", "6", "b", "7", "T", "8", "B", "9", "q",
-			)
-			v = replacer.Replace(v)
-			content = fmt.Sprintf("%s%s ", content, v)
-		}*/
 
 		content, err := helper.ToLeetCode(text)
 		if err != nil {

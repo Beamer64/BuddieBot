@@ -1,5 +1,5 @@
 res/depricated/config.json
-config/config.yaml
+config_files/config.yaml
 
 # Binaries for programs and plugins
 *.exe
@@ -23,7 +23,7 @@ config/config.yaml
 
 # End of https://www.toptal.com/developers/gitignore/api/go
 
-# gcp auth config
+# gcp auth config_files
 pokernotifications-229105-e2eb999fe460.json
 res/depricated/auth.json
 

@@ -204,7 +204,7 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 			fmt.Printf("missing one or more required files in directory %s: \n%+v\n", cp, fmap)
 		} else {
 			configDir = cp
-			fmt.Printf("SUCCESS found config dir %s\n", configDir)
+			fmt.Printf("SUCCESS found config_files dir %s\n", configDir)
 			break
 		}
 	}

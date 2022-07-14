@@ -28,7 +28,7 @@ func ToLeetCode(text string) (string, error) {
 func getCodes() (map[string][]string, error) {
 	codes := make(map[string][]string)
 
-	jsonFile, err := os.Open("leetCodes.json")
+	jsonFile, err := os.Open("config_files/leetCodes.json")
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ func TestRunCommand(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func TestRunCommandStartContainer(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,13 +57,13 @@ func TestCheckServerStatus(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// need to be careful importing from other packages in tests, could cause issues in future
-	client, err := gcp.NewGCPClient("../config/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
+	client, err := gcp.NewGCPClient("../config_files/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
 	if err != nil {
 		log.Fatal(err)
 	}

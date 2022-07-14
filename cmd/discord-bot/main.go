@@ -10,7 +10,7 @@ import (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		panic(err)
 	}

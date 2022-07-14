@@ -40,7 +40,7 @@ func TestMemberHasRole(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	/*cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	/*cfg, err := config_files.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}*/

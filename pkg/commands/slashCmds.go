@@ -1609,7 +1609,7 @@ var (
 			},
 		},
 		{
-			Name:        "config",
+			Name:        "config_files",
 			Description: "set guild settings",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -1759,7 +1759,7 @@ var (
 			}
 		},
 
-		"config": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"config_files": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendConfigResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))

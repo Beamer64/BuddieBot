@@ -11,12 +11,12 @@ func TestStopMachine(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	client, err := NewGCPClient("../config/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
+	client, err := NewGCPClient("../config_files/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,12 +31,12 @@ func TestStartMachine(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	client, err := NewGCPClient("../config/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
+	client, err := NewGCPClient("../config_files/auth.json", cfg.Configs.Server.Project_ID, cfg.Configs.Server.Zone)
 	if err != nil {
 		t.Fatal(err)
 	}

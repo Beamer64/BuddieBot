@@ -138,7 +138,7 @@ func (d *MessageCreateHandler) sendStartUpMessages(s *discordgo.Session, m *disc
 
 func (d *MessageCreateHandler) startServer(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	if d.cfg.Configs.Server.MachineIP != "" { // check if Minecraft server is set up
-		client, err := gcp.NewGCPClient("config/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
+		client, err := gcp.NewGCPClient("config_files/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
 		if err != nil {
 			return err
 		}
@@ -207,7 +207,7 @@ func (d *MessageCreateHandler) stopServer(s *discordgo.Session, m *discordgo.Mes
 				return err
 			}
 
-			client, errr := gcp.NewGCPClient("config/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
+			client, errr := gcp.NewGCPClient("config_files/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
 			if errr != nil {
 				return err
 			}
@@ -240,7 +240,7 @@ func (d *MessageCreateHandler) stopServer(s *discordgo.Session, m *discordgo.Mes
 
 // d.sendServerStatusAsMessage Sends the current server status as a message in discord
 func (d *MessageCreateHandler) sendServerStatusAsMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	client, err := gcp.NewGCPClient("config/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
+	client, err := gcp.NewGCPClient("config_files/auth.json", d.cfg.Configs.Server.Project_ID, d.cfg.Configs.Server.Zone)
 	if err != nil {
 		return err
 	}

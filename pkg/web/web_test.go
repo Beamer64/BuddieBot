@@ -22,7 +22,7 @@ func TestSendEmail(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestGroupChat(t *testing.T) {
 	var err error
 	var session *discordgo.Session
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,7 +216,7 @@ func TestGetMembers(t *testing.T) {
 	var err error
 	var session *discordgo.Session
 
-	cfg, err := config.ReadConfig("config/", "../config/", "../../config/")
+	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
 		t.Fatal(err)
 	}

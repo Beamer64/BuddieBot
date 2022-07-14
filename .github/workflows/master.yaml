@@ -21,7 +21,7 @@ jobs:
 
       - name: Pull secrets
         run:  |
-              echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
+              echo '${{ secrets.GCP_SSH_KEY }}' > config_files/config.yaml
 
       - name: Test
         run:  |
@@ -62,18 +62,19 @@ jobs:
 
       - name: Upload new configs from secret
         run:  |
-              echo '${{ secrets.GCP_SSH_KEY }}' > config/config.yaml
+              echo '${{ secrets.GCP_SSH_KEY }}' > config_files/config.yaml
               
-              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config"
-              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/cmd.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
-              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config/emojis.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config
+              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config_files"
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/cmd.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/emojis.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/leetCodes.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
 
       - name: Stop old service and start new
         run:  |
-              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
+              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
               gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="unlink current; ln -s ${GITHUB_SHA} current"
               gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo systemctl restart bot.service"
               gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo rm -rf $(ls -t -r | head -n 1)" 
@@ -81,4 +82,4 @@ jobs:
         # gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf $(ls -lt | grep '^d' | tail -1  | tr " " "\n" | tail -1)"
 
 # This line needs to be run if service never created before
-# gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
+# gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
