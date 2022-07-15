@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 )
 
 var ApprovalWords = []string{
@@ -178,14 +177,12 @@ func ToConvertedText(text string, convertGroup string) (string, error) {
 
 	convertedText := ""
 	for _, char := range text {
-		randSubs := "  "
-		if !unicode.IsSpace(char) {
-			subSet := letters[convertGroup][0][string(char)]
-			if subSet != nil {
-				randSubs = GetRandomStringFromSet(subSet)
-			} else {
-				randSubs = string(char)
-			}
+		randSubs := ""
+		subSet := letters[convertGroup][0][string(char)]
+		if subSet != nil {
+			randSubs = GetRandomStringFromSet(subSet)
+		} else {
+			randSubs = string(char)
 		}
 		convertedText += randSubs
 	}

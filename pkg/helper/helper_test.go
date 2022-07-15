@@ -37,9 +37,14 @@ func TestToLeetCode(t *testing.T) {
 	test := "This is a test."
 
 	leet := ""
-	for _, v := range strings.ToLower(test) {
-		subs := letters["leet"][0][string(v)]
-		randLeet := GetRandomStringFromSet(subs)
+	randLeet := ""
+	for _, char := range strings.ToLower(test) {
+		subs := letters["1337"][0][string(char)]
+		if subs != nil {
+			randLeet = GetRandomStringFromSet(subs)
+		} else {
+			randLeet = string(char)
+		}
 		leet += randLeet
 	}
 
@@ -74,9 +79,14 @@ func TestToBubbleCode(t *testing.T) {
 	test := "This is a test. baby"
 
 	bubble := ""
-	for _, v := range strings.ToLower(test) {
-		subs := letters["bubble"][0][string(v)]
-		randBubble := GetRandomStringFromSet(subs)
+	randBubble := ""
+	for _, char := range strings.ToLower(test) {
+		subs := letters["bubble"][0][string(char)]
+		if subs != nil {
+			randBubble = GetRandomStringFromSet(subs)
+		} else {
+			randBubble = string(char)
+		}
 		bubble += randBubble
 	}
 
