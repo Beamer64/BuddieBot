@@ -3,13 +3,10 @@ package helper
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/beamer64/discordBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
-	"io"
 	"io/ioutil"
 	"math/rand"
-	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -85,45 +82,6 @@ func GetRandomStringFromSet(set []string) string {
 	str := set[rand.Intn(len(set))]
 	time.Sleep(1 * time.Millisecond)
 	return str
-}
-
-// GetGuildMembers Discordgo and the discord api are broken atm so niether will get member list
-func GetGuildMembers(guildID string, cfg *config.Configs) ([]*discordgo.Member, error) {
-	token := ""
-	if IsLaunchedByDebugger() {
-		token = cfg.Configs.Keys.TestBotToken
-	} else {
-		token = cfg.Configs.Keys.ProdBotToken
-	}
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://discord.com/api/guilds/%s/members", guildID), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	client := &http.Client{}
-
-	req.Header.Add("Authorization", "Bot "+token)
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	var memberObj []*discordgo.Member
-
-	err = json.NewDecoder(res.Body).Decode(&memberObj)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-			return
-		}
-	}(res.Body)
-
-	return memberObj, nil
 }
 
 func MemberHasRole(session *discordgo.Session, m *discordgo.Member, guildID string, roleName string) bool {

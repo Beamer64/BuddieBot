@@ -1622,6 +1622,20 @@ var (
 						},
 					},
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "cursed",
+					Description: "Cursed Text",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "text",
+							Description: "Text to change",
+							Required:    true,
+						},
+					},
+				},
 			},
 		},
 		{

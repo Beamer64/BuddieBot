@@ -3808,6 +3808,26 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return err
 		}
 
+	case "cursed":
+		text := strings.ToLower(options.Options[0].StringValue())
+
+		content, err := helper.ToConvertedText(text, options.Name)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
 	case "emojiletters":
 		text := strings.ToLower(options.Options[0].StringValue())
 		words := strings.Split(text, " ")
