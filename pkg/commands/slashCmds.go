@@ -1508,6 +1508,12 @@ var (
 					Description: "Would You Rather??",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "just-lost",
+					Description: "Don't play this..",
+					Required:    false,
+				},
 				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "nim",

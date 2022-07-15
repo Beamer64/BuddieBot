@@ -286,6 +286,35 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			return err
 		}
 
+	case "just-lost":
+		embed := &discordgo.MessageEmbed{
+			Title:       "You just lost The Game.",
+			Color:       helper.RangeIn(1, 16777215),
+			Description: "..Told you not to play.",
+		}
+
+		channel, err := s.UserChannelCreate(i.Member.User.ID)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.ChannelMessageSendEmbed(channel.ID, embed)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Check your DM's.",
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
 	// todo finish this
 	case "nim":
 		err := games.PlayNIM(s, i, cfg, "")
@@ -422,7 +451,7 @@ func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	embed := &discordgo.MessageEmbed{
 		Title: "Flipping...",
-		Color: 16761856,
+		Color: helper.RangeIn(1, 16777215),
 		Image: &discordgo.MessageEmbedImage{
 			URL: gifURL,
 		},

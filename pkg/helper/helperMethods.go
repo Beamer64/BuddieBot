@@ -104,7 +104,7 @@ func MemberHasRole(session *discordgo.Session, m *discordgo.Member, guildID stri
 }
 
 // RangeIn Returns pseudo rand num between low and high.
-// For random embed color: rangeIn(1, 16777215)
+// For random embed color: RangeIn(1, 16777215)
 func RangeIn(low, hi int) int {
 	return low + rand.Intn(hi-low)
 }
