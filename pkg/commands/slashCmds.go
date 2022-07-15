@@ -1751,7 +1751,7 @@ var (
 			}
 		},
 
-		"img-set1": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"imgset1": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -1759,7 +1759,7 @@ var (
 			}
 		},
 
-		"img-set2": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"imgset2": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
@@ -1767,7 +1767,7 @@ var (
 			}
 		},
 
-		"img-set3": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"imgset3": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
