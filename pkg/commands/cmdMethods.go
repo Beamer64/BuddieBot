@@ -613,7 +613,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	options := i.ApplicationCommandData().Options[0]
 
 	switch options.Name {
-	case "insult":
+	case "rekd":
 		insultMsg, err := client.Roast()
 		if err != nil {
 			return err
