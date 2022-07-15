@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 var ApprovalWords = []string{
@@ -80,14 +82,10 @@ func IsLaunchedByDebugger() bool {
 	return false
 }
 
-func GetRandomLoadingMessage(possibleMessages []string) string {
-	return possibleMessages[rand.Intn(len(possibleMessages))]
-}
-
-func GetRandomEmoji(possibleEmojis []string) string {
-	emoji := possibleEmojis[rand.Intn(len(possibleEmojis))]
+func GetRandomStringFromSet(set []string) string {
+	str := set[rand.Intn(len(set))]
 	time.Sleep(1 * time.Millisecond)
-	return emoji
+	return str
 }
 
 // GetGuildMembers Discordgo and the discord api are broken atm so niether will get member list
@@ -170,4 +168,58 @@ func StringInSlice(s string, slice []string) bool {
 		}
 	}
 	return false
+}
+
+func ToConvertedText(text string, convertGroup string) (string, error) {
+	letters, err := getLetters()
+	if err != nil {
+		return "", err
+	}
+
+	convertedText := ""
+	for _, char := range text {
+		randSubs := "  "
+		if !unicode.IsSpace(char) {
+			subSet := letters[convertGroup][0][string(char)]
+			if subSet != nil {
+				randSubs = GetRandomStringFromSet(subSet)
+			} else {
+				randSubs = string(char)
+			}
+		}
+		convertedText += randSubs
+	}
+
+	return convertedText, nil
+
+}
+
+func getLetters() (map[string][]map[string][]string, error) {
+	letters := make(map[string][]map[string][]string)
+
+	fontsDir := "config_files/text_fonts.json"
+	if IsLaunchedByDebugger() {
+		fontsDir = "../../config_files/text_fonts.json"
+	}
+
+	jsonFile, err := os.Open(fontsDir)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(jsonFile *os.File) {
+		err = jsonFile.Close()
+	}(jsonFile)
+	if err != nil {
+		return nil, err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	err = json.Unmarshal(byteValue, &letters)
+	if err != nil {
+		return nil, err
+	}
+
+	return letters, nil
 }

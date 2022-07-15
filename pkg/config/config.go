@@ -179,7 +179,7 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		fmap := make(map[string]bool)
 		fmap["config.yaml"] = false
 		fmap["cmd.yaml"] = false
-		fmap["loadingMessages.txt"] = false
+		fmap["loading_messages.txt"] = false
 		fmap["emojis.txt"] = false
 
 		// loops through all files in dir, check if any of them are required
@@ -242,7 +242,7 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 	}
 
 	fmt.Println("Reading from loading messages file...")
-	msgs, err := grabStringLists(configDir + "loadingMessages.txt")
+	msgs, err := grabStringLists(configDir + "loading_messages.txt")
 	if err != nil {
 		return nil, err
 	}

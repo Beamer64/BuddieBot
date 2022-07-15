@@ -1566,7 +1566,7 @@ var (
 						},
 					},
 				},
-				/*{
+				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "bubble",
 					Description: "Bubble Text",
@@ -1579,11 +1579,25 @@ var (
 							Required:    true,
 						},
 					},
-				},*/
+				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "emojiletters",
 					Description: "Emoji Text",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "text",
+							Description: "Text to change",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "cursive",
+					Description: "Say it with class",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{

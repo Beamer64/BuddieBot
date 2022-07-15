@@ -3729,14 +3729,18 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 	case "bubble":
-		text := options.Options[0].StringValue()
-		//bubbleText := ""
+		text := strings.ToLower(options.Options[0].StringValue())
 
-		err := s.InteractionRespond(
+		content, err := helper.ToConvertedText(text, options.Name)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
 			i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: text,
+					Content: content,
 				},
 			},
 		)
@@ -3747,7 +3751,27 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "1337":
 		text := strings.ToLower(options.Options[0].StringValue())
 
-		content, err := helper.ToLeetCode(text)
+		content, err := helper.ToConvertedText(text, options.Name)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+	case "cursive":
+		text := options.Options[0].StringValue()
+
+		content, err := helper.ToConvertedText(text, options.Name)
 		if err != nil {
 			return err
 		}
@@ -4310,7 +4334,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		var emojis []string
 
 		for _, v := range i.ApplicationCommandData().Options[0].Options {
-			emoji := helper.GetRandomEmoji(cfg.Emojis)
+			emoji := helper.GetRandomStringFromSet(cfg.Emojis)
 			if v.Name != "request" {
 				f := &discordgo.MessageEmbedField{
 					Name:   v.StringValue(),

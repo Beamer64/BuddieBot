@@ -122,7 +122,7 @@ func (d *MessageCreateHandler) sendStartUpMessages(s *discordgo.Session, m *disc
 	// sleep for 1 minute while saying funny things and to wait for instance to start up
 	sm := 0
 	for i := 1; i < 5; i++ {
-		loadingMessage := helper.GetRandomLoadingMessage(d.cfg.LoadingMessages)
+		loadingMessage := helper.GetRandomStringFromSet(d.cfg.LoadingMessages)
 		time.Sleep(3 * time.Second)
 
 		_, err := s.ChannelMessageSend(m.ChannelID, loadingMessage)

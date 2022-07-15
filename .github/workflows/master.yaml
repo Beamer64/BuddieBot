@@ -68,9 +68,9 @@ jobs:
               gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
               gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/cmd.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
               gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
-              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/loadingMessages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/loading_messages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
               gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/emojis.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
-              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/leetCodes.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
+              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/text_fonts.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
 
       - name: Stop old service and start new
         run:  |
