@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/helper"
+	"github.com/beamer64/buddieBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 )
@@ -1728,7 +1728,7 @@ var (
 		},
 
 		"txt": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			err := sendTxtResponse(s, i, cfg)
+			err := sendTxtResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
@@ -1736,7 +1736,7 @@ var (
 		},
 
 		"ratethis": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			err := sendRateThisResponse(s, i, cfg)
+			err := sendRateThisResponse(s, i)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))

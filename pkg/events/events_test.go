@@ -2,7 +2,7 @@ package events
 
 import (
 	"fmt"
-	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"os"
 	"testing"

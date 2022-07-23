@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
 	"golang.org/x/text/cases"
@@ -239,7 +239,7 @@ func TestGetMembers(t *testing.T) {
 	}
 
 	req.Header.Add("Authorization", "Bot "+cfg.Configs.Keys.TestBotToken)
-	req.Header.Add("User-Agent", "DiscordBot")
+	req.Header.Add("User-Agent", "BuddieBot")
 	res, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)

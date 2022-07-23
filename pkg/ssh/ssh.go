@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/config"
 	"golang.org/x/crypto/ssh"
 )
 

@@ -2,11 +2,11 @@ package events
 
 import (
 	"fmt"
-	"github.com/beamer64/discordBot/pkg/gcp"
-	"github.com/beamer64/discordBot/pkg/helper"
-	"github.com/beamer64/discordBot/pkg/ssh"
-	"github.com/beamer64/discordBot/pkg/voice_chat"
-	"github.com/beamer64/discordBot/pkg/web"
+	"github.com/beamer64/buddieBot/pkg/gcp"
+	"github.com/beamer64/buddieBot/pkg/helper"
+	"github.com/beamer64/buddieBot/pkg/ssh"
+	"github.com/beamer64/buddieBot/pkg/voice_chat"
+	"github.com/beamer64/buddieBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 	"github.com/subosito/shorturl"
 	"net/url"
@@ -31,7 +31,7 @@ func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.Mes
 func (d *MessageCreateHandler) sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	embed := &discordgo.MessageEmbed{
 		Title: "Release Notes!",
-		URL:   "https://github.com/Beamer64/DiscordBot/blob/master/res/release.md",
+		URL:   "https://github.com/Beamer64/BuddieBot/blob/master/res/release.md",
 		Description: "SUM MOAR BIG BOI CHANGES\n\nDetailed list can be found in the Title link above." +
 			"\nCheck it out\n-----------------------------------------------------------------------------\n\n- Command changes:",
 		Color: 11091696,

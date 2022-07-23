@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/beamer64/discordBot/pkg/api"
-	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/database"
-	"github.com/beamer64/discordBot/pkg/games"
-	"github.com/beamer64/discordBot/pkg/helper"
+	"github.com/beamer64/buddieBot/pkg/api"
+	"github.com/beamer64/buddieBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/database"
+	"github.com/beamer64/buddieBot/pkg/games"
+	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/beamer64/godagpi/dagpi"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
@@ -3639,7 +3639,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 //region RateThis Commands
 
-func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	options := i.ApplicationCommandData().Options[0]
 	user := ""
 
@@ -3737,7 +3737,7 @@ func getRateThisEmbed(ratingName string, user string) (*discordgo.MessageEmbed, 
 
 //region Txt Commands
 
-func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	options := i.ApplicationCommandData().Options[0]
 
 	switch options.Name {

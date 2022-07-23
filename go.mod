@@ -1,4 +1,4 @@
-module github.com/beamer64/discordBot
+module github.com/beamer64/buddieBot
 
 go 1.18
 

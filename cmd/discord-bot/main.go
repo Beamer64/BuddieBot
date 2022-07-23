@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/beamer64/discordBot/pkg/bot"
-	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/bot"
+	"github.com/beamer64/buddieBot/pkg/config"
 	"math/rand"
 	"time"
 )

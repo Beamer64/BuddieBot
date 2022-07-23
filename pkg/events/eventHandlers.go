@@ -3,10 +3,10 @@ package events
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/beamer64/discordBot/pkg/commands"
-	"github.com/beamer64/discordBot/pkg/config"
-	"github.com/beamer64/discordBot/pkg/database"
-	"github.com/beamer64/discordBot/pkg/helper"
+	"github.com/beamer64/buddieBot/pkg/commands"
+	"github.com/beamer64/buddieBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/database"
+	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 )

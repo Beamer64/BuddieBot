@@ -5,7 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 )
 

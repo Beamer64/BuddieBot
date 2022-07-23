@@ -1,7 +1,7 @@
 package games
 
 import (
-	"github.com/beamer64/discordBot/pkg/config"
+	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )

@@ -1,7 +1,7 @@
 package voice_chat
 
 import (
-	"github.com/beamer64/discordBot/pkg/web"
+	"github.com/beamer64/buddieBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 )
 
