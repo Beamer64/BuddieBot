@@ -15,8 +15,8 @@
   <a href="https://golang.org" target="_blank">
     <img src="https://img.shields.io/badge/Made%20with-%20GO-blue" alt="shield.png">
   </a>
-  <a href="https://github.com/Beamer64/DiscordBot/blob/master/LICENSE" target="_blank">
-    <img src="https://img.shields.io/github/license/beamer64/DiscordBot" alt="shield.png">
+  <a href="https://github.com/Beamer64/BuddieBot/blob/master/LICENSE" target="_blank">
+    <img src="https://img.shields.io/github/license/beamer64/BuddieBot" alt="shield.png">
   </a>
 </div>
 
@@ -47,7 +47,7 @@
 </p>
 
 <div align="center">
-<img src="https://github.com/Beamer64/DiscordBot/blob/master/res/under-construction-tape-png-program-under-construction-removebg-preview.png" width="770" height="250" alt="">
+<img src="https://github.com/Beamer64/BuddieBot/blob/master/res/under-construction-tape-png-program-under-construction-removebg-preview.png" width="770" height="250" alt="">
 </div>
 
 ## About
@@ -80,10 +80,10 @@ BuddieBot also comes packed with a variety of features, such as:
 **You can invite BuddieBot to your server with the** [Temporarily Removed]
 link. 🤖😁 Alternatively, you can clone this repo and host the bot yourself.
 
-<!-- Server Invite: [Invite to Server](https://discord.com/api/oauth2/authorize?client_id=866151939472883762&permissions=8&redirect_uri=https%3A%2F%2Fgithub.com%2FBeamer64%2FDiscordBot&response_type=code&scope=bot%20identify%20email%20connections%20applications.commands%20guilds%20guilds.join%20gdm.join%20messages.read) -->
+<!-- Server Invite: [Invite to Server](https://discord.com/api/oauth2/authorize?client_id=866151939472883762&permissions=8&redirect_uri=https%3A%2F%2Fgithub.com%2FBeamer64%2FBuddieBot&response_type=code&scope=bot%20identify%20email%20connections%20applications.commands%20guilds%20guilds.join%20gdm.join%20messages.read) -->
 
 ```
-git clone https://github.com/Beamer64/DiscordBot.git
+git clone https://github.com/Beamer64/BuddieBot.git
 ```
 
 After cloning, run an
@@ -190,7 +190,7 @@ URL. E.g. `https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN`**
 ## Release Notes
 
 Release notes (when updated) can be found in the res folder of the project or at:
-https://github.com/Beamer64/DiscordBot/blob/master/res/release.md
+https://github.com/Beamer64/BuddieBot/blob/master/res/release.md
 
 ---
 
@@ -212,13 +212,13 @@ This is just a list of various credits to any person(s) whose work are contribut
 
 <img src="https://www.gstatic.com/tenor/web/attribution/PB_tenor_logo_blue_horizontal.png" width="600" height="100"  alt=""/>
 
-The Tenor API is used to deliver gifs from the DiscordBot. The website can be found [here](https://tenor.com/). The API site can be found [here](https://tenor.com/gifapi/documentation#quickstart).
+The Tenor API is used to deliver gifs from the BuddieBot. The website can be found [here](https://tenor.com/). The API site can be found [here](https://tenor.com/gifapi/documentation#quickstart).
 
 ---
 
 <img src="https://www.horoscope.com/images-US/horoscope-logo.svg" width="500" height="150"  alt=""/>
 
-The horoscope.com daily horoscopes are used to allow our DiscordBot to deliver a daily horoscope to our users. The website can be found [here](https://www.horoscope.com/us/index.aspx).
+The horoscope.com daily horoscopes are used to allow our BuddieBot to deliver a daily horoscope to our users. The website can be found [here](https://www.horoscope.com/us/index.aspx).
 
 ---
 
@@ -230,7 +230,7 @@ The icon for BuddieBot was made by [wanicon](https://www.flaticon.com/authors/wa
 
 # [bwmarrin/discordgo](https://github.com/bwmarrin/discordgo)
 
-We utilize the convenience of bwmarrin's discordgo Golang package in a majority of the DiscordBot's code.
+We utilize the convenience of bwmarrin's discordgo Golang package in a majority of the BuddieBot's code.
 
 > DiscordGo is a Go package that provides low level bindings to the Discord chat client API. DiscordGo has nearly complete support for all of the Discord API endpoints, websocket interface, and voice interface.
 
@@ -238,7 +238,7 @@ We utilize the convenience of bwmarrin's discordgo Golang package in a majority 
 
 # [gocolly/colly](https://github.com/gocolly/colly)
 
-Gocolly's colly framework is used to simplify any crawlers/scrapers in our DiscordBot.
+Gocolly's colly framework is used to simplify any crawlers/scrapers in our BuddieBot.
 
 > Lightning Fast and Elegant Scraping Framework for Gophers Colly provides a clean interface to write any kind of crawler/scraper/spider. With Colly you can easily extract structured data from websites, which can be used for a wide range of applications, like data mining, data processing or archiving.
 
