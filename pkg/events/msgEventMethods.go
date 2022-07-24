@@ -19,8 +19,7 @@ import (
 //region dev commands
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if helper.IsLaunchedByDebugger() {
-		//err := d.playAudioLink(s, m, param)
-		err := d.sendStartUpMessages(s, m)
+		err := d.playAudioLink(s, m, param)
 		if err != nil {
 			return err
 		}

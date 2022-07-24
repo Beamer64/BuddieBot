@@ -11,7 +11,6 @@ import (
 	"golang.org/x/text/language"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -28,7 +27,7 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	replacer := strings.NewReplacer("m.", "", "youtube", "youtubex2")
 	url := replacer.Replace(link)
 
-	ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf))
+	ctx, cancel := chromedp.NewContext(context.Background()) // options: chromedp.WithDebugf(log.Printf)
 	ctx, cancel = context.WithTimeout(ctx, 45*time.Second)
 	defer cancel()
 
@@ -198,53 +197,69 @@ func DownloadMpFile(m *discordgo.MessageCreate, link string, fileName string) er
 func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo.MessageCreate, s *discordgo.Session) error {
 	dir := fmt.Sprintf("%s/Audio", m.GuildID)
 
-	if !IsPlaying {
-		if fileName != "" {
-			MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
+	cleanFileName := ""
+	var err error
+	if fileName != "" {
+		cleanFileName, err = FormatAudioFileName(fileName)
+		if err != nil {
+			return err
 		}
 
-		IsPlaying = true
-		for i, v := range MpFileQueue {
-			fmt.Println("PlayAudioFile: ", v)
-			cleanFileName, err := FormatAudioFileName(v)
-			if err != nil {
-				return err
+		if !IsPlaying {
+			if fileName != "" {
+				MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
 			}
 
-			_, err = s.ChannelMessageSend(m.ChannelID, "Now playing: "+cleanFileName)
-			if err != nil {
-				return err
+			IsPlaying = true
+			for _, v := range MpFileQueue {
+				fmt.Println("PlayAudioFile: ", v)
+
+				_, err = s.ChannelMessageSend(m.ChannelID, "Now playing: "+cleanFileName)
+				if err != nil {
+					return err
+				}
+
+				dgvoice.PlayAudioFile(dgv, v, StopPlaying)
 			}
-
-			dgvoice.PlayAudioFile(dgv, v, StopPlaying)
-
 			//remove file from queue
-			MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
-		}
-		IsPlaying = false
-		if len(MpFileQueue) > 0 {
-			err := PlayAudioFile(dgv, "", m, s)
-			if err != nil {
-				return err
-			}
+			MpFileQueue = nil
+			//MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
 
-		} else {
 			if dgv != nil {
-				err := dgv.Disconnect()
+				err = dgv.Disconnect()
 				if err != nil {
 					return err
 				}
 			}
 
-			err := MpFileCleanUp(dir)
+			err = MpFileCleanUp(dir)
 			if err != nil {
 				return err
 			}
-		}
 
-	} else {
-		if fileName != "" {
-			_, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Added to queue: %s", fileName))
+			/*IsPlaying = false
+			if len(MpFileQueue) > 0 {
+				err := PlayAudioFile(dgv, "", m, s)
+				if err != nil {
+					return err
+				}
+
+			} else {
+				if dgv != nil {
+					err := dgv.Disconnect()
+					if err != nil {
+						return err
+					}
+				}*/
+
+			/*err := MpFileCleanUp(dir)
+				if err != nil {
+					return err
+				}
+			}*/
+
+		} else {
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Added to queue: %s", cleanFileName))
 			if err != nil {
 				return err
 			}
