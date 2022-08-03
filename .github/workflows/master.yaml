@@ -51,6 +51,10 @@ jobs:
         # sudo apt-get install software-properties-common
         # sudo add-apt-repository -r ppa:webkit-team/ppa && sudo apt-get install libwebkit2gtk-4.0-37 libwebkit2gtk-4.0-dev
 
+        # - name: Remove old directory builds
+        # run: |
+        # gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="rm -rf *"
+
       - name: Upload new server binary and install packages
         run:  |
               gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}"
