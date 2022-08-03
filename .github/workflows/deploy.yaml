@@ -19,13 +19,13 @@ jobs:
         with:
           go-version: 1.18
 
-      - name: Pull secrets
-        run:  |
-              echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
+      #      - name: Pull secrets
+      #        run:  |
+      #              echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
 
-      - name: Test
-        run:  |
-              go test -v ./...
+      #      - name: Test
+      #        run:  |
+      #              go test -v ./...
 
       - name: Build
         run:  |
@@ -40,10 +40,11 @@ jobs:
       - name: SSH Remote Commands
         uses: appleboy/ssh-action@master
         with:
-          host:     ${{ secrets.EC2_HOST_NAME }}
-          username: ${{ secrets.HOST_USERNAME }}
-          password: ${{ secrets.HOST_PASSWORD }}
-          script:   whoami
+          host:                     ${{ secrets.EC2_HOST_NAME }}
+          username:                 ${{ secrets.HOST_USERNAME }}
+          password:                 ${{ secrets.HOST_PASSWORD }}
+          config_files/config.yaml: ${{ secrets.CONFIG_KEYS }}
+          script:                   whoami
 
 
 #      - name: Use gcloud CLI
