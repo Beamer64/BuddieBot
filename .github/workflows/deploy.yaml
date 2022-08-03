@@ -53,8 +53,8 @@ jobs:
                     scp config_files/loading_messages.txt ubuntu@ip-172-31-88-183:/home/ubuntu/colerwyats/${GITHUB_SHA}/config_files
                     scp config_files/emojis.txt ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}/config_files
                     scp config_files/text_fonts.json ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}/config_files
-
-                    cd ${GITHUB_SHA}/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
+                    
+                    cd ${GITHUB_SHA}/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service
                     unlink current; ln -s ${GITHUB_SHA} current
                     sudo systemctl restart bot.service
                     sudo rm -rf $(ls -t -r | head -n 1)
