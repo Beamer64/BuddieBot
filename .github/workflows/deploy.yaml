@@ -38,15 +38,13 @@ jobs:
         uses: appleboy/ssh-action@master
         env:
           GITHUB_SHA: ${{ github.sha }}
-          RSA_KEY:    ${{ secrets.RSA_KEY }}
         with:
           host:     ${{ secrets.EC2_HOST_NAME }}
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
-          envs:     GITHUB_SHA, RSA_KEY
+          envs:     GITHUB_SHA
           script:   |
                     mkdir -p $GITHUB_SHA
-                    sudo scp -i $RSA_KEY ./buddiebot_server ubuntu@ip-172-31-88-183:/home/ubuntu/$GITHUB_SHA
                     
                     echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
                     mkdir $GITHUB_SHA/config_files
@@ -62,6 +60,19 @@ jobs:
                     unlink current; ln -s $GITHUB_SHA current
                     sudo systemctl restart bot.service
                     sudo rm -rf $(ls -t -r | head -n 1)
+
+
+      - name: SCP build file to server
+        uses: appleboy/scp-action@master
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        with:
+          host:     ${{ secrets.EC2_HOST_NAME }}
+          username: ${{ secrets.HOST_USERNAME }}
+          password: ${{ secrets.HOST_PASSWORD }}
+          envs:     GITHUB_SHA
+          source:   "./buddiebot_server"
+          target:   "/home/ubuntu/$GITHUB_SHA"
 
 #      - name: Use gcloud CLI
 #        run:  gcloud info
