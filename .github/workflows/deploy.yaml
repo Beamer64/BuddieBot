@@ -45,12 +45,12 @@ jobs:
           envs:     GITHUB_SHA
           script:   |
                     mkdir -p $GITHUB_SHA
-                    sudo scp -o StrictHostKeyChecking=no ./buddiebot_server ubuntu@172-31-88-183:/home/ubuntu/$GITHUB_SHA
+                    sudo scp -i ${{ secrets.RSA_KEY }} ./buddiebot_server ubuntu@ip-172-31-88-183:/home/ubuntu/$GITHUB_SHA
                     
                     echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
                     mkdir $GITHUB_SHA/config_files
                     
-                    scp config_files/config.yaml ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}/config_files
+                    scp -o StrictHostKeyChecking=no config_files/config.yaml ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}/config_files
                     scp config_files/cmd.yaml ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}/config_files
                     scp config_files/bot.service ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}/config_files
                     scp config_files/loading_messages.txt ubuntu@ip-172-31-88-183:/home/ubuntu/colerwyats/${GITHUB_SHA}/config_files
