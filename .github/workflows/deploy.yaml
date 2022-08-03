@@ -41,11 +41,11 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
           script:   |
-                    mkdir ${GITHUB_SHA}
+                    mkdir -p ${GITHUB_SHA}
                     scp ./buddiebot_server ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}
                     
                     echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
-                    mkdir ${GITHUB_SHA}/config_files
+                    mkdir -p ${GITHUB_SHA}/config_files
                     
                     scp config_files/config.yaml ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}/config_files
                     scp config_files/cmd.yaml ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}/config_files
