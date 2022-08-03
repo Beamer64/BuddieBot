@@ -42,7 +42,7 @@ jobs:
           # password: ${{ secrets.HOST_PASSWORD }}
           key:      ${{ secrets.RSA_KEY }}
           script:   |
-                    mkdir ${{GITHUB_SHA}}
+                    mkdir -p ${GITHUB_SHA}
                     scp ./buddiebot_server ubuntu@ip-172-31-88-183:/home/ubuntu/${GITHUB_SHA}
                     
                     echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
