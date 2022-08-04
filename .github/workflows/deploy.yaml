@@ -64,7 +64,7 @@ jobs:
                     sudo systemctl daemon-reload
                     sudo systemctl enable bot.service
                     sudo systemctl start bot.service
-                    if -d /home/ubuntu/current; then sudo unlink current; fi
+                    if test -d /home/ubuntu/current; then sudo unlink current; fi
                     sudo ln -sf ${{ github.sha }} current
                     sudo systemctl restart bot.service
 
