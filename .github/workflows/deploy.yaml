@@ -65,7 +65,7 @@ jobs:
           host:     ${{ secrets.EC2_HOST_NAME }}
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
-          source:   "config_files/config.yaml, config_files/cmd.yaml, config_files/bot.service, config_files/loading_messages.txt, config_files/emojis.txt, config_files/text_fonts.json"
+          source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
           target:   "/home/ubuntu/$GITHUB_SHA/config_files/"
 
 
@@ -78,6 +78,7 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
           script:   |
+                    sudo mv config_files $GITHUB_SHA
                     cd $GITHUB_SHA/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service
                     unlink current; ln -s $GITHUB_SHA current
                     sudo systemctl restart bot.service
