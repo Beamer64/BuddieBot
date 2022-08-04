@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
           source:   "./buddiebot_server"
-          target:   "/home/ubuntu/$GITHUB_SHA"
+          target:   "/home/ubuntu/${{ github.sha }}"
 
 
       - name: Send config files to server
@@ -51,7 +51,7 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
           source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
-          target:   "/home/ubuntu/$GITHUB_SHA/config_files"
+          target:   "/home/ubuntu/${{ github.sha }}/config_files"
 
 
       - name: Create build dirs
