@@ -73,10 +73,10 @@ jobs:
                     sudo systemctl daemon-reload
                     sudo systemctl enable bot.service
                     sudo systemctl start bot.service
-                    sudo unlink current
-                    sudo ln -s ${{ github.sha }} current
+                    
+                    sudo ln -sf ${{ github.sha }} current
+                    sudo chflags -h ${{ github.sha }}
                     sudo systemctl restart bot.service
                     sudo rm -rf $(ls -t -r | head -n 1)
 
-
-#                     unlink current
+          #                      sudo unlink current
