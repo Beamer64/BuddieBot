@@ -47,17 +47,17 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
           source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
-          target:   "/home/ubuntu/${{ github.sha }}/config_files"
+          target:   "/home/ubuntu/${{ github.sha }}"
 
 
-      #      - name: Create build dirs
-      #        uses: appleboy/ssh-action@master
-      #        with:
-      #          host:     ${{ secrets.EC2_HOST_NAME }}
-      #          username: ${{ secrets.HOST_USERNAME }}
-      #          password: ${{ secrets.HOST_PASSWORD }}
-      #          script:   |
-      #                    echo '${{ secrets.CONFIG_KEYS }}' > ${{ github.sha }}/config_files/config.yaml
+      - name: Create build dirs
+        uses: appleboy/ssh-action@master
+        with:
+          host:     ${{ secrets.EC2_HOST_NAME }}
+          username: ${{ secrets.HOST_USERNAME }}
+          password: ${{ secrets.HOST_PASSWORD }}
+          script:   |
+                    echo '${{ secrets.CONFIG_KEYS }}' > ${{ github.sha }}/config_files/config.yaml
 
 
       - name: Stop and restart service
