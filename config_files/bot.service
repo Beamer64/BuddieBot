@@ -6,8 +6,8 @@ WantedBy=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/home/colerwyats/current/discord_server
-WorkingDirectory=/home/colerwyats/current
+ExecStart=/home/ubuntu/current/buddiebot_server
+WorkingDirectory=/home/ubuntu/current
 Restart=always
 RestartSec=5
 StandardOutput=syslog
