@@ -41,8 +41,10 @@ jobs:
           envs:     GITHUB_SHA
           script:   |
                     mkdir -p $GITHUB_SHA
-                    ${{ secrets.CONFIG_KEYS }} > config_files/config.yaml
+                    echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
+                    pwd
                     mkdir -p $GITHUB_SHA/config_files
+                    pwd
 
 
       - name: Send build file to server
@@ -77,7 +79,6 @@ jobs:
           host:     ${{ secrets.EC2_HOST_NAME }}
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
-          envs:     GITHUB_SHA
           script:   |
                     cd $GITHUB_SHA/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service
                     unlink current; ln -s $GITHUB_SHA current
