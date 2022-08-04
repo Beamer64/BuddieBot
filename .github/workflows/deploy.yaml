@@ -74,9 +74,10 @@ jobs:
                     sudo systemctl enable bot.service
                     sudo systemctl start bot.service
                     
-                    ln -s ${{ github.sha }} current
+                    sudo ln -s ${{ github.sha }} current
                     sudo systemctl restart bot.service
                     sudo rm -rf $(ls -t -r | head -n 1)
+
 
 #                     unlink current
 #      - name: Use gcloud CLI
