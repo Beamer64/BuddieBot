@@ -73,40 +73,10 @@ jobs:
                     sudo systemctl daemon-reload
                     sudo systemctl enable bot.service
                     sudo systemctl start bot.service
-                    unlink current
+                    sudo unlink current
                     sudo ln -s ${{ github.sha }} current
                     sudo systemctl restart bot.service
                     sudo rm -rf $(ls -t -r | head -n 1)
 
 
 #                     unlink current
-#      - name: Use gcloud CLI
-#        run:  gcloud info
-#
-#        # sudo apt-get install -y g++ libgtk-3-dev libfreetype6-dev libx11-dev libxinerama-dev libxrandr-dev libxcursor-dev mesa-common-dev libasound2-dev freeglut3-dev libxcomposite-dev libcurl4-openssl-dev
-#        # sudo apt-get install software-properties-common
-#        # sudo add-apt-repository -r ppa:webkit-team/ppa && sudo apt-get install libwebkit2gtk-4.0-37 libwebkit2gtk-4.0-dev
-#
-#      - name: Upload new server binary and install packages
-#        run:  |
-#              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}"
-#              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a ./buddiebot_server colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}
-#
-#      - name: Upload new configs from secret
-#        run:  |
-#              echo '${{ secrets.GCP_SSH_KEY }}' > config_files/config.yaml
-#
-#              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="mkdir ${GITHUB_SHA}/config_files"
-#              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/config.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
-#              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/cmd.yaml colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
-#              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/bot.service colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
-#              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/loading_messages.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
-#              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/emojis.txt colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
-#              gcloud compute scp --strict-host-key-checking=no --zone=us-central1-a config_files/text_fonts.json colerwyats@discord-bot:/home/colerwyats/${GITHUB_SHA}/config_files
-#
-#      - name: Stop old service and start new
-#        run:  |
-#              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="cd ${GITHUB_SHA}/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service"
-#              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="unlink current; ln -s ${GITHUB_SHA} current"
-#              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo systemctl restart bot.service"
-#              gcloud compute ssh --strict-host-key-checking=no --zone=us-central1-a colerwyats@discord-bot --command="sudo rm -rf $(ls -t -r | head -n 1)"
