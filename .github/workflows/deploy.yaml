@@ -41,8 +41,8 @@ jobs:
           envs:     GITHUB_SHA
           script:   |
                     mkdir -p $GITHUB_SHA
-                    echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
                     mkdir $GITHUB_SHA/config_files
+                    echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
 
 
       - name: Send build file to server
@@ -54,7 +54,7 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
           source:   "./buddiebot_server"
-          target:   "/home/ubuntu/$GITHUB_SHA"
+          target:   "/home/ubuntu/$GITHUB_SHA/"
 
 
       - name: Send config files to server
@@ -66,7 +66,7 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
           source:   "config_files/config.yaml, config_files/cmd.yaml, config_files/bot.service, config_files/loading_messages.txt, config_files/emojis.txt, config_files/text_fonts.json"
-          target:   "/home/ubuntu/$GITHUB_SHA/config_files"
+          target:   "/home/ubuntu/$GITHUB_SHA/config_files/"
 
 
       - name: Stop and restart service
