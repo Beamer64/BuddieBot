@@ -40,14 +40,14 @@ jobs:
           target:   "/home/ubuntu/${{ github.sha }}"
 
 
-      #      - name: Send config files to server
-      #        uses: appleboy/scp-action@master
-      #        with:
-      #          host:     ${{ secrets.EC2_HOST_NAME }}
-      #          username: ${{ secrets.HOST_USERNAME }}
-      #          password: ${{ secrets.HOST_PASSWORD }}
-      #          source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
-      #          target:   "/home/ubuntu/${{ github.sha }}/config_files"
+      - name: Send config files to server
+        uses: appleboy/scp-action@master
+        with:
+          host:     ${{ secrets.EC2_HOST_NAME }}
+          username: ${{ secrets.HOST_USERNAME }}
+          password: ${{ secrets.HOST_PASSWORD }}
+          source:   "config.yaml,config_files/cmd.yaml,config_files/bot.service,loading_messages.txt,emojis.txt,config_files/text_fonts.json"
+          target:   "/home/ubuntu/${{ github.sha }}/config_files"
 
 
       - name: Create build dirs
