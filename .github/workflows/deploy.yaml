@@ -40,9 +40,9 @@ jobs:
           password: ${{ secrets.HOST_PASSWORD }}
           envs:     GITHUB_SHA
           script:   |
-                    mkdir $GITHUB_SHA
                     echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
-                    mkdir $GITHUB_SHA/config_files
+          #         mkdir $GITHUB_SHA
+          #         mkdir $GITHUB_SHA/config_files
 
 
       - name: Send build file to server
