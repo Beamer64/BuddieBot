@@ -32,8 +32,6 @@ jobs:
 
       - name: Send build file to server
         uses: appleboy/scp-action@master
-        env:
-          GITHUB_SHA: ${{ github.sha }}
         with:
           host:     ${{ secrets.EC2_HOST_NAME }}
           username: ${{ secrets.HOST_USERNAME }}
@@ -44,8 +42,6 @@ jobs:
 
       - name: Send config files to server
         uses: appleboy/scp-action@master
-        env:
-          GITHUB_SHA: ${{ github.sha }}
         with:
           host:     ${{ secrets.EC2_HOST_NAME }}
           username: ${{ secrets.HOST_USERNAME }}
@@ -62,11 +58,8 @@ jobs:
           host:     ${{ secrets.EC2_HOST_NAME }}
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
-          envs:     GITHUB_SHA
           script:   |
-                    echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
-          #         mkdir $GITHUB_SHA
-          #         mkdir $GITHUB_SHA/config_files
+                    echo '${{ secrets.CONFIG_KEYS }}' > ${{ github.sha }}/config_files/config.yaml
 
 
       - name: Stop and restart service
@@ -78,8 +71,7 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           password: ${{ secrets.HOST_PASSWORD }}
           script:   |
-                    sudo mv config_files $GITHUB_SHA
-                    cd $GITHUB_SHA/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service
+                    cd ${{ github.sha }}/config_files; sudo mv bot.service /etc/systemd/system; cd /etc/systemd/system; sudo systemctl daemon-reload; sudo systemctl enable bot.service; sudo systemctl start bot.service
                     unlink current; ln -s $GITHUB_SHA current
                     sudo systemctl restart bot.service
                     sudo rm -rf $(ls -t -r | head -n 1)
