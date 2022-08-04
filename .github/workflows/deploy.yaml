@@ -41,7 +41,7 @@ jobs:
           envs:     GITHUB_SHA
           script:   |
                     mkdir -p $GITHUB_SHA
-                    mkdir $GITHUB_SHA/config_files
+                    mkdir -p $GITHUB_SHA/config_files
                     echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
 
 
