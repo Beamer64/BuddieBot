@@ -28,23 +28,21 @@ jobs:
               go get ./...
               go get -u layeh.com/gopus
               go build -o buddiebot_server cmd/discord-bot/main.go
+      
 
-
-      - name: Create build dirs
-        uses: appleboy/ssh-action@master
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-        with:
-          host:     ${{ secrets.EC2_HOST_NAME }}
-          username: ${{ secrets.HOST_USERNAME }}
-          password: ${{ secrets.HOST_PASSWORD }}
-          envs:     GITHUB_SHA
-          script:   |
-                    mkdir -p $GITHUB_SHA
-                    echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
-                    pwd
-                    mkdir -p $GITHUB_SHA/config_files
-                    pwd
+      #      - name: Create build dirs
+      #        uses: appleboy/ssh-action@master
+      #        env:
+      #          GITHUB_SHA: ${{ github.sha }}
+      #        with:
+      #          host:     ${{ secrets.EC2_HOST_NAME }}
+      #          username: ${{ secrets.HOST_USERNAME }}
+      #          password: ${{ secrets.HOST_PASSWORD }}
+      #          envs:     GITHUB_SHA
+      #          script:   |
+      #                    mkdir $GITHUB_SHA
+      #                    echo '${{ secrets.CONFIG_KEYS }}' > config_files/config.yaml
+      #                    mkdir $GITHUB_SHA/config_files
 
 
       - name: Send build file to server
