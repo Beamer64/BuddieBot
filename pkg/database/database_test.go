@@ -272,9 +272,9 @@ func TestUpdateDBitems(t *testing.T) {
 }
 
 func TestChangeConfigSettingValueByName(t *testing.T) {
-	/*if os.Getenv("INTEGRATION") != "true" {
+	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}*/
+	}
 
 	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
