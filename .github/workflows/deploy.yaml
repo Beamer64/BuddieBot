@@ -64,11 +64,12 @@ jobs:
                     sudo systemctl daemon-reload
                     sudo systemctl enable bot.service
                     sudo systemctl start bot.service
+                    sudo unlink current
                     if [ -d /home/ubuntu/current_build ]; then sudo mv /home/ubuntu/current_build /home/ubuntu/previous_build; fi
                     sudo mv /home/ubuntu/${{ github.sha }} /home/ubuntu/current_build
-                    sudo unlink current
                     sudo ln -sf current_build current
                     sudo systemctl restart bot.service
+                    sudo rm -rf previous_build
 
           #                     sudo unlink current
           #                     sudo rm -rf $(ls -t -r | head -n 1)
