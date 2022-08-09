@@ -61,22 +61,6 @@ type Configuration struct {
 		AccessKey string `yaml:"accessKey"`
 		SecretKey string `yaml:"secretKey"`
 	}
-
-	Server struct {
-		SSHKeyBody                  string `yaml:"sshKeyBody"`
-		MachineIP                   string `yaml:"machineIP"`
-		Type                        string `yaml:"type"`
-		Project_ID                  string `yaml:"project_id"`
-		Private_key_ID              string `yaml:"private_key_id"`
-		Private_key                 string `yaml:"private_key"`
-		Client_email                string `yaml:"client_email"`
-		Client_ID                   string `yaml:"client_id"`
-		Auth_URI                    string `yaml:"auth_uri"`
-		Token_URI                   string `yaml:"token_uri"`
-		Auth_provider_x509_cert_URL string `yaml:"auth_provider_x509_cert_url"`
-		Client_x509_cert_URL        string `yaml:"client_x509_cert_url"`
-		Zone                        string `yaml:"zone"`
-	} `yaml:"vm"`
 }
 
 type Command struct {
@@ -91,73 +75,39 @@ type Command struct {
 	} `yaml:"slash-name"`
 
 	PrefixName struct {
-		StartServer  string `yaml:"start-server"`
-		StopServer   string `yaml:"stop-server"`
-		ServerStatus string `yaml:"server-status"`
 	} `yaml:"prefix-name"`
 
 	Desc struct {
-		Tuuck        string `yaml:"tuuck"`
-		StartServer  string `yaml:"start-server"`
-		StopServer   string `yaml:"stop-server"`
-		CoinFlip     string `yaml:"coin-flip"`
-		ServerStatus string `yaml:"server-status"`
-		LMGTFY       string `yaml:"lmgtfy"`
-		Pick         string `yaml:"pick"`
-		Animals      string `yaml:"animals"`
-		Daily        string `yaml:"daily"`
-		ImgSet       string `yaml:"img-set"`
-		Play         string `yaml:"play"`
-		Get          string `yaml:"get"`
+		Tuuck    string `yaml:"tuuck"`
+		CoinFlip string `yaml:"coin-flip"`
+		LMGTFY   string `yaml:"lmgtfy"`
+		Pick     string `yaml:"pick"`
+		Animals  string `yaml:"animals"`
+		Daily    string `yaml:"daily"`
+		ImgSet   string `yaml:"img-set"`
+		Play     string `yaml:"play"`
+		Get      string `yaml:"get"`
 	} `yaml:"description"`
 
 	Example struct {
-		Tuuck        string `yaml:"tuuck"`
-		StartServer  string `yaml:"start-server"`
-		StopServer   string `yaml:"stop-server"`
-		CoinFlip     string `yaml:"coin-flip"`
-		ServerStatus string `yaml:"server-status"`
-		LMGTFY       string `yaml:"lmgtfy"`
-		Pick         string `yaml:"pick"`
-		Animals      string `yaml:"animals"`
-		Daily        string `yaml:"daily"`
-		ImgSet       string `yaml:"img-set"`
-		Play         string `yaml:"play"`
-		Get          string `yaml:"get"`
+		Tuuck    string `yaml:"tuuck"`
+		CoinFlip string `yaml:"coin-flip"`
+		LMGTFY   string `yaml:"lmgtfy"`
+		Pick     string `yaml:"pick"`
+		Animals  string `yaml:"animals"`
+		Daily    string `yaml:"daily"`
+		ImgSet   string `yaml:"img-set"`
+		Play     string `yaml:"play"`
+		Get      string `yaml:"get"`
 	} `yaml:"example"`
 
 	Msg struct {
-		Invalid          string `yaml:"invalid"`
-		WindUp           string `yaml:"windUp"`
-		WindDown         string `yaml:"windDown"`
-		FinishOpperation string `yaml:"finishOpperation"`
-		ServerUP         string `yaml:"serverUP"`
-		ServerDOWN       string `yaml:"serverDOWN"`
-		CheckStatusUp    string `yaml:"checkStatusUp"`
-		CheckStatusDown  string `yaml:"checkStatusDown"`
-		NotBotAdmin      string `yaml:"notBotAdmin"`
-		MCServerError    string `yaml:"mcServerError"`
-		TenorAPIError    string `yaml:"tenorAPIError"`
-		YoutubeAPIError  string `yaml:"youtubeAPIError"`
-		InsultAPIError   string `yaml:"insultAPIError"`
+		Invalid         string `yaml:"invalid"`
+		NotBotAdmin     string `yaml:"notBotAdmin"`
+		TenorAPIError   string `yaml:"tenorAPIError"`
+		YoutubeAPIError string `yaml:"youtubeAPIError"`
+		InsultAPIError  string `yaml:"insultAPIError"`
 	} `yaml:"message"`
-}
-
-type ServerCommandOut struct {
-	Command      string `json:"CommandMessages"`
-	CreatedAt    string `json:"CreatedAt"`
-	ID           string `json:"ID"`
-	Image        string `json:"Image"`
-	Labels       string `json:"Labels"`
-	LocalVolumes string `json:"LocalVolumes"`
-	Mounts       string `json:"Mounts"`
-	Names        string `json:"Names"`
-	Networks     string `json:"Networks"`
-	Ports        string `json:"Ports"`
-	RunningFor   string `json:"RunningFor"`
-	Size         string `json:"Size"`
-	State        string `json:"State"`
-	Status       string `json:"Status"`
 }
 
 func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {

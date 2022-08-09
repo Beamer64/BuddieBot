@@ -10,51 +10,34 @@ slash-name:
 
 # List of prefix ($) commands
 pref-name:
-  start-server:  "$startServer"
-  stop-server:   "$stopServer"
-  server-status: "$serverStatus"
 
 # Command Descriptions
 description:
-  tuuck:         "Lists available commands."
-  start-server:  "Starts Minecraft Server."
-  stop-server:   "Stops Minecraft Server."
-  server-status: "Gives the current status of the MC server."
-  lmgtfy:        "Add the :grey_question: Reaction to a message and get a LMGTFY link"
-  pick:          "Chooses between 2 or more things."
-  animals:       "Look at some cutes."
-  daily:         "Gives daily readings."
-  img-set:       "multiple image manipulations!"
-  play:          "Games to play"
-  get:           "Gets some various info"
+  tuuck:   "Lists available commands."
+  lmgtfy:  "Add the :grey_question: Reaction to a message and get a LMGTFY link"
+  pick:    "Chooses between 2 or more things."
+  animals: "Look at some cutes."
+  daily:   "Gives daily readings."
+  img-set: "multiple image manipulations!"
+  play:    "Games to play"
+  get:     "Gets some various info"
 
 # Command Usage Examples
 example:
-  tuuck:         "/tuuck"
-  start-server:  "$startServer"
-  stop-server:   "$stopServer"
-  server-status: "$serverStatus"
-  lmgtfy:        "Add the :grey_question: Reaction to a channel message"
-  pick:          "/pick choices `1st: option1` `2nd: option2`"
-  animals:       "/animals doggo"
-  daily:         "/daily kanye"
-  img-set:       "/img-set{1/2/3}"
-  play:          "/play coin-flip"
-  get:           "/get 8ball"
+  tuuck:   "/tuuck"
+  lmgtfy:  "Add the :grey_question: Reaction to a channel message"
+  pick:    "/pick choices `1st: option1` `2nd: option2`"
+  animals: "/animals doggo"
+  daily:   "/daily kanye"
+  img-set: "/img-set{1/2/3}"
+  play:    "/play coin-flip"
+  get:     "/get 8ball"
 
 
 # Static cmd related messages
 message:
-  windUp:           "`*starts minecraft server in silence*`"
-  windDown:         "stopping minecraft server, Alt-F4 really speeds things up 0.0"
-  finishOpperation: "`*beep boop* All done. Powered by Duracell™️`"
-  serverUP:         "Did you even try to connect first, Ding-Dong? It's already running. "
-  serverDOWN:       "Someone must've beat you to it. Server isn't running. "
-  checkStatusUp:    "Rocking and rolling, my guy. "
-  checkStatusDown:  "Server is down. ¯\\_(ツ)_/¯ I just work here."
-  invalid:          "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<"
-  notBotAdmin:      "XD sowwy, you need spwecial pewrmission to dew dat."
-  tenorAPIError:    "UwU dere was a prawblum with the Tenor API :("
-  youtubeAPIError:  "UwU dere was a prawblum with the Youtube API :("
-  insultAPIError:   "UwU dere was a prawblum with the Insult API :("
-  mcServerError:    "UwU dere was a prawblum with the Insult API :("
+  invalid:         "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<"
+  notBotAdmin:     "XD sowwy, you need spwecial pewrmission to dew dat."
+  tenorAPIError:   "UwU dere was a prawblum with the Tenor API :("
+  youtubeAPIError: "UwU dere was a prawblum with the Youtube API :("
+  insultAPIError:  "UwU dere was a prawblum with the Insult API :("

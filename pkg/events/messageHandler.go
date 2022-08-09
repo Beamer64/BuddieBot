@@ -43,6 +43,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		}
 
 		switch strings.ToLower(command) {
+
 		/////////////Dev///////////////////
 		case "test":
 			err := d.testMethod(s, m, param)
@@ -75,8 +76,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				}
 			}
 
-		/////////////Dev///////////////////
-
 		/////////////Misc///////////////////
 
 		case "weast":
@@ -85,53 +84,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 				fmt.Printf("%+v", errors.WithStack(err))
 				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
 			}
-
-		/////////////Misc///////////////////
-
-		// Starts the Minecraft Server
-		case "startServer":
-			if helper.MemberHasRole(s, m.Member, m.GuildID, d.cfg.Configs.Settings.BotAdminRole) {
-				err := d.startServer(s, m)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
-				}
-				return
-
-			} else {
-				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
-				}
-			}
-
-		// Stops the Minecraft Server
-		case "stopServer":
-			if helper.MemberHasRole(s, m.Member, m.GuildID, d.cfg.Configs.Settings.BotAdminRole) {
-				err := d.stopServer(s, m)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
-				}
-				return
-
-			} else {
-				_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
-				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
-				}
-			}
-
-		// Stops the Minecraft Server
-		case "serverStatus":
-			err := d.sendServerStatusAsMessage(s, m)
-			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
-			}
-			return
 
 		/////////////Games///////////////////
 
