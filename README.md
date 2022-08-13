@@ -52,8 +52,7 @@
 
 ## About
 
-BuddieBot is an open source Discord bot created by two people that wanted to practice their Golang skills and develop something fun and useful for them. We enjoy growing and developing BuddieBot
-every day and play to do so for the foreseeable future! The goal of this project is to incorporate as many cool and fun features as we can find. We use BuddieBot in out personal servers every day!
+BuddieBot is an open source Discord bot written in Golang that I initially created to develop and maintain new Golang technologies and practices. What originally started as a fun idea and grown into a full personal pet project. I love working on BuddieBot to improve it with new features and utilities all the time. I enjoy using BuddieBot in my personal servers and plan to continue growing this bot for the foreseeable future!
 
 If you liked this repository, feel free to leave a star ⭐ to help promote BuddieBot!
 
@@ -61,16 +60,17 @@ If you liked this repository, feel free to leave a star ⭐ to help promote Budd
 
 ## Features
 
-10+ commands and counting!
+100+ commands and counting!
 
 BuddieBot also comes packed with a variety of features, such as:
 
 * Play/Stop/Queue music from **YouTube** links
-* **Starting/Stopping** a Minecraft Server
 * Receive your daily **Horoscope**
 * **Insult** your friends
 * **Slash Commands!**
 * **Moderator only** commands
+* Manipulate **Text**
+* **GAMES!**
 * And much more!
 
 ---
@@ -103,47 +103,53 @@ You have to create a `config.yaml` file in order to run the bot (you can use the
 ```
 # Tokens/API Keys
 keys:
-  botToken: ""
-  webHookToken: ""
-  botPublicKey: ""
-  tenorAPIkey: ""
-  insultAPI: "https://evilinsult.com/generate_insult.php?lang=en&type=json"
+  prodBotToken:   ""
+  testBotToken:   ""
+  webHookToken:   ""
+  botPublicKey:   ""
+  dagpiAPIkey:    ""
+  tenorAPIkey:    ""
+  steamAPI:       "http://api.steampowered.com/ISteamApps/GetAppList/v0002/?key=STEAMKEY&format=json"
+  affirmationAPI: "https://www.affirmations.dev/"
+  kanyeAPI:       "https://api.kanye.rest/"
+  adviceAPI:      "https://api.adviceslip.com/advice"
+  doggoAPI:       "https://api.thedogapi.com/v1/images/search"
+  albumPickerAPI: "http://recommended-album-api-dev.us-east-1.elasticbeanstalk.com/prediction/"
+  wyrAPI:         "https://would-you-rather-api.abaanshanid.repl.co/"
 
 # IDs relating to Discord or Bot
 discordIDs:
-  webHookID: ""
-  errorLogChannelID: ""
+  currentBotAppID:     "" # Don't set. This gets set later.
+  prodBotAppID:        ""
+  testBotAppID:        ""
+  masterGuildID:       ""
+  testGuildID:         ""
+  webHookID:           ""
+  errorLogChannelID:   ""
+  eventNotifChannelID: ""
 
 # Custom Settings
 settings:
-  botPrefix: ""
-  botAdminRole: ""
+  botPrefix:     ""
+  botAdminRole:  ""
+  # Used for email sending
+  email:         ""
+  emailPassword: ""
 
-# VM Server Info
-vm:
-  sshKeyBody: ""
-  machineIP: ""
-  type: "service_account"
-  project_id: ""
-  private_key_id: ""
-  private_key: ""
-  client_email: ""
-  client_id: ""
-  auth_uri: "https://accounts.google.com/o/oauth2/auth"
-  token_uri: "https://oauth2.googleapis.com/token"
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs"
-  client_x509_cert_url: ""
-  zone: ""
+database:
+  tableName: ""
+  region:    ""
+  accessKey: ""
+  secretKey: ""
 ```
 
-*The 'vm' section is for the GCP VM hosting of the Minecraft server. This can be omitted if unused.*
+*Sections like "database" and various "IDs" are used for specfic functions or features. This can be omitted if unused. That part of the bot just wont work until supplied.*
 
 Visit the Discord [developer portal](https://discordapp.com/developers/applications/) to create an app and use the client token you are given for the `token` option. To get keys for supported APIs,
 visit:
 
 * [Tenor API](https://tenor.com/gifapi/documentation)
-* [Google APIs](https://console.developers.google.com/apis/)
-* [Insult API](https://evilinsult.com/api/)
+* [Dagpi API](https://dagpi.xyz)
 
 After your `config.yaml` file is built, you have to enable `Privileged Intents` on your Discord [developer portal](https://discordapp.com/developers/applications/). You can find these intents under
 the "Bot" section, and there are two ticks you have to switch on. For more information on Gateway Intents, check out [this](https://discordpy.readthedocs.io/en/latest/intents.html) link.
@@ -156,16 +162,16 @@ Once done, feel free to launch BuddieBot using the command `go run cmd/discord-b
 
 BuddieBot is in a continuous state of development. New features/updates may come at any time. Some pending ideas are:
 
-- [ ]  Games
+- [X]  Games
 - [ ]  Be Funnier
 - [ ]  Skip songs
 - [ ]  Multiple Music Sources
-- [ ]  Rename Repo
+- [X]  Rename Repo
 - [X]  DM Your Mother
-- [X]  Convert most commands to embeds
-- [X]  Play/Queue Music
-- [X]  Slash Commands
 - [X]  Custom tag/reaction system
+- [ ]  Server specific settings
+- [ ]  BuddieBot Website
+- [X]  Txt commands
 
 ---
 
@@ -206,10 +212,6 @@ This is just a list of various credits to any person(s) whose work are contribut
 
 ### To give credit where credit is due 😁
 
-* **Wyatt Shuler** - *Co-contributor* - [Github](https://github.com/Saberr43), [Website](http://www.shuler.io/)
-
----
-
 <img src="https://www.gstatic.com/tenor/web/attribution/PB_tenor_logo_blue_horizontal.png" width="600" height="100"  alt=""/>
 
 The Tenor API is used to deliver gifs from the BuddieBot. The website can be found [here](https://tenor.com/). The API site can be found [here](https://tenor.com/gifapi/documentation#quickstart).
@@ -222,24 +224,14 @@ The horoscope.com daily horoscopes are used to allow our BuddieBot to deliver a 
 
 ---
 
-<img src="https://image.flaticon.com/icons/png/512/4698/4698787.png" width="128" height="128"  alt=""/>
+<img src="https://cdn-icons-png.flaticon.com/512/4698/4698821.png" width="128" height="128"  alt=""/>
 
 The icon for BuddieBot was made by [wanicon](https://www.flaticon.com/authors/wanicon) from www.flaticon.com
 
 ---
 
-# [bwmarrin/discordgo](https://github.com/bwmarrin/discordgo)
+# Dagpi API
 
-We utilize the convenience of bwmarrin's discordgo Golang package in a majority of the BuddieBot's code.
-
-> DiscordGo is a Go package that provides low level bindings to the Discord chat client API. DiscordGo has nearly complete support for all of the Discord API endpoints, websocket interface, and voice interface.
-
----
-
-# [gocolly/colly](https://github.com/gocolly/colly)
-
-Gocolly's colly framework is used to simplify any crawlers/scrapers in our BuddieBot.
-
-> Lightning Fast and Elegant Scraping Framework for Gophers Colly provides a clean interface to write any kind of crawler/scraper/spider. With Colly you can easily extract structured data from websites, which can be used for a wide range of applications, like data mining, data processing or archiving.
+Thanks to Dagpi, BuddieBot has a new wide variety of tools and features. A [Dagpi API](https://dagpi.xyz/) key can be applied for from the Dagpi website.
 
 ---
