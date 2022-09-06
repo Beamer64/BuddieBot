@@ -1,51 +1,38 @@
 package games
 
 import (
-	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )
 
-func PlayNIM(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, user string) error {
-	/*if strings.HasPrefix(param, "<@") {
-		err := startNim(s, m, param, true)
-		if err != nil {
-			return err
-		}
-
-	} else {
-		if param == "" {
-			err := startNim(s, m, param, false)
-			if err != nil {
-				return err
-			}
-
-		} else {
-			_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.Invalid)
-			if err != nil {
-				return err
-			}
-		}
-	}*/
-	return nil
-}
-
-func startNim(s *discordgo.Session, m *discordgo.MessageCreate, user string, versus bool) error {
-	if versus {
-		accepted, err := sendPlayerInvite(s, m, user)
-		if err != nil {
-			return err
-		}
-
-		if accepted {
-
-		} else {
-
-		}
-
-	} else {
-
+/*func SendNimEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	embed := &discordgo.MessageEmbed{
+		Title:       "12 Coin Nim",
+		Color:       helper.RangeIn(1, 16777215),
+		Description: doggoObj[0].Breeds[0].Temperament,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Weight",
+				Value:  fmt.Sprintf("%s lbs / %s kg", impWeight, metWeight),
+				Inline: true,
+			},
+			{
+				Name:   "Height",
+				Value:  fmt.Sprintf("%s in / %s cm", impHeight, metHeight),
+				Inline: true,
+			},
+		},
 	}
+	err := startNim(s, i)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}*/
+
+func startNim(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+
 	return nil
 }
 

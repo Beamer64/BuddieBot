@@ -106,7 +106,6 @@ type Command struct {
 		NotBotAdmin     string `yaml:"notBotAdmin"`
 		TenorAPIError   string `yaml:"tenorAPIError"`
 		YoutubeAPIError string `yaml:"youtubeAPIError"`
-		InsultAPIError  string `yaml:"insultAPIError"`
 	} `yaml:"message"`
 }
 

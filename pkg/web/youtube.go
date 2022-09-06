@@ -274,8 +274,8 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 // FormatAudioFileName formats audio file name to look better
 func FormatAudioFileName(fileName string) (string, error) {
 	//split at "/"
-	splitName := strings.SplitAfterN(fileName, "\\", 3)
-	fileName = splitName[2]
+	/*splitName := strings.SplitAfterN(fileName, "\\", 3)
+	fileName = splitName[2]*/
 
 	//replace characters
 	replacer := strings.NewReplacer("/", "", "_", " ", "-", "", ".mp3", "")

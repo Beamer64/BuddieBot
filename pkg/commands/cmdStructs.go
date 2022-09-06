@@ -64,6 +64,16 @@ type wyr struct {
 	Data string `json:"data"`
 }
 
+type gtl struct {
+	Answer   string `json:"answer"`
+	Brand    string `json:"brand"`
+	Clue     string `json:"clue"`
+	Easy     bool   `json:"easy"`
+	Hint     string `json:"hint"`
+	Question string `json:"question"`
+	WikiURL  string `json:"wiki_url"`
+}
+
 type wtp struct {
 	Data struct {
 		Type      []string `json:"Type"`

@@ -1,43 +1,50 @@
 # List of slash (/) commands
 slash-name:
-  tuuck:   "/tuuck"
-  pick:    "/pick"
-  animals: "/animals"
-  daily:   "/daily"
-  img-set: "/img-set{1/2/3}"
-  play:    "/play"
-  get:     "/get"
+  tuuck:        "/tuuck"
+  pick:         "/pick"
+  animals:      "/animals"
+  daily:        "/daily"
+  img-set:      "/img-set{1/2/3}"
+  play:         "/play"
+  get:          "/get"
+  rate-this:    "/ratethis"
+  txt:          "/txt"
+  config-files: "/config_files"
 
 # List of prefix ($) commands
 pref-name:
 
 # Command Descriptions
 description:
-  tuuck:   "Lists available commands."
-  lmgtfy:  "Add the :grey_question: Reaction to a message and get a LMGTFY link"
-  pick:    "Chooses between 2 or more things."
-  animals: "Look at some cutes."
-  daily:   "Gives daily readings."
-  img-set: "multiple image manipulations!"
-  play:    "Games to play"
-  get:     "Gets some various info"
+  tuuck:        "Lists available commands."
+  lmgtfy:       "Add the :grey_question: Reaction to a message and get a LMGTFY link"
+  pick:         "Chooses between 2 or more things."
+  animals:      "Look at some cutes."
+  daily:        "Gives daily readings."
+  img-set:      "multiple image manipulations!"
+  play:         "Games to play"
+  get:          "Gets some various info"
+  rate-this:    "Rate users"
+  txt:          "Manipulate text"
+  config-files: "set guild settings"
 
 # Command Usage Examples
 example:
-  tuuck:   "/tuuck"
-  lmgtfy:  "Add the :grey_question: Reaction to a channel message"
-  pick:    "/pick choices `1st: option1` `2nd: option2`"
-  animals: "/animals doggo"
-  daily:   "/daily kanye"
-  img-set: "/img-set{1/2/3}"
-  play:    "/play coin-flip"
-  get:     "/get 8ball"
+  tuuck:        "/tuuck"
+  lmgtfy:       "Add the :grey_question: Reaction to a channel message"
+  pick:         "/pick choices `1st: option1` `2nd: option2`"
+  animals:      "/animals doggo"
+  daily:        "/daily kanye"
+  img-set:      "/img-set{1/2/3}"
+  play:         "/play coin-flip"
+  get:          "/get 8ball"
+  rate-this:    "/ratethis stinky"
+  txt:          "/txt cursive"
+  config-files: "/config_files list"
 
 
 # Static cmd related messages
 message:
-  invalid:         "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<"
-  notBotAdmin:     "XD sowwy, you need spwecial pewrmission to dew dat."
-  tenorAPIError:   "UwU dere was a prawblum with the Tenor API :("
-  youtubeAPIError: "UwU dere was a prawblum with the Youtube API :("
-  insultAPIError:  "UwU dere was a prawblum with the Insult API :("
+  invalid:       "UwU you did a oopsy poopsy! Try '$tuuck' for swum big swong hewlp >.<"
+  notBotAdmin:   "XD sowwy, you need spwecial pewrmission to dew dat."
+  tenorAPIError: "UwU dere was a prawblum with the Tenor API :("

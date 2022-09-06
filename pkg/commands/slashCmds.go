@@ -1525,8 +1525,8 @@ var (
 					Name:        "typeracer",
 					Description: "It's like a game or something.",
 					Required:    false,
-				},
-				{
+				},*/
+				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "gtl",
 					Description: "Guess that Logo!",

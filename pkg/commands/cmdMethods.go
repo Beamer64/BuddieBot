@@ -7,7 +7,6 @@ import (
 	"github.com/beamer64/buddieBot/pkg/api"
 	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/beamer64/buddieBot/pkg/database"
-	"github.com/beamer64/buddieBot/pkg/games"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/beamer64/godagpi/dagpi"
 	"github.com/bwmarrin/discordgo"
@@ -317,14 +316,37 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 
 	// todo finish this
 	case "nim":
-		err := games.PlayNIM(s, i, cfg, "")
+		/*err := games.SendNimEmbed(s, i, cfg)
 		if err != nil {
 			return err
-		}
+		}*/
 
 	case "typeracer":
 
 	case "gtl":
+		data, err := client.GTL()
+		if err != nil {
+			return err
+		}
+
+		embed, err := getGTLembed(data)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{
+						embed,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
 
 	case "wtp":
 		data, err := client.WTP()
@@ -350,12 +372,6 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		if err != nil {
 			return err
 		}
-
-		timer := time.NewTimer(60 * time.Second)
-		go func() {
-			<-timer.C
-			fmt.Println("You took too long to respond!")
-		}()
 
 	case "wyr":
 		embed, err := getWYREmbed(cfg)
@@ -390,6 +406,29 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	}
 
 	return nil
+}
+
+func getGTLembed(data interface{}) (*discordgo.MessageEmbed, error) {
+	var gtlObj gtl
+	err := mapstructure.Decode(data, &gtlObj)
+	if err != nil {
+		return nil, err
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Clue",
+				Value:  gtlObj.Clue,
+				Inline: false,
+			},
+		},
+		Image: &discordgo.MessageEmbedImage{
+			URL: gtlObj.Question,
+		},
+	}
+
+	return embed, nil
 }
 
 func getWYREmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {

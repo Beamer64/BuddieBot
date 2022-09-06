@@ -61,6 +61,12 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 						fmt.Printf("%+v", errors.WithStack(err))
 						_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
 					}
+				} else {
+					_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
+					if err != nil {
+						fmt.Printf("%+v", errors.WithStack(err))
+						_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
+					}
 				}
 			}
 			return
@@ -69,6 +75,12 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 			if m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				if helper.MemberHasRole(s, m.Member, m.GuildID, d.cfg.Configs.Settings.BotAdminRole) {
 					err := database.UpdateDBitems(d.dbClient, d.cfg)
+					if err != nil {
+						fmt.Printf("%+v", errors.WithStack(err))
+						_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
+					}
+				} else {
+					_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)
 					if err != nil {
 						fmt.Printf("%+v", errors.WithStack(err))
 						_, _ = s.ChannelMessageSendEmbed(d.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, m.GuildID))
