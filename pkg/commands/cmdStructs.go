@@ -1,5 +1,9 @@
 package commands
 
+import (
+	"time"
+)
+
 type steamGames struct {
 	Applist struct {
 		Apps []struct {
@@ -98,3 +102,83 @@ type albumPicker struct {
 	URL         string `json:"url"`
 	//SpotifyAlbumURL string `json:"spotify_album_url"`
 }
+
+//region FakePerson Structs
+type fakePerson struct {
+	Results []fakePersonResults `json:"results"`
+	Info    fakePersonInfo      `json:"info"`
+}
+type fakePersonName struct {
+	Title string `json:"title"`
+	First string `json:"first"`
+	Last  string `json:"last"`
+}
+type fakePersonStreet struct {
+	Number int    `json:"number"`
+	Name   string `json:"name"`
+}
+type fakePersonCoordinates struct {
+	Latitude  string `json:"latitude"`
+	Longitude string `json:"longitude"`
+}
+type fakePersonTimezone struct {
+	Offset      string `json:"offset"`
+	Description string `json:"description"`
+}
+type fakePersonLocation struct {
+	Street      fakePersonStreet      `json:"street"`
+	City        string                `json:"city"`
+	State       string                `json:"state"`
+	Country     string                `json:"country"`
+	Postcode    int                   `json:"postcode"`
+	Coordinates fakePersonCoordinates `json:"coordinates"`
+	Timezone    fakePersonTimezone    `json:"timezone"`
+}
+type fakePersonLogin struct {
+	UUID     string `json:"uuid"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Salt     string `json:"salt"`
+	Md5      string `json:"md5"`
+	Sha1     string `json:"sha1"`
+	Sha256   string `json:"sha256"`
+}
+type fakePersonDob struct {
+	Date string `json:"date"`
+	Age  int    `json:"age"`
+}
+type fakePersonRegistered struct {
+	Date time.Time `json:"date"`
+	Age  int       `json:"age"`
+}
+type fakePersonID struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+type fakePersonPicture struct {
+	Large     string `json:"large"`
+	Medium    string `json:"medium"`
+	Thumbnail string `json:"thumbnail"`
+}
+type fakePersonResults struct {
+	Gender     string               `json:"gender"`
+	Name       fakePersonName       `json:"name"`
+	Location   fakePersonLocation   `json:"location"`
+	Email      string               `json:"email"`
+	Login      fakePersonLogin      `json:"login"`
+	Dob        fakePersonDob        `json:"dob"`
+	Registered fakePersonRegistered `json:"registered"`
+	Phone      string               `json:"phone"`
+	Cell       string               `json:"cell"`
+	ID         fakePersonID         `json:"id"`
+	Picture    fakePersonPicture    `json:"picture"`
+	Nat        string               `json:"nat"`
+}
+type fakePersonInfo struct {
+	Seed    string `json:"seed"`
+	Results int    `json:"results"`
+	Page    int    `json:"page"`
+	Version string `json:"version"`
+}
+
+//endregion

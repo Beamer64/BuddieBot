@@ -1,6 +1,8 @@
 package events
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/beamer64/buddieBot/pkg/voice_chat"
@@ -142,6 +144,14 @@ func (d *MessageCreateHandler) playAudioLink(s *discordgo.Session, m *discordgo.
 
 	link, fileName, err := web.GetYtAudioLink(s, msg, link)
 	if err != nil {
+		// if context timed out because no link found
+		if errors.Is(err, context.DeadlineExceeded) {
+			_, err = s.ChannelMessageEdit(m.ChannelID, msg.ID, "Audio Unavailable..")
+			if err != nil {
+				return err
+			}
+			err = nil
+		}
 		return err
 	}
 

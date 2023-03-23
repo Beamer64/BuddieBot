@@ -776,6 +776,32 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return err
 		}
 
+	case "fake-person":
+		data, err := callFakePersonAPI(cfg)
+		if err != nil {
+			return err
+		}
+
+		embed, err := getFakePersonEmbed(data)
+		if err != nil {
+			return err
+		}
+
+		err = s.InteractionRespond(
+			i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "",
+					Embeds: []*discordgo.MessageEmbed{
+						embed,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
 		/*case "captcha":
 		data, err := client.WTP()
 		if err != nil {
@@ -785,6 +811,113 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	}
 
 	return nil
+}
+
+func callFakePersonAPI(cfg *config.Configs) (fakePerson, error) {
+	var personObj fakePerson
+
+	res, err := http.Get(cfg.Configs.Keys.FakePerson)
+	if err != nil {
+		return personObj, err
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&personObj)
+	if err != nil {
+		return personObj, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(res.Body)
+
+	return personObj, nil
+}
+
+func getFakePersonEmbed(fakePersonObj fakePerson) (*discordgo.MessageEmbed, error) {
+	fpObj := fakePersonObj.Results[0]
+	dob := strings.Split(fpObj.Dob.Date, "T")
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "Fake Person Generator",
+		Description: "BuddieBot has created life!",
+		Color:       helper.RangeIn(1, 16777215),
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Gender",
+				Value:  fpObj.Gender,
+				Inline: true,
+			},
+			{
+				Name:   "Name",
+				Value:  fmt.Sprintf("%s %s %s", fpObj.Name.Title, fpObj.Name.First, fpObj.Name.Last),
+				Inline: true,
+			},
+			{
+				Name:   "DOB",
+				Value:  dob[0],
+				Inline: true,
+			},
+			{
+				Name:   "Age",
+				Value:  fmt.Sprintf("%v", fpObj.Dob.Age),
+				Inline: true,
+			},
+			{
+				Name: "Address",
+				Value: fmt.Sprintf(
+					"%v %s\n%s, %s, %v %s", fpObj.Location.Street.Number, fpObj.Location.Street.Name, fpObj.Location.City, fpObj.Location.State, fpObj.Location.Postcode,
+					fpObj.Location.Country,
+				),
+				Inline: false,
+			},
+			{
+				Name:   "Email",
+				Value:  fpObj.Email,
+				Inline: true,
+			},
+			{
+				Name:   "Username",
+				Value:  fpObj.Login.Username,
+				Inline: true,
+			},
+			{
+				Name:   "Password",
+				Value:  fpObj.Login.Password,
+				Inline: true,
+			},
+			{
+				Name:   "Phone",
+				Value:  fpObj.Phone,
+				Inline: true,
+			},
+			{
+				Name:   "Cell",
+				Value:  fpObj.Cell,
+				Inline: true,
+			},
+			{
+				Name:   fpObj.ID.Name,
+				Value:  fpObj.ID.Value,
+				Inline: true,
+			},
+			{
+				Name:   "Nationality",
+				Value:  fpObj.Nat,
+				Inline: true,
+			},
+		},
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: fpObj.Picture.Large,
+		},
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "Generated with randomuser.me",
+		},
+	}
+
+	return embed, nil
 }
 
 //endregion

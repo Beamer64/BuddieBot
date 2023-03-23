@@ -264,6 +264,12 @@ var (
 					Description: "Woah Momma",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "fake-person",
+					Description: "The miracle of life",
+					Required:    false,
+				},
 				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "captcha",
@@ -1657,7 +1663,7 @@ var (
 			},
 		},
 		{
-			Name:        "config_files",
+			Name:        "config_settings",
 			Description: "set guild settings",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -1807,7 +1813,7 @@ var (
 			}
 		},
 
-		"config_files": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"config_settings": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendConfigResponse(s, i, cfg)
 			if err != nil {
 				fmt.Printf("%+v", errors.WithStack(err))

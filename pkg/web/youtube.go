@@ -24,11 +24,11 @@ var IsPlaying bool
 var MpFileQueue []string
 
 func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mpFileLink string, fileName string, err error) {
-	replacer := strings.NewReplacer("m.", "", "youtube", "youtubex2")
+	replacer := strings.NewReplacer("m.", "", "https", "http", "youtube", "youtubex2")
 	url := replacer.Replace(link)
 
 	ctx, cancel := chromedp.NewContext(context.Background()) // options: chromedp.WithDebugf(log.Printf)
-	ctx, cancel = context.WithTimeout(ctx, 45*time.Second)
+	ctx, cancel = context.WithTimeout(ctx, 40*time.Second)
 	defer cancel()
 
 	var res string
@@ -51,6 +51,7 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	}
 
 	// navigate to redirect and click button
+	// Grey 'Download file MP3' button
 	button := "/html/body/div[1]/main/section[2]/div[2]/div/div[2]/div/div[2]/div/a"
 	clickTasks := chromedp.Tasks{
 		chromedp.Navigate(res),
@@ -141,7 +142,8 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 		},
 	)
 
-	fileName = strings.SplitAfterN(mpLink, "/", 12)[7]
+	fileName = strings.SplitAfterN(mpLink, "/", 12)[11]
+	fmt.Println(fileName)
 
 	return mpLink, fileName, nil
 }
@@ -211,7 +213,7 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 			}
 
 			IsPlaying = true
-			for _, v := range MpFileQueue {
+			for i, v := range MpFileQueue {
 				fmt.Println("PlayAudioFile: ", v)
 
 				_, err = s.ChannelMessageSend(m.ChannelID, "Now playing: "+cleanFileName)
@@ -220,12 +222,14 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 				}
 
 				dgvoice.PlayAudioFile(dgv, v, StopPlaying)
+
+				MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
 			}
 			//remove file from queue
-			MpFileQueue = nil
-			//MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
+			//MpFileQueue = nil
 
 			if dgv != nil {
+				IsPlaying = false
 				err = dgv.Disconnect()
 				if err != nil {
 					return err
@@ -236,27 +240,6 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 			if err != nil {
 				return err
 			}
-
-			/*IsPlaying = false
-			if len(MpFileQueue) > 0 {
-				err := PlayAudioFile(dgv, "", m, s)
-				if err != nil {
-					return err
-				}
-
-			} else {
-				if dgv != nil {
-					err := dgv.Disconnect()
-					if err != nil {
-						return err
-					}
-				}*/
-
-			/*err := MpFileCleanUp(dir)
-				if err != nil {
-					return err
-				}
-			}*/
 
 		} else {
 			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Added to queue: %s", cleanFileName))
