@@ -22,7 +22,7 @@
 
 <div align="center">
   <a target="_blank">
-    <img src="https://img.shields.io/badge/Total%20Lines-8749-maroon.svg" alt="shield.png">
+    <img src="https://img.shields.io/badge/Total%20Lines-8996-maroon.svg" alt="shield.png">
   </a>
 </div>
 
