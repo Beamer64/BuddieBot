@@ -8,7 +8,9 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
+	// deprecated
+	//rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {

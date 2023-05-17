@@ -27,117 +27,119 @@ import (
 //region Utility Commands
 
 func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	options := i.ApplicationCommandData().Options
+	if len(options) == 0 {
+		return sendTuuckCommands(s, i, cfg)
+	}
+
+	cmdName := options[0].StringValue()
+	if strings.HasPrefix(cmdName, "/") {
+		cmdName = cmdName[1:]
+	}
+
+	cmdInfo := getCommandInfo(cmdName, cfg)
+	if cmdInfo == nil {
+		return helper.SendResponseError(s, i, fmt.Sprintf("Invalid command: %s", cmdName))
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title: cmdInfo.Name + " info",
+		Color: helper.RangeIn(1, 16777215),
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Description",
+				Value:  cmdInfo.Desc,
+				Inline: false,
+			},
+			{
+				Name:   "Usage",
+				Value:  "`" + cmdInfo.Name + "`",
+				Inline: false,
+			},
+			{
+				Name:   "Example",
+				Value:  cmdInfo.Example,
+				Inline: false,
+			},
+		},
+	}
+
+	err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{embed},
+			},
+		},
+	)
+
+	return err
+}
+
+func sendTuuckCommands(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	var content strings.Builder
+	content.WriteString("A list of current Slash command groups\n```\n")
+
+	v := reflect.ValueOf(&cfg.Cmd.SlashName).Elem()
+
+	for n := 0; n < v.NumField(); n++ {
+		field := v.Type().Field(n)
+		_, err := fmt.Fprintf(&content, "%s\n", field.Name)
+		if err != nil {
+			return fmt.Errorf("error formatting string: %v", err)
+		}
+	}
+
+	content.WriteString("```\nYou can get more information about a command by using `/tuuck <command_name>`")
+
+	err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: content.String(),
+			},
+		},
+	)
+
+	return err
+}
+
+func getCommandInfo(cmdName string, cfg *config.Configs) *tuuckCmdInfo {
+	var info tuuckCmdInfo
+
 	n := reflect.ValueOf(&cfg.Cmd.SlashName).Elem()
 	d := reflect.ValueOf(&cfg.Cmd.Desc).Elem()
 	e := reflect.ValueOf(&cfg.Cmd.Example).Elem()
 
-	if len(i.ApplicationCommandData().Options) > 0 {
-		cmdOption := strings.ToLower(i.ApplicationCommandData().Options[0].StringValue())
-		slashCmd := ""
-		cmdName := ""
-		if strings.Contains(cmdOption, "/") {
-			slashCmd = cmdOption
-			cmdName = strings.ReplaceAll(slashCmd, "/", "")
-		} else {
-			slashCmd = fmt.Sprintf("/%s", cmdOption)
-			cmdName = cmdOption
-		}
-
-		title := ""
-		for t := 0; t < n.NumField(); t++ {
-			if strings.Contains(fmt.Sprintf("%s", n.Field(t).Interface()), cmdName) {
-				title = fmt.Sprintf("%s info", n.Field(t).Interface())
-				break
-			}
-		}
-
-		desc := ""
-		for de := 0; de < d.NumField(); de++ {
-			cmdDesc := strings.ReplaceAll(cmdName, " ", "")
-			lowerDesc := strings.ToLower(d.Type().Field(de).Name)
-			if strings.Contains(lowerDesc, cmdDesc) {
-				desc = fmt.Sprintf("%s", d.Field(de).Interface())
-				break
-			}
-		}
-
-		example := ""
-		for ex := 0; ex < e.NumField(); ex++ {
-			cmdExample := strings.ReplaceAll(cmdName, " ", "")
-			lowerExample := strings.ToLower(e.Type().Field(ex).Name)
-			if strings.Contains(lowerExample, cmdExample) {
-				example = fmt.Sprintf("%s", e.Field(ex).Interface())
-				break
-			}
-		}
-		usage := fmt.Sprintf("`%s`", slashCmd)
-
-		if title == "" {
-			title = fmt.Sprintf("Invalid Command: %s", cmdOption)
-		} else if desc == "" {
-			desc = "Command not found"
-			usage = "N/A"
-		} else if example == "" {
-			example = "Command not found"
-		}
-
-		embed := &discordgo.MessageEmbed{
-			Title: title,
-			Color: helper.RangeIn(1, 16777215),
-			Fields: []*discordgo.MessageEmbedField{
-				{
-					Name:   "Description",
-					Value:  desc,
-					Inline: false,
-				},
-				{
-					Name:   "Usage",
-					Value:  usage,
-					Inline: false,
-				},
-				{
-					Name:   "Example",
-					Value:  example,
-					Inline: false,
-				},
-			},
-		}
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						embed,
-					},
-				},
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-	} else {
-		content := "A list of current Slash command groups\n```\n"
-
-		for i := 0; i < n.NumField(); i++ {
-			content = content + fmt.Sprintf("%s \n", n.Field(i).Interface())
-		}
-		content = content + "```\nYou can get more information about a command by using /tuuck <command_name>"
-
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: content,
-				},
-			},
-		)
-		if err != nil {
-			return err
+	for i := 0; i < n.NumField(); i++ {
+		field := n.Type().Field(i)
+		if strings.EqualFold(field.Name, cmdName) {
+			info.Name = fmt.Sprintf("%s", n.Field(i).Interface())
+			break
 		}
 	}
 
-	return nil
+	for i := 0; i < d.NumField(); i++ {
+		field := d.Type().Field(i)
+		if strings.EqualFold(field.Name, cmdName) {
+			info.Desc = fmt.Sprintf("%s", d.Field(i).Interface())
+			break
+		}
+	}
+
+	for i := 0; i < e.NumField(); i++ {
+		field := e.Type().Field(i)
+		if strings.EqualFold(field.Name, cmdName) {
+			info.Example = fmt.Sprintf("%s", e.Field(i).Interface())
+			break
+		}
+	}
+
+	if info.Name != "" {
+		return &info
+	} else {
+		return nil
+	}
 }
 
 func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
@@ -261,32 +263,30 @@ func getSettingsListEmbed(guildID string, cfg *config.Configs) (*discordgo.Messa
 
 func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
-
 	options := i.ApplicationCommandData().Options[0]
+
+	var embed *discordgo.MessageEmbed
+	var data *discordgo.InteractionResponseData
+	var err error
 
 	switch options.Name {
 	case "coin-flip":
-		embed, err := getCoinFlipEmbed(cfg)
+		embed, err = getCoinFlipEmbed(cfg)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, "Unable to flip coin atm, try again later.")
+			}()
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						embed,
-					},
-				},
+		data = &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
 			},
-		)
-		if err != nil {
-			return err
 		}
 
 	case "just-lost":
-		embed := &discordgo.MessageEmbed{
+		embed = &discordgo.MessageEmbed{
 			Title:       "You just lost The Game.",
 			Color:       helper.RangeIn(1, 16777215),
 			Description: "..Told you not to play.",
@@ -302,16 +302,15 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Check your DM's.",
-				},
+		embed = &discordgo.MessageEmbed{
+			Title: "Check your DM's  👀",
+			Color: helper.RangeIn(1, 16777215),
+		}
+
+		data = &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
 			},
-		)
-		if err != nil {
-			return err
 		}
 
 	// todo finish this
@@ -321,88 +320,81 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			return err
 		}*/
 
+	// todo finish this
 	case "typeracer":
 
 	case "gtl":
-		data, err := client.GTL()
+		clientData, err := client.GTL()
 		if err != nil {
 			return err
 		}
 
-		embed, err := getGTLembed(data)
+		embed, err = getGTLembed(clientData)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, "Unable to fetch game atm, try again later.")
+			}()
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						embed,
-					},
-				},
+		data = &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
 			},
-		)
-		if err != nil {
-			return err
 		}
 
 	case "wtp":
-		data, err := client.WTP()
+		clientData, err := client.WTP()
 		if err != nil {
 			return err
 		}
 
-		embed, err := getWTPembed(data, false)
+		embed, err = getWTPembed(clientData, false)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, "Unable to fetch game atm, try again later.")
+			}()
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						embed,
-					},
-				},
+		data = &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
 			},
-		)
-		if err != nil {
-			return err
 		}
 
 	case "wyr":
-		embed, err := getWYREmbed(cfg)
+		embed, err = getWYREmbed(cfg)
 		if err != nil {
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						embed,
-					},
+		data = &discordgo.InteractionResponseData{
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
-						discordgo.ActionsRow{
-							Components: []discordgo.MessageComponent{
-								discordgo.Button{
-									Label:    "Another One! (▀̿Ĺ̯▀̿ ̿)",
-									Style:    1,
-									CustomID: "wyr-button",
-								},
-							},
+						discordgo.Button{
+							Label:    "Another One! (▀̿Ĺ̯▀̿ ̿)",
+							Style:    1,
+							CustomID: "wyr-button",
 						},
 					},
 				},
 			},
-		)
-		if err != nil {
-			return err
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
+			},
 		}
+	}
+
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: data,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error sendind Interaction: %v", err)
 	}
 
 	return nil
@@ -432,9 +424,13 @@ func getGTLembed(data interface{}) (*discordgo.MessageEmbed, error) {
 }
 
 func getWYREmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	res, err := http.Get(cfg.Configs.Keys.WYRAPI)
+	res, err := http.Get(cfg.Configs.ApiURLs.WYRAPI)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
 	}
 
 	var wyrObj wyr
@@ -532,86 +528,224 @@ func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 //region Animal Commands
 
 func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	switch i.ApplicationCommandData().Options[0].Name {
+	commandName := i.ApplicationCommandData().Options[0].Name
+
+	var embed *discordgo.MessageEmbed
+	var data *discordgo.InteractionResponseData
+	var err error
+	errRespMsg := "Unable to make call at this moment, please try later :("
+
+	switch commandName {
 	case "doggo":
-		embed, err := getDoggoEmbed(cfg)
+		embed, err = getDoggoEmbed(cfg)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						embed,
-					},
-				},
+		data = &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
 			},
-		)
+		}
+
+	case "katz":
+		embed, err = getKatzEmbed(cfg)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		data = &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
+			},
+		}
+	}
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: data,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error sendind Interaction: %v", err)
 	}
 
 	return nil
 }
 
 func getDoggoEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	// a data scientist had to fix this...
+	callCount := 1
+
 	doggoObj, err := callDoggoAPI(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(doggoObj[0].Breeds) < 1 {
+	for len(doggoObj) == 0 || len(doggoObj[0].Breeds) == 0 {
 		doggoObj, err = callDoggoAPI(cfg)
 		if err != nil {
 			return nil, err
 		}
+		callCount++
+
+		if callCount == 5 {
+			return nil, fmt.Errorf("error retrieving doggoObj. Attempts made: %v", callCount)
+		}
 	}
 
-	impWeight := helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Weight.Imperial)
-	metWeight := helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Weight.Metric)
-	impHeight := helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Height.Imperial)
-	metHeight := helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Height.Metric)
+	breed := doggoObj[0].Breeds[0]
+
+	impWeight := helper.CheckIfStructValueISEmpty(breed.Weight.Imperial)
+	metWeight := helper.CheckIfStructValueISEmpty(breed.Weight.Metric)
+	impHeight := helper.CheckIfStructValueISEmpty(breed.Height.Imperial)
+	metHeight := helper.CheckIfStructValueISEmpty(breed.Height.Metric)
 
 	embed := &discordgo.MessageEmbed{
-		Title:       doggoObj[0].Breeds[0].Name,
+		Title:       breed.Name,
 		Color:       helper.RangeIn(1, 16777215),
-		Description: doggoObj[0].Breeds[0].Temperament,
+		Description: breed.Temperament,
 		Image: &discordgo.MessageEmbedImage{
 			URL: doggoObj[0].URL,
 		},
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Weight",
-				Value:  fmt.Sprintf("%s lbs / %s kg", impWeight, metWeight),
-				Inline: true,
-			},
-			{
-				Name:   "Height",
-				Value:  fmt.Sprintf("%s in / %s cm", impHeight, metHeight),
-				Inline: true,
-			},
-			{
-				Name:   "Origin",
-				Value:  helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].Origin),
-				Inline: true,
-			},
-			{
-				Name:   "Bred For",
-				Value:  helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].BredFor),
+				Value:  fmt.Sprintf("%slbs / %skg", impWeight, metWeight),
 				Inline: true,
 			},
 			{
 				Name:   "Breed Group",
-				Value:  helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].BreedGroup),
+				Value:  helper.CheckIfStructValueISEmpty(breed.BreedGroup),
+				Inline: true,
+			},
+			{
+				Name:   "Origin",
+				Value:  helper.CheckIfStructValueISEmpty(breed.Origin),
+				Inline: true,
+			},
+			{
+				Name:   "Height",
+				Value:  fmt.Sprintf("%sin / %scm", impHeight, metHeight),
 				Inline: true,
 			},
 			{
 				Name:   "Life Span",
-				Value:  helper.CheckIfStringEmpty(doggoObj[0].Breeds[0].LifeSpan),
+				Value:  helper.CheckIfStructValueISEmpty(breed.LifeSpan),
+				Inline: true,
+			},
+			{
+				Name:   "Good Pup",
+				Value:  "10/10",
+				Inline: true,
+			},
+			{
+				Name:   "Bred For",
+				Value:  helper.CheckIfStructValueISEmpty(breed.BredFor),
+				Inline: false,
+			},
+		},
+	}
+
+	return embed, nil
+}
+
+func getKatzEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
+	descTiers := map[int]string{
+		0: "★★★★★",
+		1: "⭐★★★★",
+		2: "⭐⭐★★★",
+		3: "⭐⭐⭐★★",
+		4: "⭐⭐⭐⭐★",
+		5: "⭐⭐⭐⭐⭐",
+	}
+
+	katzObj, err := callKatzAPI(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	i := rand.Intn(len(katzObj))
+	breed := katzObj[i]
+
+	name := helper.CheckIfStructValueISEmpty(breed.Name)
+	origin := helper.CheckIfStructValueISEmpty(breed.Origin)
+	length := helper.CheckIfStructValueISEmpty(breed.Length)
+
+	minLife := helper.CheckIfStructValueISEmpty(breed.MinLifeExpectancy)
+	maxLife := helper.CheckIfStructValueISEmpty(breed.MaxLifeExpectancy)
+	lifeSpan := fmt.Sprintf("%s - %s years", minLife, maxLife)
+
+	minWeight := helper.CheckIfStructValueISEmpty(breed.MinWeight)
+	maxWeight := helper.CheckIfStructValueISEmpty(breed.MaxWeight)
+	weight := fmt.Sprintf("%s - %s lbs", minWeight, maxWeight)
+
+	embed := &discordgo.MessageEmbed{
+		Title:       name,
+		Description: "Good Beans",
+		Color:       helper.RangeIn(1, 16777215),
+		Image: &discordgo.MessageEmbedImage{
+			URL: breed.ImageLink,
+		},
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Origin",
+				Value:  origin,
+				Inline: true,
+			},
+			{
+				Name:   "Weight",
+				Value:  weight,
+				Inline: true,
+			},
+			{
+				Name:   "Life Span",
+				Value:  lifeSpan,
+				Inline: true,
+			},
+			{
+				Name:   "Grooming Req",
+				Value:  descTiers[breed.Grooming],
+				Inline: true,
+			},
+			{
+				Name:   "Playfulness",
+				Value:  descTiers[breed.Playfulness],
+				Inline: true,
+			},
+			{
+				Name:   "Affection",
+				Value:  descTiers[breed.FamilyFriendly],
+				Inline: true,
+			},
+			{
+				Name:   "Pet Friendly",
+				Value:  descTiers[breed.OtherPetsFriendly],
+				Inline: true,
+			},
+			{
+				Name:   "Children Friendly",
+				Value:  descTiers[breed.ChildrenFriendly],
+				Inline: true,
+			},
+			{
+				Name:   "Intelligence",
+				Value:  descTiers[breed.Intelligence],
+				Inline: true,
+			},
+			{
+				Name:   "General Health",
+				Value:  descTiers[breed.GeneralHealth],
+				Inline: true,
+			},
+			{
+				Name:   "Length",
+				Value:  length,
 				Inline: true,
 			},
 		},
@@ -620,15 +754,27 @@ func getDoggoEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func callDoggoAPI(cfg *config.Configs) (doggo, error) {
-	res, err := http.Get(cfg.Configs.Keys.DoggoAPI)
+func callDoggoAPI(cfg *config.Configs) ([]doggo, error) {
+	client := http.Client{}
+	req, err := http.NewRequest("GET", cfg.Configs.ApiURLs.DoggoAPI, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new request: %v", err)
 	}
 
-	var doggoObj doggo
+	req.Header.Set("x-api-key", cfg.Configs.Keys.DoggoKatzAPIkey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to request doggoKatz URL: %v", err)
+	}
 
-	err = json.NewDecoder(res.Body).Decode(&doggoObj)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
+	}
+
+	var doggoObj []doggo
+	err = json.NewDecoder(resp.Body).Decode(&doggoObj)
 	if err != nil {
 		return nil, err
 	}
@@ -638,9 +784,47 @@ func callDoggoAPI(cfg *config.Configs) (doggo, error) {
 		if err != nil {
 			return
 		}
-	}(res.Body)
+	}(resp.Body)
 
 	return doggoObj, nil
+}
+
+func callKatzAPI(cfg *config.Configs) ([]katz, error) {
+	charset := "abcdefghijklmnopqrstuvwxyz"
+	c := string(charset[rand.Intn(len(charset))])
+
+	client := http.Client{}
+	req, err := http.NewRequest("GET", cfg.Configs.ApiURLs.NinjaKatzAPI+c, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new request: %v", err)
+	}
+
+	req.Header.Set("x-api-key", cfg.Configs.Keys.NinjaAPIKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to request doggoKatz URL: %v", err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
+	}
+
+	var katzObj []katz
+	err = json.NewDecoder(resp.Body).Decode(&katzObj)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			return
+		}
+	}(resp.Body)
+
+	return katzObj, nil
 }
 
 //endregion
@@ -660,6 +844,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		content := ""
 		switch len(options.Options) {
+		// todo add comments
 		case 0:
 			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, insultMsg)
 
@@ -816,9 +1001,13 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 func callFakePersonAPI(cfg *config.Configs) (fakePerson, error) {
 	var personObj fakePerson
 
-	res, err := http.Get(cfg.Configs.Keys.FakePerson)
+	res, err := http.Get(cfg.Configs.ApiURLs.FakePersonAPI)
 	if err != nil {
 		return personObj, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return personObj, fmt.Errorf("API call failed with status code %d", res.StatusCode)
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&personObj)
@@ -4250,9 +4439,13 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 }
 
 func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	res, err := http.Get(cfg.Configs.Keys.AdviceAPI)
+	res, err := http.Get(cfg.Configs.ApiURLs.AdviceAPI)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
 	}
 
 	var adviceObj advice
@@ -4279,9 +4472,13 @@ func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 }
 
 func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	res, err := http.Get(cfg.Configs.Keys.KanyeAPI)
+	res, err := http.Get(cfg.Configs.ApiURLs.KanyeAPI)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
 	}
 
 	var kanyeObj kanye
@@ -4313,9 +4510,13 @@ func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 }
 
 func getDailyAffirmationEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	res, err := http.Get(cfg.Configs.Keys.AffirmationAPI)
+	res, err := http.Get(cfg.Configs.ApiURLs.AffirmationAPI)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
 	}
 
 	var affirmObj affirmation
@@ -4475,8 +4676,6 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		content = strings.TrimSpace(content)
 		content = fmt.Sprintf("*%s*", content)
 
-		rand.Seed(time.Now().UnixNano())
-
 		randomIndex := rand.Intn(len(i.ApplicationCommandData().Options[0].Options))
 		choice := i.ApplicationCommandData().Options[0].Options[randomIndex].StringValue()
 
@@ -4628,11 +4827,15 @@ func callAlbumPickerAPI(cfg *config.Configs, tagSlice []string, tagStr string) (
 		urlTags = tagStr
 	}
 
-	URL := cfg.Configs.Keys.AlbumPickerAPI + url.PathEscape("["+urlTags+"]")
+	URL := cfg.Configs.ApiURLs.AlbumPickerAPI + url.PathEscape("["+urlTags+"]")
 
 	res, err := http.Get(URL)
 	if err != nil {
 		return albumPickerObjs, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&albumPickerObjs)
@@ -4680,32 +4883,33 @@ func getAlbumPickerEmbed(tags string, cfg *config.Configs) (*discordgo.MessageEm
 			URL: albumPickerObj[index].URL,
 		},
 		Footer: &discordgo.MessageEmbedFooter{
+
 			Text: "http://www.albumrecommender.com",
 		},
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Album Name",
-				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].AlbumName),
+				Value:  helper.CheckIfStructValueISEmpty(albumPickerObj[index].AlbumName),
 				Inline: true,
 			},
 			{
 				Name:   "Album Artist",
-				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].Artist),
+				Value:  helper.CheckIfStructValueISEmpty(albumPickerObj[index].Artist),
 				Inline: true,
 			},
 			{
 				Name:   "Genres",
-				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].Genres),
+				Value:  helper.CheckIfStructValueISEmpty(albumPickerObj[index].Genres),
 				Inline: false,
 			},
 			{
 				Name:   "Secondary Genres",
-				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].SecGenres),
+				Value:  helper.CheckIfStructValueISEmpty(albumPickerObj[index].SecGenres),
 				Inline: false,
 			},
 			{
 				Name:   "Descriptors",
-				Value:  helper.CheckIfStringEmpty(albumPickerObj[index].Descriptors),
+				Value:  helper.CheckIfStructValueISEmpty(albumPickerObj[index].Descriptors),
 				Inline: false,
 			},
 		},
@@ -4715,9 +4919,13 @@ func getAlbumPickerEmbed(tags string, cfg *config.Configs) (*discordgo.MessageEm
 }
 
 func getSteamGame(cfg *config.Configs) (string, error) {
-	res, err := http.Get(cfg.Configs.Keys.SteamAPI)
+	res, err := http.Get(cfg.Configs.ApiURLs.SteamAPI)
 	if err != nil {
 		return "", err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API call failed with status code %d", res.StatusCode)
 	}
 
 	var steamObj steamGames

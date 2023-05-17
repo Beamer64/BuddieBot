@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"io"
+	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -21,27 +21,28 @@ type gif struct {
 }
 
 func RequestGifURL(searchStr, tenorAPIkey string) (string, error) {
-	var gifObj gif
-
 	searchStr = url.QueryEscape(searchStr)
 	URL := "https://g.tenor.com/v1/search?q=" + searchStr + "&key=" + tenorAPIkey + "&limit=1"
 
-	res, err := http.Get(URL)
+	resp, err := http.Get(URL)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to request gif URL: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API call failed with status code %d", resp.StatusCode)
 	}
 
-	err = json.NewDecoder(res.Body).Decode(&gifObj)
+	var gifObj gif
+	err = json.NewDecoder(resp.Body).Decode(&gifObj)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to decode response body: %v", err)
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-			return
-		}
-	}(res.Body)
+	if len(gifObj.Results) == 0 || len(gifObj.Results[0].Media) == 0 {
+		return "", fmt.Errorf("no gif found for the search string %s", searchStr)
+	}
 
 	gifURL := gifObj.Results[0].Media[0].Gif.URL
 

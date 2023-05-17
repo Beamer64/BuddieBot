@@ -21,22 +21,27 @@ type Configs struct {
 
 type Configuration struct {
 	Keys struct {
-		ProdBotToken   string `yaml:"prodBotToken"`
-		TestBotToken   string `yaml:"testBotToken"`
-		WebHookToken   string `yaml:"webHookToken"`
-		BotPublicKey   string `yaml:"botPublicKey"`
-		TenorAPIkey    string `yaml:"tenorAPIkey"`
-		DagpiAPIkey    string `yaml:"dagpiAPIkey"`
-		InsultAPI      string `yaml:"insultAPI"`
+		ProdBotToken    string `yaml:"prodBotToken"`
+		TestBotToken    string `yaml:"testBotToken"`
+		WebHookToken    string `yaml:"webHookToken"`
+		BotPublicKey    string `yaml:"botPublicKey"`
+		TenorAPIkey     string `yaml:"tenorAPIkey"`
+		DagpiAPIkey     string `yaml:"dagpiAPIkey"`
+		NinjaAPIKey     string `yaml:"ninjaAPIKey"`
+		DoggoKatzAPIkey string `yaml:"doggoKatzAPIkey"`
+	} `yaml:"keys"`
+
+	ApiURLs struct {
 		SteamAPI       string `yaml:"steamAPI"`
 		AffirmationAPI string `yaml:"affirmationAPI"`
 		KanyeAPI       string `yaml:"kanyeAPI"`
 		AdviceAPI      string `yaml:"adviceAPI"`
 		DoggoAPI       string `yaml:"doggoAPI"`
+		NinjaKatzAPI   string `yaml:"ninjaKatzAPI"`
 		AlbumPickerAPI string `yaml:"albumPickerAPI"`
 		WYRAPI         string `yaml:"wyrAPI"`
-		FakePerson     string `yaml:"fakePerson"`
-	} `yaml:"keys"`
+		FakePersonAPI  string `yaml:"fakePersonAPI"`
+	} `yaml:"apiURLs"`
 
 	DiscordIDs struct {
 		CurrentBotAppID     string `yaml:"currentBotAppID"`

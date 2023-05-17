@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -67,6 +68,20 @@ func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.Messa
 	return embed
 }
 
+func SendResponseError(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
+	err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags:   1 << 6, // Ephemeral
+				Content: message,
+			},
+		},
+	)
+
+	return err
+}
+
 // IsLaunchedByDebugger Determines if application is being run by the debugger.
 func IsLaunchedByDebugger() bool {
 	// gops executable must be in the path. See https://github.com/google/gops
@@ -109,13 +124,32 @@ func RangeIn(low, hi int) int {
 	return low + rand.Intn(hi-low)
 }
 
-// CheckIfStringEmpty Checks if the value is empty and returns it if not.
+// CheckIfStructValueISEmpty Checks if the value is empty and returns it if not.
 // Otherwise, return 'N/A'
-func CheckIfStringEmpty(value string) string {
-	if value != "" && value != " " {
-		return value
+func CheckIfStructValueISEmpty(value interface{}) string {
+	retVal := ""
+	if value != nil {
+		switch value.(type) {
+		case int:
+			retVal = fmt.Sprintf("%v", reflect.ValueOf(value).Int())
+
+		case float64:
+			retVal = fmt.Sprintf("%v", reflect.ValueOf(value).Float())
+
+		case string:
+			if value != "" && value != " " {
+				retVal = reflect.ValueOf(value).String()
+			} else {
+				retVal = "N/A"
+			}
+
+		default:
+			retVal = "N/A"
+		}
+	} else {
+		retVal = "N/A"
 	}
-	return "N/A"
+	return retVal
 }
 
 func StringInSlice(s string, slice []string) bool {

@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+type tuuckCmdInfo struct {
+	Name    string
+	Desc    string
+	Example string
+}
+
 type steamGames struct {
 	Applist struct {
 		Apps []struct {
@@ -28,29 +34,54 @@ type advice struct {
 	} `json:"slip"`
 }
 
-type doggo []struct {
-	Breeds []struct {
-		Weight struct {
-			Imperial string `json:"imperial"`
-			Metric   string `json:"metric"`
-		} `json:"weight"`
-		Height struct {
-			Imperial string `json:"imperial"`
-			Metric   string `json:"metric"`
-		} `json:"height"`
-		ID               int    `json:"id"`
-		Name             string `json:"name"`
-		BredFor          string `json:"bred_for"`
-		BreedGroup       string `json:"breed_group"`
-		LifeSpan         string `json:"life_span"`
-		Temperament      string `json:"temperament"`
-		Origin           string `json:"origin"`
-		ReferenceImageID string `json:"reference_image_id"`
-	} `json:"breeds"`
-	ID     string `json:"id"`
-	URL    string `json:"url"`
-	Width  int    `json:"width"`
-	Height int    `json:"height"`
+type doggo struct {
+	Breeds []doggoBreeds `json:"breeds"`
+	ID     string        `json:"id"`
+	URL    string        `json:"url"`
+	Width  int           `json:"width"`
+	Height int           `json:"height"`
+}
+type animalWeight struct {
+	Imperial string `json:"imperial"`
+	Metric   string `json:"metric"`
+}
+type doggoHeight struct {
+	Imperial string `json:"imperial"`
+	Metric   string `json:"metric"`
+}
+type doggoBreeds struct {
+	Weight           animalWeight `json:"weight"`
+	Height           doggoHeight  `json:"height"`
+	ID               int          `json:"id"`
+	Name             string       `json:"name"`
+	CountryCode      string       `json:"country_code"`
+	BredFor          string       `json:"bred_for"`
+	BreedGroup       string       `json:"breed_group"`
+	LifeSpan         string       `json:"life_span"`
+	Temperament      string       `json:"temperament"`
+	Origin           string       `json:"origin"`
+	ReferenceImageID string       `json:"reference_image_id"`
+}
+
+type katz struct {
+	Length            string  `json:"length"`
+	Origin            string  `json:"origin"`
+	ImageLink         string  `json:"image_link"`
+	FamilyFriendly    int     `json:"family_friendly"`
+	Shedding          int     `json:"shedding"`
+	GeneralHealth     int     `json:"general_health"`
+	Playfulness       int     `json:"playfulness"`
+	Meowing           int     `json:"meowing"`
+	ChildrenFriendly  int     `json:"children_friendly"`
+	StrangerFriendly  int     `json:"stranger_friendly"`
+	Grooming          int     `json:"grooming"`
+	Intelligence      int     `json:"intelligence"`
+	OtherPetsFriendly int     `json:"other_pets_friendly"`
+	MinWeight         float64 `json:"min_weight"`
+	MaxWeight         float64 `json:"max_weight"`
+	MinLifeExpectancy float64 `json:"min_life_expectancy"`
+	MaxLifeExpectancy float64 `json:"max_life_expectancy"`
+	Name              string  `json:"name"`
 }
 
 type joke struct {
@@ -103,7 +134,7 @@ type albumPicker struct {
 	//SpotifyAlbumURL string `json:"spotify_album_url"`
 }
 
-//region FakePerson Structs
+// region FakePerson Structs
 type fakePerson struct {
 	Results []fakePersonResults `json:"results"`
 	Info    fakePersonInfo      `json:"info"`

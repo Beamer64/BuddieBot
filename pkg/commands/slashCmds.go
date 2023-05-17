@@ -24,6 +24,12 @@ var (
 					Description: "🐕",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "katz",
+					Description: "😻",
+					Required:    false,
+				},
 			},
 		},
 		{

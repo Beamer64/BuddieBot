@@ -10,13 +10,14 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/subosito/shorturl"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
 
 // functions here should mostly be used for the prefix commands ($)
 
-//region dev commands
+// region dev commands
 func (d *MessageCreateHandler) testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
 	if helper.IsLaunchedByDebugger() {
 		err := d.playAudioLink(s, m, param)
@@ -135,7 +136,7 @@ func (d *MessageCreateHandler) sendStartUpMessages(s *discordgo.Session, m *disc
 	return nil
 }
 
-//region audio commands
+// region audio commands
 func (d *MessageCreateHandler) playAudioLink(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
 	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
 	if err != nil {
@@ -249,7 +250,7 @@ func (d *MessageCreateHandler) skipPlayback(s *discordgo.Session, m *discordgo.M
 
 //endregion
 
-//region misc
+// region misc
 func (d *MessageCreateHandler) sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	_, err := s.ChannelMessageSend(
 		m.ChannelID,
@@ -258,6 +259,104 @@ func (d *MessageCreateHandler) sendWeasterEgg(s *discordgo.Session, m *discordgo
 			"──────────██▒▒▒▒▒▒▒▒▒▒██─────────\n─────────██▒▒▒▒▒▒▒▒▒▒▒██─────────\n────────██▒████▒████▒▒██─────────\n────────██▒▒▒▒▒▒▒▒▒▒▒▒██─────────\n────────██▒────▒▒────▒██─────────\n────────██▒─██─▒▒─██─▒██─────────\n────────██▒────▒▒────▒██─────────\n────────██▒▒▒▒▒▒▒▒▒▒▒▒██─────────\n───────██▒▒█▀▀▀▀▀▀▀█▒▒▒▒██───────\n─────██▒▒▒▒▒█▄▄▄▄▄█▒▒▒▒▒▒▒██─────\n───██▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒██───\n─██▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒██─\n█▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒█\n█▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒█\n█▒▒████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒████▒▒█\n▀████▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▒▒▒▒▒▒████▀\n──█▌▌▌▌▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▌▌▌███──\n───█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌█────\n───█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌█────\n────▀█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌██▀─────\n─────█▌▌▌▌▌▌████████▌▌▌▌▌██──────\n──────██▒▒██────────██▒▒██───────\n──────▀████▀────────▀████▀───────",
 	)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *MessageCreateHandler) checkPalindrome(s *discordgo.Session, m *discordgo.MessageCreate, str string) error {
+	revStr := ""
+	isPalindrome := true
+	for i := len(str) - 1; i >= 0; i-- {
+		revStr += string(str[i])
+	}
+	for i := range str {
+		if str[i] != revStr[i] {
+			isPalindrome = false
+			break
+		}
+	}
+
+	if isPalindrome {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Is palindrome 👍")
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err := s.ChannelMessageSend(m.ChannelID, "No is palindrome 👎")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *MessageCreateHandler) romanNums(s *discordgo.Session, m *discordgo.MessageCreate, str string) error {
+	if intVal, err := strconv.Atoi(str); err == nil {
+		romanLetters := []struct {
+			value   int
+			letters string
+		}{
+			{1000, "M"},
+			{900, "CM"},
+			{500, "D"},
+			{400, "CD"},
+			{100, "C"},
+			{90, "XC"},
+			{50, "L"},
+			{40, "XL"},
+			{10, "X"},
+			{9, "IX"},
+			{5, "V"},
+			{4, "IV"},
+			{1, "I"},
+		}
+
+		roman := ""
+		for _, v := range romanLetters {
+			for intVal >= v.value {
+				roman += v.letters
+				intVal -= v.value
+			}
+		}
+
+		content := fmt.Sprintf("%s as roman value: %v", str, roman)
+		_, err = s.ChannelMessageSend(m.ChannelID, content)
+		if err != nil {
+			return err
+		}
+
+	} else if errors.Is(err, strconv.ErrSyntax) {
+		str = strings.ToUpper(str)
+		strUp := str
+		romanNums := map[rune]int{
+			'I': 1,
+			'V': 5,
+			'X': 10,
+			'L': 50,
+			'C': 100,
+			'D': 500,
+			'M': 1000,
+		}
+
+		// convert the subtraction instances into their full value.
+		// 900, 400, 90, 40, 9, 4
+		replacer := strings.NewReplacer("CM", "CCCCCCCCC", "CD", "CCCC", "XC", "XXXXXXXXX", "XL", "XXXX", "IX", "IIIIIIIII", "IV", "IIII")
+		str = replacer.Replace(str)
+
+		total := 0
+		for _, v := range str {
+			total += romanNums[v]
+		}
+
+		content := fmt.Sprintf("%s as numeric value: %v", strUp, total)
+		_, err = s.ChannelMessageSend(m.ChannelID, content)
+		if err != nil {
+			return err
+		}
+
+	} else {
 		return err
 	}
 
