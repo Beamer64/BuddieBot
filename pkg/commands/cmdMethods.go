@@ -767,7 +767,9 @@ func callDoggoAPI(cfg *config.Configs) ([]doggo, error) {
 		return nil, fmt.Errorf("failed to request doggoKatz URL: %v", err)
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
@@ -805,7 +807,9 @@ func callKatzAPI(cfg *config.Configs) ([]katz, error) {
 		return nil, fmt.Errorf("failed to request doggoKatz URL: %v", err)
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
@@ -835,10 +839,19 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
 	options := i.ApplicationCommandData().Options[0]
 
+	var embed *discordgo.MessageEmbed
+	var data *discordgo.InteractionResponseData
+	var err error
+
+	errRespMsg := "Unable to fetch data atm, Try again later."
+
 	switch options.Name {
 	case "rekd":
-		insultMsg, err := client.Roast()
+		clientData, err := client.Roast()
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
@@ -846,145 +859,110 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		switch len(options.Options) {
 		// todo add comments
 		case 0:
-			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, insultMsg)
+			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, clientData)
 
 		case 1:
 			user := options.Options[0].UserValue(s)
 
-			content = fmt.Sprintf("<@!%s>\n%s", user.ID, insultMsg)
+			content = fmt.Sprintf("<@!%s>\n%s", user.ID, clientData)
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("%s\n(ง ͠° ͟ل͜ ͡°)ง", content),
-				},
-			},
-		)
-		if err != nil {
-			return err
+		data = &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("%s\n(ง ͠° ͟ل͜ ͡°)ง", content),
 		}
 
 	case "joke":
-		data, err := client.Joke()
+		clientData, err := client.Joke()
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
 		var jokeObj joke
-		err = mapstructure.Decode(data, &jokeObj)
+		err = mapstructure.Decode(clientData, &jokeObj)
 		if err != nil {
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("%s", jokeObj.Joke),
-				},
-			},
-		)
-		if err != nil {
-			return err
+		data = &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("%s", jokeObj.Joke),
 		}
 
 	case "8ball":
-		data, err := client.Eightball()
+		clientData, err := client.Eightball()
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("%s", data),
-				},
-			},
-		)
-		if err != nil {
-			return err
+		data = &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("%s", clientData),
 		}
 
 	case "yomomma":
-		data, err := client.Yomama()
+		clientData, err := client.Yomama()
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
 		content := ""
 		switch len(options.Options) {
 		case 0:
-			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, data)
+			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, clientData)
 
 		case 1:
 			user := options.Options[0].UserValue(s)
-
-			content = fmt.Sprintf("<@!%s>\n%s", user.ID, data)
+			content = fmt.Sprintf("<@!%s>\n%s", user.ID, clientData)
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: content,
-				},
-			},
-		)
-		if err != nil {
-			return err
+		data = &discordgo.InteractionResponseData{
+			Content: content,
 		}
 
 	case "pickup-line":
-		data, err := client.PickupLine()
+		clientData, err := client.PickupLine()
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
 		var pickupObj pickupLine
-		err = mapstructure.Decode(data, &pickupObj)
+		err = mapstructure.Decode(clientData, &pickupObj)
 		if err != nil {
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("%s", pickupObj.Joke),
-				},
-			},
-		)
-		if err != nil {
-			return err
+		data = &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("%s", pickupObj.Joke),
 		}
 
 	case "fake-person":
-		data, err := callFakePersonAPI(cfg)
+		clientData, err := callFakePersonAPI(cfg)
+		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
+			return err
+		}
+
+		embed, err = getFakePersonEmbed(clientData)
 		if err != nil {
 			return err
 		}
 
-		embed, err := getFakePersonEmbed(data)
-		if err != nil {
-			return err
-		}
-
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "",
-					Embeds: []*discordgo.MessageEmbed{
-						embed,
-					},
-				},
+		data = &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
 			},
-		)
-		if err != nil {
-			return err
 		}
 
 		/*case "captcha":
@@ -993,6 +971,16 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return err
 		}*/
 
+	}
+
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: data,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error sendind Interaction: %v", err)
 	}
 
 	return nil
@@ -1117,2880 +1105,1427 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
 	options := i.ApplicationCommandData().Options[0]
 
+	var user *discordgo.User
+	var imgName string
+	var bufferImage []byte
+	var err error
+	errRespMsg := "Unable to edit image at this moment, please try later :("
+
 	switch options.Name {
 	case "pixelate":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Pixelate(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Pixelate(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Pixelate.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Pixelate(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Pixelate.png"
 
 	case "mirror":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Mirror(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Mirror(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Mirror.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Mirror(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Mirror.png"
 
 	case "flip-image":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.FlipImage(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.FlipImage(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "FlipImage.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.FlipImage(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "FlipImage.png"
 
 	case "colors":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Colors(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Colors(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Colors.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Colors(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Colors.png"
 
 	case "murica":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.America(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.America(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "America.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.America(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "America.png"
 
 	case "communism":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Communism(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Communism(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Communism.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Communism(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Communism.png"
 
 	case "triggered":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Triggered(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Triggered(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Triggered.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Triggered(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Triggered.png"
 
 	case "expand":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.ExpandImage(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
+			user = options.Options[0].UserValue(s)
 
-			bufferImage, err := client.ExpandImage(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "ExpandImage.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.ExpandImage(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "ExpandImage.png"
 
 	case "wasted":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Wasted(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
+			user = options.Options[0].UserValue(s)
 
-			bufferImage, err := client.Wasted(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Wasted.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Wasted(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Wasted.png"
 
 	case "sketch":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Sketch(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
+			user = options.Options[0].UserValue(s)
 
-			bufferImage, err := client.Sketch(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Sketch.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Sketch(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Sketch.png"
 
 	case "spin":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.SpinImage(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.SpinImage(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "SpinImage.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.SpinImage(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "SpinImage.png"
 
 	case "petpet":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.PetPet(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.PetPet(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "PetPet.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.PetPet(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "PetPet.png"
 
 	case "bonk":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Bonk(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Bonk(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Bonk.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Bonk(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Bonk.png"
 
 	case "bomb":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Bomb(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Bomb(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Bomb.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Bomb(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Bomb.png"
 
 	case "shake":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Shake(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Shake(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Shake.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Shake(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Shake.png"
 
 	case "invert":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Invert(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Invert(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Invert.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Invert(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Invert.png"
 
 	case "sobel":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Sobel(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Sobel(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Sobel.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Sobel(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Sobel.png"
 
 	case "hog":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Hog(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Hog(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Hog.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Hog(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Hog.png"
 
 	case "triangle":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Triangle(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Triangle(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Triangle.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Triangle(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Triangle.png"
 
 	case "blur":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Blur(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Blur(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Blur.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Blur(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Blur.png"
 
 	case "rgb":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.RGB(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.RGB(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "RGB.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.RGB(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "RGB.png"
 
 	case "angel":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Angel(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Angel(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Angel.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Angel(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Angel.png"
 
 	case "satan":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Satan(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Satan(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Satan.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Satan(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Satan.png"
 
 	case "delete":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Delete(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Delete(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Delete.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Delete(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Delete.png"
 
 	case "fedora":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Fedora(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Fedora(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Fedora.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Fedora(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Fedora.png"
 
 	case "hitler":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Hitler(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Hitler(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Hitler.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Hitler(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Hitler.png"
 
 	case "lego":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Lego(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Lego(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Lego.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Lego(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Lego.png"
 
 	case "wanted":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Wanted(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Wanted(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Wanted.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Wanted(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Wanted.png"
 
 	case "stringify":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Stringify(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Stringify(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Stringify.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Stringify(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Stringify.png"
 
 	case "burn":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Burn(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Burn(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Burn.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Burn(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Burn.png"
 
 	case "earth":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Earth(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Earth(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Earth.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Earth(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Earth.png"
 
 	case "freeze":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Freeze(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Freeze(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Freeze.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Freeze(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Freeze.png"
 
 	case "ground":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Ground(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Ground(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Ground.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Ground(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Ground.png"
 
 	case "mosiac":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Mosiac(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Mosiac(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Mosiac.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Mosiac(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Mosiac.png"
 
 	case "sithlord":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Sithlord(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Sithlord(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Sithlord.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Sithlord(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Sithlord.png"
 
 	case "jail":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Jail(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Jail(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Jail.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Jail(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Jail.png"
 
 	case "shatter":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Shatter(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Shatter(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Shatter.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Shatter(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
+		imgName = "Shatter.png"
+
 	case "pride":
-		var buffer []byte
 		flag := options.Options[0].StringValue()
 
 		switch len(options.Options) {
 		case 1:
-			user, err := s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-			buffer, err = client.Pride(user.AvatarURL("300"), flag)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
 		case 2:
-			user := options.Options[1].UserValue(s)
-
-			bufferImg, err := client.Pride(user.AvatarURL("300"), flag)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImg
+			user = options.Options[1].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "pride.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Pride(user.AvatarURL("300"), flag)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "pride.png"
 
 	case "trash":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Trash(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Trash(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Trash.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Trash(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Trash.png"
 
 	case "deepfry":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Deepfry(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Deepfry(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "deepfry.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Deepfry(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "deepfry.png"
 
 	case "ascii":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Ascii(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Ascii(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Ascii.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Ascii(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Ascii.png"
 
 	case "charcoal":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Charcoal(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Charcoal(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Charcoal.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Charcoal(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Charcoal.png"
 
 	case "posterize":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Posterize(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Posterize(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Posterize.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Posterize(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Posterize.png"
 
 	case "sepia":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Sepia(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Sepia(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Sepia.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Sepia(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Sepia.png"
 
 	case "swirl":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Swirl(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Swirl(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Swirl.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Swirl(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Swirl.png"
 
 	case "paint":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Paint(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Paint(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Paint.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Paint(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Paint.png"
 
 	case "night":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Night(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Night(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "night.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Night(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "night.png"
 
 	case "rainbow":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Rainbow(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Rainbow(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Rainbow.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Rainbow(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Rainbow.png"
 
 	case "magik":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Magik(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Magik(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "Magik.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Magik(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "Magik.png"
 
 	case "5guys1girl":
 		guy := options.Options[0].UserValue(s)
 		girl := options.Options[1].UserValue(s)
 
-		buffer, err := client.FivegOneg(guy.AvatarURL("300"), girl.AvatarURL("300"))
+		bufferImage, err = client.FivegOneg(guy.AvatarURL("300"), girl.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "fiveGuys.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
-		if err != nil {
-			return err
-		}
+		imgName = "fiveGuys.png"
 
 	case "slap":
 		slapped := options.Options[0].UserValue(s)
 		slapper := options.Options[1].UserValue(s)
 
-		buffer, err := client.Slap(slapper.AvatarURL("300"), slapped.AvatarURL("300"))
+		bufferImage, err = client.Slap(slapper.AvatarURL("300"), slapped.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "slap.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
-		if err != nil {
-			return err
-		}
+		imgName = "slap.png"
 
 	case "obama":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Obama(user.AvatarURL("300"), user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Obama(user.AvatarURL("300"), user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "obama.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Obama(user.AvatarURL("300"), user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
+		imgName = "obama.png"
+
 	case "tweet":
-		var buffer []byte
 		tweet := options.Options[0].StringValue()
 
 		switch len(options.Options) {
 		case 1:
-			user, err := s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-			buffer, err = client.Tweet(user.AvatarURL("300"), user.Username, tweet)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
 		case 2:
-			user := options.Options[1].UserValue(s)
-
-			bufferImage, err := client.Tweet(user.AvatarURL("300"), user.Username, tweet)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[1].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "tweet.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Tweet(user.AvatarURL("300"), user.Username, tweet)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "tweet.png"
 
 	case "youtube":
 		comment := options.Options[0].StringValue()
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 1:
-			user, err := s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-			buffer, err = client.YouTubeComment(user.AvatarURL("300"), user.Username, comment, false)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
 		case 2:
-			user := options.Options[1].UserValue(s)
-
-			bufferImage, err := client.YouTubeComment(user.AvatarURL("300"), user.Username, comment, false)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[1].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "youtube.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.YouTubeComment(user.AvatarURL("300"), user.Username, comment, false)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "youtube.png"
 
 	case "discord":
 		msg := options.Options[0].StringValue()
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 1:
-			user, err := s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-			buffer, err = client.Discord(user.AvatarURL("300"), user.Username, msg, true)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
 		case 2:
-			user := options.Options[1].UserValue(s)
-
-			bufferImage, err := client.Discord(user.AvatarURL("300"), user.Username, msg, true)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[1].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "discord.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Discord(user.AvatarURL("300"), user.Username, msg, true)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "discord.png"
 
 	case "retro-meme":
-		var buffer []byte
 		topText := options.Options[0].StringValue()
 		bottomText := options.Options[1].StringValue()
 
 		switch len(options.Options) {
 		case 2:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Retromeme(user.AvatarURL("300"), topText, bottomText)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 
 		case 3:
-			user := options.Options[2].UserValue(s)
-
-			bufferImage, err := client.Retromeme(user.AvatarURL("300"), topText, bottomText)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[2].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "retro-meme.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Retromeme(user.AvatarURL("300"), topText, bottomText)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "retro-meme.png"
 
 	case "motivational":
-		var buffer []byte
 		topText := options.Options[0].StringValue()
 		bottomText := options.Options[1].StringValue()
 
 		switch len(options.Options) {
 		case 2:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Motivational(user.AvatarURL("300"), topText, bottomText)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 
 		case 3:
-			user := options.Options[2].UserValue(s)
-
-			bufferImage, err := client.Motivational(user.AvatarURL("300"), topText, bottomText)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[2].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "motivational.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Motivational(user.AvatarURL("300"), topText, bottomText)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
+		imgName = "motivational.png"
+
 	case "modern-meme":
-		var buffer []byte
 		text := options.Options[0].StringValue()
 
 		switch len(options.Options) {
 		case 1:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Modernmeme(user.AvatarURL("300"), text)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 
 		case 2:
-			user := options.Options[1].UserValue(s)
-
-			bufferImage, err := client.Modernmeme(user.AvatarURL("300"), text)
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[1].UserValue(s)
 		}
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "modern-meme.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+
+		bufferImage, err = client.Modernmeme(user.AvatarURL("300"), text)
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "modern-meme.png"
 
 	case "why_are_you_gay":
 		user1 := options.Options[0].UserValue(s)
 		user2 := options.Options[1].UserValue(s)
 
-		buffer, err := client.WhyAreYouGay(user1.AvatarURL("300"), user2.AvatarURL("300"))
+		bufferImage, err = client.WhyAreYouGay(user1.AvatarURL("300"), user2.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
-		err = s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "why_are_you_gay.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
-		if err != nil {
-			return err
-		}
+		imgName = "why_are_you_gay.png"
 
 	case "elmo":
-		var buffer []byte
-
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Elmo(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Elmo(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "elmo.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Elmo(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "elmo.png"
 
 	case "tv-static":
-		var buffer []byte
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.TvStatic(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.TvStatic(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "static.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.TvStatic(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "static.png"
 
 	case "rain":
-		var buffer []byte
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.Rain(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Rain(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "rain.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Rain(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "rain.png"
 
 	case "glitch":
-		var buffer []byte
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Glitch(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Glitch(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "glitch.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Glitch(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "glitch.png"
 
 	case "sȶǟȶɨƈ-ɢʟɨȶƈɦ":
-		var buffer []byte
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
-
-			bufferImage, err := client.GlitchStatic(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.GlitchStatic(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "static.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.GlitchStatic(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
+
+		imgName = "static.png"
 
 	case "album":
-		var buffer []byte
 		switch len(options.Options) {
 		case 0:
-			user, err := s.User(i.Member.User.ID)
+			user, err = s.User(i.Member.User.ID)
 			if err != nil {
 				return err
 			}
 
-			bufferImage, err := client.Album(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
 		case 1:
-			user := options.Options[0].UserValue(s)
-
-			bufferImage, err := client.Album(user.AvatarURL("300"))
-			if err != nil {
-				return err
-			}
-
-			buffer = bufferImage
+			user = options.Options[0].UserValue(s)
 		}
 
-		err := s.InteractionRespond(
-			i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Files: []*discordgo.File{
-						{
-							Name:        "album.png",
-							ContentType: "image",
-							Reader:      bytes.NewReader(buffer),
-						},
-					},
-				},
-			},
-		)
+		bufferImage, err = client.Album(user.AvatarURL("300"))
 		if err != nil {
+			go func() {
+				err = helper.SendResponseError(s, i, errRespMsg)
+			}()
 			return err
 		}
 
+		imgName = "album.png"
+
+	}
+
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Files: []*discordgo.File{
+					{
+						Name:        imgName,
+						ContentType: "image",
+						Reader:      bytes.NewReader(bufferImage),
+					},
+				},
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error sendind Interaction: %v", err)
 	}
 
 	return nil
