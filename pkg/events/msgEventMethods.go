@@ -118,6 +118,7 @@ func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message)
 	return nil
 }
 
+// sendStartUpMessages is used when spinning up servers for minecraft for example
 func (d *MessageCreateHandler) sendStartUpMessages(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	// sleep for 1 minute while saying funny things and to wait for instance to start up
 	sm := 0

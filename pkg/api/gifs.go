@@ -20,6 +20,7 @@ type gif struct {
 	} `json:"results"`
 }
 
+// RequestGifURL returns a tenor gif URL from a search string
 func RequestGifURL(searchStr, tenorAPIkey string) (string, error) {
 	searchStr = url.QueryEscape(searchStr)
 	URL := "https://g.tenor.com/v1/search?q=" + searchStr + "&key=" + tenorAPIkey + "&limit=1"

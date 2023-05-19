@@ -10,6 +10,7 @@ import (
 	"github.com/beamer64/buddieBot/pkg/events"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
+	"log"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"time"
@@ -33,7 +34,7 @@ func Init(cfg *config.Configs) error {
 
 	user, err := botSession.User("@me")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to grab Discord session User: %v", err)
 	}
 
 	dbClient, err := createDynamoDBClient(cfg)
@@ -53,7 +54,7 @@ func Init(cfg *config.Configs) error {
 		return fmt.Errorf("failed to register commands: %v", err)
 	}
 
-	fmt.Println(botENV)
+	log.Println(botENV)
 	return nil
 }
 
@@ -94,7 +95,7 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 }
 
 func registerCommands(s *discordgo.Session) error {
-	fmt.Println("Updating commands")
+	log.Println("Updating commands")
 
 	// added sleep timer to allow time for
 	// ApplicationCommandBulkOverwrite after creating bot session
@@ -104,6 +105,6 @@ func registerCommands(s *discordgo.Session) error {
 		return err
 	}
 
-	fmt.Printf("%d commands registered\n", len(commandsRegistered))
+	log.Printf("%d commands registered\n", len(commandsRegistered))
 	return nil
 }

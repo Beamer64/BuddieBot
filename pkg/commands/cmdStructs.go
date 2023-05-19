@@ -11,12 +11,14 @@ type tuuckCmdInfo struct {
 }
 
 type steamGames struct {
-	Applist struct {
-		Apps []struct {
-			Appid int    `json:"appid"`
-			Name  string `json:"name"`
-		} `json:"apps"`
-	} `json:"applist"`
+	Applist steamAppList `json:"applist"`
+}
+type steamApps struct {
+	Appid int    `json:"appid"`
+	Name  string `json:"name"`
+}
+type steamAppList struct {
+	Apps []steamApps `json:"apps"`
 }
 
 type affirmation struct {
@@ -28,10 +30,11 @@ type kanye struct {
 }
 
 type advice struct {
-	Slip struct {
-		ID     int    `json:"id"`
-		Advice string `json:"advice"`
-	} `json:"slip"`
+	Slip adviceSlip `json:"slip"`
+}
+type adviceSlip struct {
+	ID     int    `json:"id"`
+	Advice string `json:"advice"`
 }
 
 type doggo struct {
@@ -110,18 +113,19 @@ type gtl struct {
 }
 
 type wtp struct {
-	Data struct {
-		Type      []string `json:"Type"`
-		Abilities []string `json:"abilities"`
-		ASCII     string   `json:"ascii"`
-		Height    float64  `json:"height"`
-		ID        int      `json:"id"`
-		Link      string   `json:"link"`
-		Name      string   `json:"name"`
-		Weight    int      `json:"weight"`
-	} `json:"Data"`
-	Answer   string `json:"answer"`
-	Question string `json:"question"`
+	Data     wtpData `json:"Data"`
+	Answer   string  `json:"answer"`
+	Question string  `json:"question"`
+}
+type wtpData struct {
+	Type      []string `json:"Type"`
+	Abilities []string `json:"abilities"`
+	ASCII     string   `json:"ascii"`
+	Height    float64  `json:"height"`
+	ID        int      `json:"id"`
+	Link      string   `json:"link"`
+	Name      string   `json:"name"`
+	Weight    float64  `json:"weight"`
 }
 
 type albumPicker struct {

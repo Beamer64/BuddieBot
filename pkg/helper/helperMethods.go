@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -82,6 +81,12 @@ func SendResponseError(s *discordgo.Session, i *discordgo.InteractionCreate, mes
 	return err
 }
 
+// LogErrors logs any errors to console and send to the Error Discord Channel
+func LogErrors(s *discordgo.Session, errorLogChannelID string, err error, guildID string) {
+	fmt.Printf("%+v", errors.WithStack(err))
+	_, _ = s.ChannelMessageSendEmbed(errorLogChannelID, GetErrorEmbed(err, s, guildID))
+}
+
 // IsLaunchedByDebugger Determines if application is being run by the debugger.
 func IsLaunchedByDebugger() bool {
 	// gops executable must be in the path. See https://github.com/google/gops
@@ -124,32 +129,29 @@ func RangeIn(low, hi int) int {
 	return low + rand.Intn(hi-low)
 }
 
-// CheckIfStructValueISEmpty Checks if the value is empty and returns it if not.
+// CheckIfStructValueISEmpty Checks if the value is empty and returns it as string if not.
 // Otherwise, return 'N/A'
 func CheckIfStructValueISEmpty(value interface{}) string {
-	retVal := ""
-	if value != nil {
-		switch value.(type) {
-		case int:
-			retVal = fmt.Sprintf("%v", reflect.ValueOf(value).Int())
-
-		case float64:
-			retVal = fmt.Sprintf("%v", reflect.ValueOf(value).Float())
-
-		case string:
-			if value != "" && value != " " {
-				retVal = reflect.ValueOf(value).String()
-			} else {
-				retVal = "N/A"
-			}
-
-		default:
-			retVal = "N/A"
-		}
-	} else {
-		retVal = "N/A"
+	if value == nil {
+		return "N/A"
 	}
-	return retVal
+
+	switch v := value.(type) {
+	case int:
+		return strconv.Itoa(v)
+
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+
+	case string:
+		if v != "" && v != " " {
+			return v
+		}
+		return "N/A"
+
+	default:
+		return "N/A"
+	}
 }
 
 func StringInSlice(s string, slice []string) bool {
@@ -184,8 +186,6 @@ func ToConvertedText(text string, convertGroup string) (string, error) {
 }
 
 func getLetters() (map[string][]map[string][]string, error) {
-	letters := make(map[string][]map[string][]string)
-
 	fontsDir := "config_files/text_fonts.json"
 	if IsLaunchedByDebugger() {
 		fontsDir = "../../config_files/text_fonts.json"
@@ -197,14 +197,15 @@ func getLetters() (map[string][]map[string][]string, error) {
 	}
 
 	defer func(jsonFile *os.File) {
-		err = jsonFile.Close()
+		_ = jsonFile.Close()
 	}(jsonFile)
+
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		return nil, err
 	}
 
-	byteValue, _ := io.ReadAll(jsonFile)
-
+	letters := make(map[string][]map[string][]string)
 	err = json.Unmarshal(byteValue, &letters)
 	if err != nil {
 		return nil, err

@@ -2,9 +2,9 @@ package config
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -115,7 +115,6 @@ type command struct {
 }
 
 func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
-
 	var configDir string
 	for _, cp := range possibleConfigPaths {
 		if !strings.HasSuffix(cp, "/") {
@@ -125,29 +124,28 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		// attempt to open dir
 		files, err := os.ReadDir(cp)
 		if err != nil {
-			fmt.Printf("Couldn't find file in dir %s\n", cp)
+			log.Printf("Couldn't find file in dir %s\n", cp)
 			continue
 		}
 
 		// build a map of necessary files
-		fmap := make(map[string]bool)
-		fmap["config.yaml"] = false
-		fmap["cmd.yaml"] = false
-		fmap["loading_messages.txt"] = false
-		fmap["emojis.txt"] = false
+		requiredFiles := map[string]bool{
+			"config.yaml":          false,
+			"cmd.yaml":             false,
+			"loading_messages.txt": false,
+			"emojis.txt":           false,
+		}
 
 		// loops through all files in dir, check if any of them are required
 		for _, f := range files {
-			for reqFile := range fmap {
-				if reqFile == f.Name() {
-					fmap[reqFile] = true
-				}
+			if _, ok := requiredFiles[f.Name()]; ok {
+				requiredFiles[f.Name()] = true
 			}
 		}
 
 		// check if all values are set to true, meaning that all files were found
 		allFound := true
-		for _, v := range fmap {
+		for _, v := range requiredFiles {
 			if !v {
 				allFound = false
 				break
@@ -155,53 +153,52 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		}
 
 		if !allFound {
-			fmt.Printf("missing one or more required files in directory %s: \n%+v\n", cp, fmap)
+			log.Printf("missing one or more required files in directory %s: \n%+v\n", cp, requiredFiles)
 		} else {
+			log.Printf("SUCCESS found config_files dir %s\n", cp)
 			configDir = cp
-			fmt.Printf("SUCCESS found config_files dir %s\n", configDir)
 			break
 		}
 	}
 
-	fmt.Println("Reading from config file...")
+	log.Println("Reading from config file...")
 	configFile, err := os.ReadFile(configDir + "config.yaml")
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Reading from cmd file...")
+	log.Println("Reading from cmd file...")
 	commandFile, err := os.ReadFile(configDir + "cmd.yaml")
 	if err != nil {
 		return nil, err
 	}
 
-	var cfg *configuration
-	var command *command
+	cfg := &configuration{}
+	cmd := &command{}
 
-	err = yaml.Unmarshal(configFile, &cfg)
+	err = yaml.Unmarshal(configFile, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	// set AppID to test or prod
 	if isLaunchedByDebugger() {
 		cfg.DiscordIDs.CurrentBotAppID = cfg.DiscordIDs.TestBotAppID
 	} else {
 		cfg.DiscordIDs.CurrentBotAppID = cfg.DiscordIDs.ProdBotAppID
 	}
 
-	err = yaml.Unmarshal(commandFile, &command)
+	err = yaml.Unmarshal(commandFile, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Reading from loading messages file...")
+	log.Println("Reading from loading messages file...")
 	msgs, err := grabStringLists(configDir + "loading_messages.txt")
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Reading from emojis file...")
+	log.Println("Reading from emojis file...")
 	emojis, err := grabStringLists(configDir + "emojis.txt")
 	if err != nil {
 		return nil, err
@@ -209,15 +206,12 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 
 	return &Configs{
 		Configs:         cfg,
-		Cmd:             command,
+		Cmd:             cmd,
 		LoadingMessages: msgs,
 		Emojis:          emojis,
 	}, nil
 }
 
-//Todo fix these
-
-// don't move these out (circular dependency)
 // finds and returns []string from txt file
 func grabStringLists(strListPath string) ([]string, error) {
 	file, err := os.Open(strListPath)

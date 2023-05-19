@@ -10,7 +10,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"io"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -40,12 +40,11 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	}
 
 	// navigate to url and get redirect url
-	NavTasks := chromedp.Tasks{
+	err = chromedp.Run(
+		ctx,
 		chromedp.Navigate(url),
 		chromedp.Location(&res),
-	}
-	// run navigate task list
-	err = chromedp.Run(ctx, NavTasks)
+	)
 	if err != nil {
 		return "", "", err
 	}
@@ -53,12 +52,11 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	// navigate to redirect and click button
 	// Grey 'Download file MP3' button
 	button := "/html/body/div[1]/main/section[2]/div[2]/div/div[2]/div/div[2]/div/a"
-	clickTasks := chromedp.Tasks{
+	err = chromedp.Run(
+		ctx,
 		chromedp.Navigate(res),
 		chromedp.Click(button),
-	}
-	// run clickTask list
-	err = chromedp.Run(ctx, clickTasks)
+	)
 	if err != nil {
 		return "", "", err
 	}
@@ -70,13 +68,11 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 
 	// wait for page to load and get button redirect url
 	searchElem := "/html/body/div/main/section[1]/div/div/div[5]/div/div[1]/div"
-	waitTasks := chromedp.Tasks{
+	err = chromedp.Run(
+		ctx,
 		chromedp.WaitNotPresent(searchElem),
 		chromedp.Location(&res),
-	}
-
-	// run waitTasks list
-	err = chromedp.Run(ctx, waitTasks)
+	)
 	if err != nil {
 		return "", "", err
 	}
@@ -89,13 +85,11 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	// navigate to button redirect and get download link
 	button = "/html/body/div[1]/main/section/div/div[2]/div/div[2]/div[1]/div[3]/a[1]"
 	resURL := res
-	navTasks := chromedp.Tasks{
+	err = chromedp.Run(
+		ctx,
 		chromedp.Navigate(resURL),
 		chromedp.AttributeValue(button, "href", &res, ok),
-	}
-
-	// run navTasks list
-	err = chromedp.Run(ctx, navTasks)
+	)
 	if err != nil {
 		return "", "", err
 	}
@@ -103,11 +97,6 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	msg, err = s.ChannelMessageEdit(msg.ChannelID, msg.ID, "Prepping vidya...70% [#######   ]")
 	if err != nil {
 		return "", "", err
-	}
-
-	// navigate to download link to parse network response
-	getLinkTasks := chromedp.Tasks{
-		chromedp.Navigate(res),
 	}
 
 	// listen for response containing mp3 link
@@ -123,8 +112,8 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 		},
 	)
 
-	// run getLinkTasks list
-	err = chromedp.Run(ctx, getLinkTasks)
+	// navigate to download link to parse network response
+	err = chromedp.Run(ctx, chromedp.Navigate(res))
 	if err != nil {
 		if !strings.Contains(err.Error(), "net::ERR_ABORTED") {
 			return "", "", err
@@ -156,18 +145,15 @@ func DownloadMpFile(m *discordgo.MessageCreate, link string, fileName string) er
 	}
 
 	defer func(Body io.ReadCloser) {
-		err = Body.Close()
+		_ = Body.Close()
 	}(resp.Body)
-	if err != nil {
-		return err
-	}
 
 	// Create the dir
 	dir := fmt.Sprintf("%s/Audio", m.GuildID)
 	if _, err = os.Stat(dir); os.IsNotExist(err) {
 		// does not exist
 		err = os.MkdirAll(dir, 0777)
-		fmt.Println(fmt.Sprintf("Dir created: %s", dir))
+		log.Println(fmt.Sprintf("Dir created: %s", dir))
 	}
 	if err != nil {
 		return err
@@ -178,14 +164,10 @@ func DownloadMpFile(m *discordgo.MessageCreate, link string, fileName string) er
 	if err != nil {
 		return err
 	}
-	fmt.Println("Created File")
 
 	defer func(out *os.File) {
-		err = out.Close()
+		_ = out.Close()
 	}(out)
-	if err != nil {
-		return err
-	}
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
@@ -193,87 +175,80 @@ func DownloadMpFile(m *discordgo.MessageCreate, link string, fileName string) er
 		return err
 	}
 
+	log.Println("Created File")
+
 	return nil
 }
 
 func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo.MessageCreate, s *discordgo.Session) error {
 	dir := fmt.Sprintf("%s/Audio", m.GuildID)
 
-	cleanFileName := ""
 	var err error
-	if fileName != "" {
-		cleanFileName, err = FormatAudioFileName(fileName)
+
+	cleanFileName, err := formatAudioFileName(fileName)
+	if err != nil {
+		return err
+	}
+
+	if !IsPlaying {
+		if fileName != "" {
+			MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
+		}
+
+		IsPlaying = true
+		for i, v := range MpFileQueue {
+			log.Println("PlayAudioFile: ", v)
+
+			_, err = s.ChannelMessageSend(m.ChannelID, "Now playing: "+cleanFileName)
+			if err != nil {
+				return err
+			}
+
+			dgvoice.PlayAudioFile(dgv, v, StopPlaying)
+
+			MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
+		}
+		//remove file from queue
+		//MpFileQueue = nil
+
+		if dgv != nil {
+			IsPlaying = false
+			err = dgv.Disconnect()
+			if err != nil {
+				return err
+			}
+		}
+
+		err = MpFileCleanUp(dir)
 		if err != nil {
 			return err
 		}
 
-		if !IsPlaying {
-			if fileName != "" {
-				MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
-			}
-
-			IsPlaying = true
-			for i, v := range MpFileQueue {
-				fmt.Println("PlayAudioFile: ", v)
-
-				_, err = s.ChannelMessageSend(m.ChannelID, "Now playing: "+cleanFileName)
-				if err != nil {
-					return err
-				}
-
-				dgvoice.PlayAudioFile(dgv, v, StopPlaying)
-
-				MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
-			}
-			//remove file from queue
-			//MpFileQueue = nil
-
-			if dgv != nil {
-				IsPlaying = false
-				err = dgv.Disconnect()
-				if err != nil {
-					return err
-				}
-			}
-
-			err = MpFileCleanUp(dir)
-			if err != nil {
-				return err
-			}
-
-		} else {
-			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Added to queue: %s", cleanFileName))
-			if err != nil {
-				return err
-			}
-
-			MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
+	} else {
+		_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Added to queue: %s", cleanFileName))
+		if err != nil {
+			return err
 		}
+
+		MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
 	}
 
 	return nil
 }
 
-// FormatAudioFileName formats audio file name to look better
-func FormatAudioFileName(fileName string) (string, error) {
-	//split at "/"
-	/*splitName := strings.SplitAfterN(fileName, "\\", 3)
-	fileName = splitName[2]*/
-
+// formatAudioFileName formats audio file name to look better
+func formatAudioFileName(fileName string) (string, error) {
 	//replace characters
 	replacer := strings.NewReplacer("/", "", "_", " ", "-", "", ".mp3", "")
 	fileName = replacer.Replace(fileName)
 
 	//remove numbers
-	numRegex, err := regexp.Compile("[0-9]")
+	numRegex := regexp.MustCompile("[0-9]")
 	fileName = numRegex.ReplaceAllString(fileName, "")
-	if err != nil {
-		return "", err
-	}
 
 	//capitalize first letters
-	caser := cases.Title(language.AmericanEnglish)
-	fileName = caser.String(fileName)
+	c := cases.Title(language.AmericanEnglish)
+	fileName = c.String(fileName)
 
 	return fileName, nil
 }
@@ -282,21 +257,21 @@ func FormatAudioFileName(fileName string) (string, error) {
 func MpFileCleanUp(dir string) error {
 	MpFileQueue = nil
 
-	fmt.Println("\nRunning Cleanup")
-	files, err := ioutil.ReadDir(dir)
+	log.Println("\nRunning Cleanup")
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range files {
-		if strings.Contains(filepath.Join(dir, filepath.Base(f.Name())), ".mp3") {
-			err = os.Remove(filepath.Join(dir, filepath.Base(f.Name())))
+		if strings.HasSuffix(f.Name(), ".mp3") {
+			err = os.Remove(filepath.Join(dir, f.Name()))
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	fmt.Println("Cleanup Finished")
+	log.Println("Cleanup Finished")
 	return nil
 }

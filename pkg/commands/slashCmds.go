@@ -38,14 +38,14 @@ var (
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "simp",
-					Description: "Simp Rating",
+					Name:        "dank",
+					Description: "Dank Rating",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
-							Description: "User simp score",
+							Description: "User Dank score",
 							Required:    false,
 						},
 					},
@@ -66,20 +66,6 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "dank",
-					Description: "Dank Rating",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "User Dank score",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "gay",
 					Description: "Gay Rating",
 					Required:    false,
@@ -94,6 +80,76 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "geek",
+					Description: "Geek Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Geek score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "looks",
+					Description: "Looks Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Looks score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "neckbeard",
+					Description: "Neck Beard Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Neck Beard score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "nerd",
+					Description: "Nerd Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Nerd score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "pickme",
+					Description: "Pick Me Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Pick Me score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "schmeat",
 					Description: "Schmeat Rating",
 					Required:    false,
@@ -102,6 +158,34 @@ var (
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
 							Description: "User Schmeat score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "simp",
+					Description: "Simp Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User simp score",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "smarts",
+					Description: "Smarts Rating",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "User Smarts score",
 							Required:    false,
 						},
 					},
@@ -134,96 +218,36 @@ var (
 						},
 					},
 				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "neckbeard",
-					Description: "Neck Beard Rating",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "User Neck Beard score",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "pickme",
-					Description: "Pick Me Rating",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "User Pick Me score",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "looks",
-					Description: "Looks Rating",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "User Looks score",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "smarts",
-					Description: "Smarts Rating",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "User Smarts score",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "nerd",
-					Description: "Nerd Rating",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "User Nerd score",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "geek",
-					Description: "Geek Rating",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "User Geek score",
-							Required:    false,
-						},
-					},
-				},
 			},
 		},
 		{
 			Name:        "get",
 			Description: "Get a text based response like a joke or pickup line",
 			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "8ball",
+					Description: "Think of a question",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "fake-person",
+					Description: "The miracle of life",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "joke",
+					Description: "Tell a joke",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "pickup-line",
+					Description: "Woah Momma",
+					Required:    false,
+				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "rekd",
@@ -240,18 +264,6 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "joke",
-					Description: "Tell a joke",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "8ball",
-					Description: "Think of a question",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "yomomma",
 					Description: "is sooooooo fat..",
 					Required:    false,
@@ -263,18 +275,6 @@ var (
 							Required:    false,
 						},
 					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "pickup-line",
-					Description: "Woah Momma",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "fake-person",
-					Description: "The miracle of life",
-					Required:    false,
 				},
 				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
@@ -290,294 +290,14 @@ var (
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "pixelate",
-					Description: "Pixelate yourself",
+					Name:        "album",
+					Description: "Make an album cover!",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
-							Description: "Mirror someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "mirror",
-					Description: "Mirror an image along the y-axis",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Mirror someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "flip-image",
-					Description: "Flip an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Flip someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "colors",
-					Description: "Get an Image with the colors present in the image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Colors someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "murica",
-					Description: "Let the star spangled banner of the free and the brave soar",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Murica someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "communism",
-					Description: "Support the soviet union comrade. Let the red flag fly!",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Convert someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "triggered",
-					Description: "Get a triggered gif",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Trigger someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "expand",
-					Description: "Animation that stretches an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Expand someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "wasted",
-					Description: "Get an image with GTA V Wasted screen",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Waste someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "sketch",
-					Description: "Cool effect that shows how an image would have been created by an artist",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Sketch someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "spin",
-					Description: "You spin me right round baby",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Spin someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "petpet",
-					Description: "Pet pet",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Pet someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "bonk",
-					Description: "Get bonked on my cheems",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Bonk someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "bomb",
-					Description: "Cool guys don't look at explosions",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Explode someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "shake",
-					Description: "Shake a gif by having it wiggle",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Shake someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "invert",
-					Description: "Get an image with an inverted color effect",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Invert someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "sobel",
-					Description: "Get an image with the sobel effect",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Sobel someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "hog",
-					Description: "Histogram of Oriented Gradients for an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Histogram someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "triangle",
-					Description: "Cool triangle effect for an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Triangle someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "blur",
-					Description: "Blurs a given image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Blur someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "rgb",
-					Description: "Get an RGB graph of an image's colors",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "RGB someone else",
+							Description: "user",
 							Required:    false,
 						},
 					},
@@ -598,56 +318,8 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "satan",
-					Description: "Put an image on the devil 😈",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Make someone else the devil",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "delete",
-					Description: "Generates a windows error meme based on a given image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Delete someone else",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "fedora",
-					Description: "Tips fedora in appreciation. *Platypus noise*.",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Fedora someone else",
-							Required:    false,
-						},
-					},
-				},
-			},
-		},
-		{
-			Name:        "imgset2",
-			Description: "Manipulate some more images!",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "hitler",
-					Description: "?????",
+					Name:        "ascii",
+					Description: "Cool hackerman effect for an image",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
@@ -660,42 +332,28 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "lego",
-					Description: "Every group of pixels is a lego brick",
+					Name:        "bomb",
+					Description: "Cool guys don't look at explosions",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
-							Description: "user",
+							Description: "Explode someone else",
 							Required:    false,
 						},
 					},
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "wanted",
-					Description: "Wanted poster of an image",
+					Name:        "bonk",
+					Description: "Get bonked on my cheems",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "stringify",
-					Description: "Turn your image into a ball of yarn",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
+							Description: "Bonk someone else",
 							Required:    false,
 						},
 					},
@@ -716,6 +374,96 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "charcoal",
+					Description: "mage into a charcoal drawing",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "colors",
+					Description: "Get an Image with the colors present in the image",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Colors someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "communism",
+					Description: "Support the soviet union comrade. Let the red flag fly!",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Convert someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "delete",
+					Description: "Generates a windows error meme based on a given image",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Delete someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "deepfry",
+					Description: "Deepfry an image",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "discord",
+					Description: "Generate realistic discord messages",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "message",
+							Description: "Message to be displayed",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Name and image to be displayed",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "earth",
 					Description: "The green and blue of the earth",
 					Required:    false,
@@ -730,8 +478,78 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "elmo",
+					Description: "Burning Elmo meme 🔥🔥",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "expand",
+					Description: "Animation that stretches an image",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Expand someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "fedora",
+					Description: "Tips fedora in appreciation. *Platypus noise*.",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Fedora someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "flip-image",
+					Description: "Flip an image",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Flip someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "freeze",
 					Description: "Blue ice like tint",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "glitch",
+					Description: "Are you there, Neo?",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
@@ -758,8 +576,8 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "mosiac",
-					Description: "Turn an image into a roman mosiac",
+					Name:        "hitler",
+					Description: "?????",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
@@ -772,14 +590,28 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "sithlord",
-					Description: "Put an image on the Laughs in Sithlord meme",
+					Name:        "hog",
+					Description: "Histogram of Oriented Gradients for an image",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
-							Description: "user",
+							Description: "Histogram someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "invert",
+					Description: "Get an image with an inverted color effect",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Invert someone else",
 							Required:    false,
 						},
 					},
@@ -800,8 +632,200 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "shatter",
-					Description: "Broken glass overlay",
+					Name:        "lego",
+					Description: "Every group of pixels is a lego brick",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+			},
+		},
+		{
+			Name:        "imgset2",
+			Description: "Manipulate some more images!",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "magik",
+					Description: "The much loved magik endpoint",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "mirror",
+					Description: "Mirror an image along the y-axis",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Mirror someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "modern-meme",
+					Description: "A modern meme generation system that allows reddit ready memes with just one endpoint",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "text",
+							Description: "it's top the text",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "mosiac",
+					Description: "Turn an image into a roman mosiac",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "motivational",
+					Description: "The black background with top and bottom motivational text.",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "top-text",
+							Description: "top msg",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "bottom-text",
+							Description: "bottom msg",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "murica",
+					Description: "Let the star spangled banner of the free and the brave soar",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Murica someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "night",
+					Description: "Turn an day into night",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "obama",
+					Description: "What's his last name?!",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "ApplicationCommandOptionUser",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "paint",
+					Description: "Turn an image into art",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "petpet",
+					Description: "Pet pet",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Pet someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "pixelate",
+					Description: "Pixelate yourself",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Mirror someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "posterize",
+					Description: "Posterizes an image",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
@@ -880,120 +904,8 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "trash",
-					Description: "Image is trash",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "deepfry",
-					Description: "Deepfry an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "ascii",
-					Description: "Cool hackerman effect for an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "charcoal",
-					Description: "mage into a charcoal drawing",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "posterize",
-					Description: "Posterizes an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "sepia",
-					Description: "Sepia Tone an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "swirl",
-					Description: "Swirl an image",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "paint",
-					Description: "Turn an image into art",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "night",
-					Description: "Turn an day into night",
+					Name:        "rain",
+					Description: "For the rainy days",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
@@ -1014,140 +926,6 @@ var (
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
 							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "magik",
-					Description: "The much loved magik endpoint",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "5guys1girl",
-					Description: "The meme",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "guys",
-							Description: "user",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "girl",
-							Description: "user",
-							Required:    true,
-						},
-					},
-				},
-			},
-		},
-		{
-			Name:        "imgset3",
-			Description: "MOAR!",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "slap",
-					Description: "Have one image slap another",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "slapper",
-							Description: "user",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "slapped",
-							Description: "user",
-							Required:    true,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "obama",
-					Description: "What's his last name?!",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "ApplicationCommandOptionUser",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "tweet",
-					Description: "Cast out to the void!",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "tweet",
-							Description: "Message to be displayed",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Name and image to be displayed",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "youtube",
-					Description: "Generate realistic Youtube messages",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "comment",
-							Description: "Message to be displayed",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Name and image to be displayed",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "discord",
-					Description: "Generate realistic discord messages",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "message",
-							Description: "Message to be displayed",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "Name and image to be displayed",
 							Required:    false,
 						},
 					},
@@ -1180,22 +958,38 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "motivational",
-					Description: "The black background with top and bottom motivational text.",
+					Name:        "rgb",
+					Description: "Get an RGB graph of an image's colors",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "top-text",
-							Description: "top msg",
-							Required:    true,
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "RGB someone else",
+							Required:    false,
 						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "satan",
+					Description: "Put an image on the devil 😈",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
 						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "bottom-text",
-							Description: "bottom msg",
-							Required:    true,
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Make someone else the devil",
+							Required:    false,
 						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "sepia",
+					Description: "Sepia Tone an image",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
@@ -1206,20 +1000,214 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "modern-meme",
-					Description: "A modern meme generation system that allows reddit ready memes with just one endpoint",
+					Name:        "shatter",
+					Description: "Broken glass overlay",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "sithlord",
+					Description: "Put an image on the Laughs in Sithlord meme",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "sketch",
+					Description: "Cool effect that shows how an image would have been created by an artist",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Sketch someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "slap",
+					Description: "Have one image slap another",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "slapper",
+							Description: "user",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "slapped",
+							Description: "user",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "sobel",
+					Description: "Get an image with the sobel effect",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Sobel someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "spin",
+					Description: "You spin me right round baby",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Spin someone else",
+							Required:    false,
+						},
+					},
+				},
+			},
+		},
+		{
+			Name:        "imgset3",
+			Description: "MOAR!",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "stringify",
+					Description: "Turn your image into a ball of yarn",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "swirl",
+					Description: "Swirl an image",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "trash",
+					Description: "Image is trash",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "triggered",
+					Description: "Get a triggered gif",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Trigger someone else",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "tweet",
+					Description: "Cast out to the void!",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "text",
-							Description: "it's top the text",
+							Name:        "tweet",
+							Description: "Message to be displayed",
 							Required:    true,
 						},
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
+							Description: "Name and image to be displayed",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "tv-static",
+					Description: "Tastes like Monster Energy™️",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
 							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "wanted",
+					Description: "Wanted poster of an image",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "user",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "wasted",
+					Description: "Get an image with GTA V Wasted screen",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "user",
+							Description: "Waste someone else",
 							Required:    false,
 						},
 					},
@@ -1246,84 +1234,20 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "elmo",
-					Description: "Burning Elmo meme 🔥🔥",
+					Name:        "youtube",
+					Description: "Generate realistic Youtube messages",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "comment",
+							Description: "Message to be displayed",
+							Required:    true,
 						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "tv-static",
-					Description: "Tastes like Monster Energy™️",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionUser,
 							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "rain",
-					Description: "For the rainy days",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "glitch",
-					Description: "Are you there, Neo?",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "sȶǟȶɨƈ-ɢʟɨȶƈɦ",
-					Description: "ʟɨʄɛ ɨֆ քǟɨռ",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
-							Required:    false,
-						},
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "album",
-					Description: "Make an album cover!",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionUser,
-							Name:        "user",
-							Description: "user",
+							Description: "Name and image to be displayed",
 							Required:    false,
 						},
 					},
@@ -1336,20 +1260,8 @@ var (
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "horoscope",
-					Description: "Gives daily horoscope",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "affirmation",
 					Description: "Gives daily affirmation",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "kanye",
-					Description: "Gifts us with a quote from the man himself",
 					Required:    false,
 				},
 				{
@@ -1364,56 +1276,24 @@ var (
 					Description: "Read a fun fact",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "horoscope",
+					Description: "Gives daily horoscope",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "kanye",
+					Description: "Gifts us with a quote from the man himself",
+					Required:    false,
+				},
 			},
 		},
 		{
 			Name:        "pick",
 			Description: "I'll pick stuff for you. I'll also pick a steam game with the 1st choice of 'steam'",
 			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "choices",
-					Description: "Will choose between 2 or more things.",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "1st",
-							Description: "First choice",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "2nd",
-							Description: "Second choice",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "3rd",
-							Description: "Third choice",
-							Required:    false,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "4th",
-							Description: "Fourth choice",
-							Required:    false,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "5th",
-							Description: "Fifth choice",
-							Required:    false,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "6th",
-							Description: "Sixth choice",
-							Required:    false,
-						},
-					},
-				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "album",
@@ -1460,9 +1340,47 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "steam",
-					Description: "Will choose a random Steam game to play.",
+					Name:        "choices",
+					Description: "Will choose between 2 or more things.",
 					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "1st",
+							Description: "First choice",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "2nd",
+							Description: "Second choice",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "3rd",
+							Description: "Third choice",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "4th",
+							Description: "Fourth choice",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "5th",
+							Description: "Fifth choice",
+							Required:    false,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "6th",
+							Description: "Sixth choice",
+							Required:    false,
+						},
+					},
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
@@ -1502,6 +1420,12 @@ var (
 						},
 					},
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "steam",
+					Description: "Will choose a random Steam game to play.",
+					Required:    false,
+				},
 			},
 		},
 		{
@@ -1514,12 +1438,12 @@ var (
 					Description: "Flips a coin...",
 					Required:    false,
 				},
-				{
+				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "wyr",
-					Description: "Would You Rather??",
+					Name:        "gtl",
+					Description: "Guess that Logo!",
 					Required:    false,
-				},
+				},*/
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "just-lost",
@@ -1540,36 +1464,22 @@ var (
 				},*/
 				/*{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "gtl",
-					Description: "Guess that Logo!",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "wtp",
 					Description: "Who's that Pokemon?!",
 					Required:    false,
 				},*/
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "wyr",
+					Description: "Would You Rather??",
+					Required:    false,
+				},
 			},
 		},
 		{
 			Name:        "txt",
 			Description: "Funky Texts",
 			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "clapback",
-					Description: "Say it with sass",
-					Required:    false,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "text",
-							Description: "Text to change",
-							Required:    true,
-						},
-					},
-				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "1337",
@@ -1600,8 +1510,22 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "emojiletters",
-					Description: "Emoji Text",
+					Name:        "clapback",
+					Description: "Say it with sass",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "text",
+							Description: "Text to change",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "cursed",
+					Description: "Cursed Text",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
@@ -1628,8 +1552,8 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "flipped",
-					Description: "bǝqqilᖷ",
+					Name:        "emojiletters",
+					Description: "Emoji Text",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
@@ -1642,8 +1566,8 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "cursed",
-					Description: "Cursed Text",
+					Name:        "flipped",
+					Description: "bǝqqilᖷ",
 					Required:    false,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
