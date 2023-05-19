@@ -90,11 +90,11 @@ func TestInsertDBmemberData(t *testing.T) {
 		var roles = []string{
 			"11111111111",
 		}
-		member := DBmemberItem{
+		member := dbMemberItem{
 			UserName: "BuddieBot",
 			UserID:   "866151939472883762",
 			Roles:    roles,
-			Inventory: DBinventoryItem{
+			Inventory: dbInventoryItem{
 				Currency: 69420,
 			},
 		}

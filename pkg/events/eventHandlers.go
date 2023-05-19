@@ -147,11 +147,11 @@ func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.Guild
 
 	log.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", m.Member.User.String(), guild.Name)
 
-	err = database.InsertDBmemberData(g.dbClient, m.Member, g.cfg)
+	/*err = database.InsertDBmemberData(g.dbClient, m.Member, g.cfg)
 	if err != nil {
 		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 		return
-	}
+	}*/
 }
 
 // GuildLeaveHandler when someone leaves our server
@@ -164,11 +164,11 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.Guil
 
 	log.Printf("%s left the server %s\n Seacrest OUT..", m.Member.User.String(), guild.Name)
 
-	err = database.DeleteDBmemberData(g.dbClient, m.Member, g.cfg)
+	/*err = database.DeleteDBmemberData(g.dbClient, m.Member, g.cfg)
 	if err != nil {
 		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 		return
-	}
+	}*/
 }
 
 // GuildCreateHandler bot joins new guild

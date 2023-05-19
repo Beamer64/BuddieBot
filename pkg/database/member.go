@@ -1,26 +1,17 @@
 package database
 
-import (
-	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/bwmarrin/discordgo"
-)
-
-type DBinventoryItem struct {
+type dbInventoryItem struct {
 	Currency int `json:"Currency"`
 }
 
-type DBmemberItem struct {
+type dbMemberItem struct {
 	UserName  string   `json:"UserName"`
 	UserID    string   `json:"UserID"`
 	Roles     []string `json:"Roles"`
-	Inventory DBinventoryItem
+	Inventory dbInventoryItem
 }
 
-func InsertDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *config.Configs) error {
+/*func InsertDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *config.Configs) error {
 	item, err := GetDBguildItemByGuildID(dbClient, cfg, m.GuildID)
 	if err != nil {
 		return err
@@ -34,11 +25,11 @@ func InsertDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *c
 		}
 
 		if !memberItemList[m.User.ID] {
-			member := DBmemberItem{
+			member := dbMemberItem{
 				UserName: m.User.Username,
 				UserID:   m.User.ID,
 				Roles:    m.Roles,
-				Inventory: DBinventoryItem{
+				Inventory: dbInventoryItem{
 					Currency: 69420,
 				},
 			}
@@ -85,9 +76,9 @@ func InsertDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *c
 	}
 
 	return nil
-}
+}*/
 
-func DeleteDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *config.Configs) error {
+/*func DeleteDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *config.Configs) error {
 	//check for existing db item
 	item, err := GetDBguildItemByGuildID(dbClient, cfg, m.GuildID)
 	if err != nil {
@@ -118,4 +109,4 @@ func DeleteDBmemberData(dbClient *dynamodb.DynamoDB, m *discordgo.Member, cfg *c
 		}
 	}
 	return nil
-}
+}*/

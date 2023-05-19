@@ -89,11 +89,8 @@ func TestFormatAudioFileName(t *testing.T) {
 	fileName = replacer.Replace(fileName)
 
 	//remove numbers
-	numRegex, err := regexp.Compile("[0-9]")
+	numRegex := regexp.MustCompile("[0-9]")
 	fileName = numRegex.ReplaceAllString(fileName, "")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	//capitalize first letters
 	caser := cases.Title(language.AmericanEnglish)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/beamer64/buddieBot/pkg/database"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/beamer64/buddieBot/pkg/web"
 	"strings"
@@ -69,10 +68,10 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		case "updatedbitems":
 			if m.GuildID == d.cfg.Configs.DiscordIDs.TestGuildID {
 				if helper.MemberHasRole(s, m.Member, m.GuildID, d.cfg.Configs.Settings.BotAdminRole) {
-					err := database.UpdateDBitems(d.dbClient, d.cfg)
+					/*err := database.UpdateDBitems(d.dbClient, d.cfg)
 					if err != nil {
 						helper.LogErrors(s, d.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-					}
+					}*/
 
 				} else {
 					_, err := s.ChannelMessageSend(m.ChannelID, d.cfg.Cmd.Msg.NotBotAdmin)

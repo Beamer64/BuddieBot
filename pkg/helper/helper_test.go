@@ -3,7 +3,7 @@ package helper
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -29,7 +29,7 @@ func TestToLeetCode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := io.ReadAll(jsonFile)
 	err = json.Unmarshal(byteValue, &letters)
 	if err != nil {
 		t.Fatal(err)
@@ -71,7 +71,7 @@ func TestToBubbleCode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := io.ReadAll(jsonFile)
 	err = json.Unmarshal(byteValue, &letters)
 	if err != nil {
 		t.Fatal(err)

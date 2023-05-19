@@ -24,7 +24,7 @@ type DBguildItem struct {
 	Name          string `json:"Name"`
 	OwnerID       string `json:"OwnerID"`
 	GuildSettings DBguildSettingsItem
-	Members       []DBmemberItem
+	Members       []dbMemberItem
 }
 
 func GetDBguildItemByGuildID(dbClient *dynamodb.DynamoDB, cfg *config.Configs, guildID string) (DBguildItem, error) {
@@ -52,7 +52,7 @@ func GetDBguildItemByGuildID(dbClient *dynamodb.DynamoDB, cfg *config.Configs, g
 	return guildObj, nil
 }
 
-func UpdateDBitems(dbClient *dynamodb.DynamoDB, cfg *config.Configs) error {
+/*func UpdateDBitems(dbClient *dynamodb.DynamoDB, cfg *config.Configs) error {
 	resp, err := dbClient.Scan(
 		&dynamodb.ScanInput{
 			TableName: aws.String(cfg.Configs.Database.TableName),
@@ -105,9 +105,9 @@ func UpdateDBitems(dbClient *dynamodb.DynamoDB, cfg *config.Configs) error {
 		}
 	}
 	return nil
-}
+}*/
 
-func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *config.Configs) error {
+/*func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *config.Configs) error {
 	//check for existing db item
 	item, err := GetDBguildItemByGuildID(dbClient, cfg, g.ID)
 	if err != nil {
@@ -117,13 +117,13 @@ func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *con
 	// guild does not exist in DB
 	if item.GuildID == "" {
 		//create db item
-		var memberList []DBmemberItem
+		var memberList []dbMemberItem
 		for _, v := range g.Members {
-			member := DBmemberItem{
+			member := dbMemberItem{
 				UserName: v.User.Username,
 				UserID:   v.User.ID,
 				Roles:    v.Roles,
-				Inventory: DBinventoryItem{
+				Inventory: dbInventoryItem{
 					Currency: 69420,
 				},
 			}
@@ -161,7 +161,7 @@ func InsertDBguildItem(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *con
 		fmt.Printf("Inserted DB Guild Item for %s\n", g.ID)
 	}
 	return nil
-}
+}*/
 
 func DeleteDBguildData(dbClient *dynamodb.DynamoDB, g *discordgo.Guild, cfg *config.Configs) error {
 	//check for existing db item

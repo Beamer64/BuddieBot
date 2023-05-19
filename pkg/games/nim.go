@@ -1,10 +1,5 @@
 package games
 
-import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
-)
-
 /*func SendNimEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	embed := &discordgo.MessageEmbed{
 		Title:       "12 Coin Nim",
@@ -31,12 +26,12 @@ import (
 	return nil
 }*/
 
-func startNim(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+/*func startNim(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 	return nil
-}
+}*/
 
-func sendPlayerInvite(s *discordgo.Session, m *discordgo.MessageCreate, user string) (bool, error) {
+/*func sendPlayerInvite(s *discordgo.Session, m *discordgo.MessageCreate, user string) (bool, error) {
 	usrID := strings.SplitAfter(user, "!")
 	userID := strings.Split(usrID[1], ">")[0]
 
@@ -51,4 +46,4 @@ func sendPlayerInvite(s *discordgo.Session, m *discordgo.MessageCreate, user str
 	}
 
 	return false, nil
-}
+}*/

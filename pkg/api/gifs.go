@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 )
@@ -29,7 +30,10 @@ func RequestGifURL(searchStr, tenorAPIkey string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to request gif URL: %v", err)
 	}
-	defer resp.Body.Close()
+
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("API call failed with status code %d", resp.StatusCode)
