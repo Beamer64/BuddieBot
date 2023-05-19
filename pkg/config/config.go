@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -13,13 +12,13 @@ import (
 )
 
 type Configs struct {
-	Configs         *Configuration
-	Cmd             *Command
+	Configs         *configuration
+	Cmd             *command
 	LoadingMessages []string
 	Emojis          []string
 }
 
-type Configuration struct {
+type configuration struct {
 	Keys struct {
 		ProdBotToken    string `yaml:"prodBotToken"`
 		TestBotToken    string `yaml:"testBotToken"`
@@ -36,7 +35,7 @@ type Configuration struct {
 		AffirmationAPI string `yaml:"affirmationAPI"`
 		KanyeAPI       string `yaml:"kanyeAPI"`
 		AdviceAPI      string `yaml:"adviceAPI"`
-		DoggoAPI       string `yaml:"doggoAPI"`
+		NinjaDoggoAPI  string `yaml:"ninjaDoggoAPI"`
 		NinjaKatzAPI   string `yaml:"ninjaKatzAPI"`
 		AlbumPickerAPI string `yaml:"albumPickerAPI"`
 		WYRAPI         string `yaml:"wyrAPI"`
@@ -69,7 +68,7 @@ type Configuration struct {
 	}
 }
 
-type Command struct {
+type command struct {
 	SlashName struct {
 		Tuuck   string `yaml:"tuuck"`
 		Pick    string `yaml:"pick"`
@@ -124,7 +123,7 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		}
 
 		// attempt to open dir
-		files, err := ioutil.ReadDir(cp)
+		files, err := os.ReadDir(cp)
 		if err != nil {
 			fmt.Printf("Couldn't find file in dir %s\n", cp)
 			continue
@@ -165,19 +164,19 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 	}
 
 	fmt.Println("Reading from config file...")
-	configFile, err := ioutil.ReadFile(configDir + "config.yaml")
+	configFile, err := os.ReadFile(configDir + "config.yaml")
 	if err != nil {
 		return nil, err
 	}
 
 	fmt.Println("Reading from cmd file...")
-	commandFile, err := ioutil.ReadFile(configDir + "cmd.yaml")
+	commandFile, err := os.ReadFile(configDir + "cmd.yaml")
 	if err != nil {
 		return nil, err
 	}
 
-	var cfg *Configuration
-	var command *Command
+	var cfg *configuration
+	var command *command
 
 	err = yaml.Unmarshal(configFile, &cfg)
 	if err != nil {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -203,7 +203,7 @@ func getLetters() (map[string][]map[string][]string, error) {
 		return nil, err
 	}
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := io.ReadAll(jsonFile)
 
 	err = json.Unmarshal(byteValue, &letters)
 	if err != nil {
