@@ -1,11 +1,9 @@
 package commands
 
 import (
-	"fmt"
 	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -33,7 +31,7 @@ var (
 			},
 		},
 		{
-			Name:        "ratethis",
+			Name:        "rate-this",
 			Description: "Rate this ...",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -264,6 +262,12 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "xkcd",
+					Description: "Better than Newspaper Comics",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "yomomma",
 					Description: "is sooooooo fat..",
 					Required:    false,
@@ -285,7 +289,7 @@ var (
 			},
 		},
 		{
-			Name:        "imgset1",
+			Name:        "img-b",
 			Description: "Manipulate some images!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -647,7 +651,7 @@ var (
 			},
 		},
 		{
-			Name:        "imgset2",
+			Name:        "img-e",
 			Description: "Manipulate some more images!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -1091,9 +1095,29 @@ var (
 			},
 		},
 		{
-			Name:        "imgset3",
+			Name:        "img-wbs",
 			Description: "MOAR!",
 			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "5guys1girl",
+					Description: "The meme",
+					Required:    false,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "guys",
+							Description: "user",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionUser,
+							Name:        "girl",
+							Description: "user",
+							Required:    true,
+						},
+					},
+				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "stringify",
@@ -1593,7 +1617,7 @@ var (
 			},
 		},
 		{
-			Name:        "config_settings",
+			Name:        "config-settings",
 			Description: "set guild settings",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -1631,24 +1655,21 @@ var (
 		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendHoroscopeCompResponse(s, i)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"album-suggest": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendAlbumPickCompResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"wyr-button": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendWYRCompResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 	}
@@ -1658,96 +1679,84 @@ var (
 		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendAnimalsResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"txt": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendTxtResponse(s, i)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
-		"ratethis": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"rate-this": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendRateThisResponse(s, i)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"get": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendGetResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
-		"imgset1": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"img-b": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
-		"imgset2": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"img-e": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
-		"imgset3": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"img-wbs": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"daily": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendDailyResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"pick": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendPickResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"tuuck": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendTuuckResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"play": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendPlayResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
-		"config_settings": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+		"config-settings": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendConfigResponse(s, i, cfg)
 			if err != nil {
-				fmt.Printf("%+v", errors.WithStack(err))
-				_, _ = s.ChannelMessageSendEmbed(cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, i.GuildID))
+				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 	}

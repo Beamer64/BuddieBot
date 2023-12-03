@@ -2,7 +2,6 @@ package events
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/beamer64/buddieBot/pkg/web"
@@ -12,16 +11,14 @@ import (
 )
 
 type MessageCreateHandler struct {
-	cfg      *config.Configs
-	botID    string
-	dbClient *dynamodb.DynamoDB
+	cfg   *config.Configs
+	botID string
 }
 
-func NewMessageCreateHandler(cfg *config.Configs, u *discordgo.User, dbc *dynamodb.DynamoDB) *MessageCreateHandler {
+func NewMessageCreateHandler(cfg *config.Configs, u *discordgo.User) *MessageCreateHandler {
 	return &MessageCreateHandler{
-		cfg:      cfg,
-		botID:    u.ID,
-		dbClient: dbc,
+		cfg:   cfg,
+		botID: u.ID,
 	}
 }
 

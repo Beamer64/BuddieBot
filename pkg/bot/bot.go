@@ -2,9 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/beamer64/buddieBot/pkg/commands"
 	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/beamer64/buddieBot/pkg/events"
@@ -12,7 +9,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"log"
 
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"time"
 )
 
@@ -37,12 +33,7 @@ func Init(cfg *config.Configs) error {
 		return fmt.Errorf("failed to grab Discord session User: %v", err)
 	}
 
-	dbClient, err := createDynamoDBClient(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to create DynamoDB client: %v", err)
-	}
-
-	registerEvents(botSession, cfg, user, dbClient)
+	registerEvents(botSession, cfg, user)
 
 	botSession.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
 	if err = botSession.Open(); err != nil {
@@ -58,36 +49,21 @@ func Init(cfg *config.Configs) error {
 	return nil
 }
 
-func createDynamoDBClient(cfg *config.Configs) (*dynamodb.DynamoDB, error) {
-	sess, err := session.NewSession(
-		&aws.Config{
-			Region:      aws.String(cfg.Configs.Database.Region),
-			Credentials: credentials.NewStaticCredentials(cfg.Configs.Database.AccessKey, cfg.Configs.Database.SecretKey, ""),
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS session: %v", err)
-	}
-
-	dbClient := dynamodb.New(sess)
-	return dbClient, nil
-}
-
-func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User, dbc *dynamodb.DynamoDB) {
+func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User) {
 	// Session
 	s.AddHandler(events.NewReadyHandler(cfg).ReadyHandler)
 
 	// Guild
-	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildCreateHandler)
-	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildDeleteHandler)
-	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildJoinHandler)
-	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildLeaveHandler)
+	s.AddHandler(events.NewGuildHandler(cfg).GuildCreateHandler)
+	s.AddHandler(events.NewGuildHandler(cfg).GuildDeleteHandler)
+	s.AddHandler(events.NewGuildHandler(cfg).GuildJoinHandler)
+	s.AddHandler(events.NewGuildHandler(cfg).GuildLeaveHandler)
 
 	// Members
-	s.AddHandler(events.NewGuildHandler(cfg, dbc).GuildMemberUpdateHandler)
+	s.AddHandler(events.NewGuildHandler(cfg).GuildMemberUpdateHandler)
 
 	// Messages
-	s.AddHandler(events.NewMessageCreateHandler(cfg, u, dbc).MessageCreateHandler)
+	s.AddHandler(events.NewMessageCreateHandler(cfg, u).MessageCreateHandler)
 	s.AddHandler(events.NewReactionHandler(cfg, u).ReactHandlerAdd)
 
 	// Commands

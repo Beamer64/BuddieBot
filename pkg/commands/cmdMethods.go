@@ -8,12 +8,12 @@ import (
 	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/beamer64/buddieBot/pkg/database"
 	"github.com/beamer64/buddieBot/pkg/helper"
-	"github.com/beamer64/godagpi/dagpi"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
 	"github.com/mitchellh/mapstructure"
 	"io"
 	"math/rand"
+	"mvdan.cc/xurls/v2"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -180,14 +180,11 @@ func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cf
 			if err != nil {
 				return err
 			}
-		case "setting":
-			settingName := i.ApplicationCommandData().Options[0].Options[0].StringValue()
-			newSettingValue := i.ApplicationCommandData().Options[0].Options[1].StringValue()
 
-			err = database.ChangeConfigSettingValueByName(settingName, newSettingValue, i.GuildID, cfg)
-			if err != nil {
-				return err
-			}
+		// TODO fix this
+		case "setting":
+			/*settingName := i.ApplicationCommandData().Options[0].Options[0].StringValue()
+			newSettingValue := i.ApplicationCommandData().Options[0].Options[1].StringValue()*/
 
 		default:
 			//send setting list
@@ -262,7 +259,7 @@ func getSettingsListEmbed(guildID string, cfg *config.Configs) (*discordgo.Messa
 //region Play Commands
 
 func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
+	client := cfg.Clients.Dagpi
 	options := i.ApplicationCommandData().Options[0]
 
 	var embed *discordgo.MessageEmbed
@@ -746,10 +743,12 @@ func getKatzEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 func callDoggoAPI(cfg *config.Configs) ([]doggo, error) {
 	client := http.Client{}
 
-	req, err := createNinjaAPIrequest(cfg, cfg.Configs.ApiURLs.NinjaDoggoAPI)
+	req, err := http.NewRequest("GET", cfg.Configs.ApiURLs.DoggoAPI, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new request: %v", err)
 	}
+
+	req.Header.Set("x-api-key", cfg.Configs.Keys.DoggoAPIkey)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -820,7 +819,7 @@ func createNinjaAPIrequest(cfg *config.Configs, url string) (*http.Request, erro
 //region Get Commands
 
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
+	client := cfg.Clients.Dagpi
 	options := i.ApplicationCommandData().Options[0]
 
 	var embed *discordgo.MessageEmbed
@@ -930,7 +929,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 	case "fake-person":
-		clientData, err := callFakePersonAPI(cfg)
+		personData, err := callFakePersonAPI(cfg)
 		if err != nil {
 			go func() {
 				err = helper.SendResponseError(s, i, errRespMsg)
@@ -938,10 +937,16 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return err
 		}
 
-		embed, err = getFakePersonEmbed(clientData)
-		if err != nil {
-			return err
+		embed = getFakePersonEmbed(personData)
+
+		data = &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
+			},
 		}
+
+	case "xkcd":
+		embed, err = getXkcdEmbed(cfg)
 
 		data = &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{
@@ -970,6 +975,49 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	return nil
 }
 
+func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
+	resp, err := http.Get(cfg.Configs.ApiURLs.XkcdAPI)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
+	}
+
+	html, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	doc := fmt.Sprintf("%s", html)
+
+	rxRelaxed := xurls.Strict()
+	links := rxRelaxed.FindAllString(doc, -1)
+
+	img := ""
+	for _, l := range links {
+		if strings.Contains(l, "https://imgs.xkcd.com/comics/") {
+			img = l
+			break
+		}
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title: "Sunfay Dunnies",
+		Color: helper.RangeIn(1, 16777215),
+		Image: &discordgo.MessageEmbedImage{
+			URL: img,
+		},
+	}
+
+	return embed, nil
+}
+
 func callFakePersonAPI(cfg *config.Configs) (fakePerson, error) {
 	var personObj fakePerson
 
@@ -994,7 +1042,7 @@ func callFakePersonAPI(cfg *config.Configs) (fakePerson, error) {
 	return personObj, nil
 }
 
-func getFakePersonEmbed(fakePersonObj fakePerson) (*discordgo.MessageEmbed, error) {
+func getFakePersonEmbed(fakePersonObj fakePerson) *discordgo.MessageEmbed {
 	fpObj := fakePersonObj.Results[0]
 	dob := strings.Split(fpObj.Dob.Date, "T")
 
@@ -1075,7 +1123,7 @@ func getFakePersonEmbed(fakePersonObj fakePerson) (*discordgo.MessageEmbed, erro
 		},
 	}
 
-	return embed, nil
+	return embed
 }
 
 //endregion
@@ -1083,7 +1131,7 @@ func getFakePersonEmbed(fakePersonObj fakePerson) (*discordgo.MessageEmbed, erro
 //region Img Commands
 
 func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
+	client := cfg.Clients.Dagpi
 	options := i.ApplicationCommandData().Options[0]
 
 	var user *discordgo.User
@@ -2658,7 +2706,7 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error
 //region Daily Commands
 
 func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	client := dagpi.Client{Auth: cfg.Configs.Keys.DagpiAPIkey}
+	client := cfg.Clients.Dagpi
 
 	optionName := i.ApplicationCommandData().Options[0].Name
 	var err error
@@ -2976,7 +3024,7 @@ func sendSteamPickResponse(cfg *config.Configs) (*discordgo.InteractionResponseD
 	}
 
 	data := &discordgo.InteractionResponseData{
-		Content: fmt.Sprintf("I have Chosen...\n%s\n☝(°ロ°)☝", gameURL),
+		Content: fmt.Sprintf("I have Chosen...\n %s \n☝(°ロ°)☝", gameURL),
 	}
 
 	return data, nil

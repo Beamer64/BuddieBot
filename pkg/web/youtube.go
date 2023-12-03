@@ -132,7 +132,6 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	)
 
 	fileName = strings.SplitAfterN(mpLink, "/", 12)[11]
-	fmt.Println(fileName)
 
 	return mpLink, fileName, nil
 }
@@ -257,7 +256,7 @@ func formatAudioFileName(fileName string) (string, error) {
 func MpFileCleanUp(dir string) error {
 	MpFileQueue = nil
 
-	log.Println("\nRunning Cleanup")
+	log.Println("Running Cleanup")
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return err

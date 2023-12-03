@@ -2,6 +2,7 @@ package config
 
 import (
 	"bufio"
+	"github.com/beamer64/godagpi/dagpi"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"log"
@@ -16,18 +17,19 @@ type Configs struct {
 	Cmd             *command
 	LoadingMessages []string
 	Emojis          []string
+	Clients         *clients
 }
 
 type configuration struct {
 	Keys struct {
-		ProdBotToken    string `yaml:"prodBotToken"`
-		TestBotToken    string `yaml:"testBotToken"`
-		WebHookToken    string `yaml:"webHookToken"`
-		BotPublicKey    string `yaml:"botPublicKey"`
-		TenorAPIkey     string `yaml:"tenorAPIkey"`
-		DagpiAPIkey     string `yaml:"dagpiAPIkey"`
-		NinjaAPIKey     string `yaml:"ninjaAPIKey"`
-		DoggoKatzAPIkey string `yaml:"doggoKatzAPIkey"`
+		ProdBotToken string `yaml:"prodBotToken"`
+		TestBotToken string `yaml:"testBotToken"`
+		WebHookToken string `yaml:"webHookToken"`
+		BotPublicKey string `yaml:"botPublicKey"`
+		TenorAPIkey  string `yaml:"tenorAPIkey"`
+		DagpiAPIkey  string `yaml:"dagpiAPIkey"`
+		NinjaAPIKey  string `yaml:"ninjaAPIKey"`
+		DoggoAPIkey  string `yaml:"doggoAPIkey"`
 	} `yaml:"keys"`
 
 	ApiURLs struct {
@@ -35,11 +37,12 @@ type configuration struct {
 		AffirmationAPI string `yaml:"affirmationAPI"`
 		KanyeAPI       string `yaml:"kanyeAPI"`
 		AdviceAPI      string `yaml:"adviceAPI"`
-		NinjaDoggoAPI  string `yaml:"ninjaDoggoAPI"`
+		DoggoAPI       string `yaml:"doggoAPI"`
 		NinjaKatzAPI   string `yaml:"ninjaKatzAPI"`
 		AlbumPickerAPI string `yaml:"albumPickerAPI"`
 		WYRAPI         string `yaml:"wyrAPI"`
 		FakePersonAPI  string `yaml:"fakePersonAPI"`
+		XkcdAPI        string `yaml:"xkcdAPI"`
 	} `yaml:"apiURLs"`
 
 	DiscordIDs struct {
@@ -112,6 +115,10 @@ type command struct {
 		TenorAPIError   string `yaml:"tenorAPIError"`
 		YoutubeAPIError string `yaml:"youtubeAPIError"`
 	} `yaml:"message"`
+}
+
+type clients struct {
+	Dagpi *dagpi.Client
 }
 
 func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
@@ -204,12 +211,21 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		return nil, err
 	}
 
+	clients := registerClients(cfg)
+
 	return &Configs{
 		Configs:         cfg,
 		Cmd:             cmd,
 		LoadingMessages: msgs,
 		Emojis:          emojis,
+		Clients:         clients,
 	}, nil
+}
+
+func registerClients(cfg *configuration) *clients {
+	return &clients{
+		Dagpi: &dagpi.Client{Auth: cfg.Keys.DagpiAPIkey},
+	}
 }
 
 // finds and returns []string from txt file

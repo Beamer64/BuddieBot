@@ -273,7 +273,7 @@ func TestGetYtAudioLink(t *testing.T) {
 	//badLink := "https://www.youtube.com/watch?v=Y7cgLu0PuQo"
 
 	// Good Link: Cherry - FLETCHER feat. Hayley Kiyoko
-	goodLink := "https://www.youtube.com/watch?v=GvxlJPMicfA"
+	goodLink := "https://www.youtube.com/watch?v=5T5tjZzZZDM"
 
 	//Long Link: video is 45 mins
 	//longLink := "https://www.youtube.com/watch?v=YbXMLCdzsCA&t=1744s"

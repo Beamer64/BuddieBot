@@ -2,10 +2,8 @@ package events
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/beamer64/buddieBot/pkg/commands"
 	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/beamer64/buddieBot/pkg/database"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
@@ -20,18 +18,16 @@ type ReactionHandler struct {
 type ReadyHandler struct{ cfg *config.Configs }
 type CommandHandler struct{ cfg *config.Configs }
 type GuildHandler struct {
-	cfg      *config.Configs
-	dbClient *dynamodb.DynamoDB
+	cfg *config.Configs
 }
 
 func NewCommandHandler(cfg *config.Configs) *CommandHandler {
 	return &CommandHandler{cfg: cfg}
 }
 
-func NewGuildHandler(cfg *config.Configs, dbc *dynamodb.DynamoDB) *GuildHandler {
+func NewGuildHandler(cfg *config.Configs) *GuildHandler {
 	return &GuildHandler{
-		cfg:      cfg,
-		dbClient: dbc,
+		cfg: cfg,
 	}
 }
 
@@ -146,12 +142,6 @@ func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.Guild
 	}
 
 	log.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", m.Member.User.String(), guild.Name)
-
-	/*err = database.InsertDBmemberData(g.dbClient, m.Member, g.cfg)
-	if err != nil {
-		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-		return
-	}*/
 }
 
 // GuildLeaveHandler when someone leaves our server
@@ -163,22 +153,10 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.Guil
 	}
 
 	log.Printf("%s left the server %s\n Seacrest OUT..", m.Member.User.String(), guild.Name)
-
-	/*err = database.DeleteDBmemberData(g.dbClient, m.Member, g.cfg)
-	if err != nil {
-		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-		return
-	}*/
 }
 
 // GuildCreateHandler bot joins new guild
 func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
-	/*err := database.InsertDBguildItem(g.dbClient, e.Guild, g.cfg)
-	if err != nil {
-		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)
-		return
-	}*/
-
 	if helper.IsLaunchedByDebugger() {
 		return
 	}
@@ -223,9 +201,10 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 
 // GuildDeleteHandler when bot leaves a server
 func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.GuildDelete) {
-	err := database.DeleteDBguildData(g.dbClient, e.Guild, g.cfg)
+	//TODO add this in
+	/*err := Do sum
 	if err != nil {
 		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)
 		return
-	}
+	}*/
 }
