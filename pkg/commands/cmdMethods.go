@@ -24,7 +24,7 @@ import (
 
 // functions here should mostly be used for the slash commands
 
-//region Utility Commands
+// region Utility Commands
 
 func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	options := i.ApplicationCommandData().Options
@@ -149,7 +149,7 @@ func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cf
 	}
 
 	if !helper.MemberHasRole(s, i.Member, i.GuildID, cfg.Configs.Settings.BotAdminRole) {
-		//send setting list
+		// send setting list
 		err = s.InteractionRespond(
 			i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -166,7 +166,7 @@ func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cf
 	} else {
 		switch i.ApplicationCommandData().Options[0].Name {
 		case "list":
-			//send setting list
+			// send setting list
 			err = s.InteractionRespond(
 				i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -187,7 +187,7 @@ func sendConfigResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cf
 			newSettingValue := i.ApplicationCommandData().Options[0].Options[1].StringValue()*/
 
 		default:
-			//send setting list
+			// send setting list
 			err = s.InteractionRespond(
 				i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -254,9 +254,9 @@ func getSettingsListEmbed(guildID string, cfg *config.Configs) (*discordgo.Messa
 	return settingListEmbed, nil
 }
 
-//endregion
+// endregion
 
-//region Play Commands
+// region Play Commands
 
 func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	client := cfg.Clients.Dagpi
@@ -509,9 +509,9 @@ func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-//endregion
+// endregion
 
-//region Animal Commands
+// region Animal Commands
 
 func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	commandName := i.ApplicationCommandData().Options[0].Name
@@ -814,9 +814,9 @@ func createNinjaAPIrequest(cfg *config.Configs, url string) (*http.Request, erro
 	return req, nil
 }
 
-//endregion
+// endregion
 
-//region Get Commands
+// region Get Commands
 
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	client := cfg.Clients.Dagpi
@@ -1126,33 +1126,30 @@ func getFakePersonEmbed(fakePersonObj fakePerson) *discordgo.MessageEmbed {
 	return embed
 }
 
-//endregion
+// endregion
 
-//region Img Commands
+// region Img Commands
 
 func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	client := cfg.Clients.Dagpi
 	options := i.ApplicationCommandData().Options[0]
 
-	var user *discordgo.User
 	var imgName string
 	var bufferImage []byte
 	var err error
 
+	user, err := s.User(i.Member.User.ID)
+	if err != nil {
+		return err
+	}
+
+	if len(options.Options) > 0 {
+		user = options.Options[0].UserValue(s)
+	}
 	errRespMsg := "Unable to edit image at this moment, please try later :("
 
 	switch options.Name {
 	case "pixelate":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Pixelate(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1164,17 +1161,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Pixelate.png"
 
 	case "mirror":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Mirror(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1186,17 +1172,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Mirror.png"
 
 	case "flip-image":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.FlipImage(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1208,16 +1183,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "FlipImage.png"
 
 	case "colors":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Colors(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1229,16 +1194,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Colors.png"
 
 	case "murica":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.America(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1250,17 +1205,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "America.png"
 
 	case "communism":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Communism(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1272,17 +1216,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Communism.png"
 
 	case "triggered":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Triggered(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1294,17 +1227,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Triggered.png"
 
 	case "expand":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-
-		}
-
 		bufferImage, err = client.ExpandImage(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1316,18 +1238,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "ExpandImage.png"
 
 	case "wasted":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-
-		}
-
 		bufferImage, err = client.Wasted(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1339,18 +1249,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Wasted.png"
 
 	case "sketch":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-
-		}
-
 		bufferImage, err = client.Sketch(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1362,17 +1260,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Sketch.png"
 
 	case "spin":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.SpinImage(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1384,17 +1271,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "SpinImage.png"
 
 	case "petpet":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.PetPet(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1406,17 +1282,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "PetPet.png"
 
 	case "bonk":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Bonk(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1428,17 +1293,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Bonk.png"
 
 	case "bomb":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Bomb(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1450,17 +1304,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Bomb.png"
 
 	case "shake":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Shake(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1472,17 +1315,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Shake.png"
 
 	case "invert":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Invert(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1494,17 +1326,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Invert.png"
 
 	case "sobel":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Sobel(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1516,17 +1337,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Sobel.png"
 
 	case "hog":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Hog(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1538,17 +1348,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Hog.png"
 
 	case "triangle":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Triangle(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1560,17 +1359,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Triangle.png"
 
 	case "blur":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Blur(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1582,17 +1370,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Blur.png"
 
 	case "rgb":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.RGB(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1604,16 +1381,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "RGB.png"
 
 	case "angel":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Angel(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1625,17 +1392,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Angel.png"
 
 	case "satan":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Satan(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1647,16 +1403,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Satan.png"
 
 	case "delete":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Delete(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1668,16 +1414,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Delete.png"
 
 	case "fedora":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Fedora(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1689,16 +1425,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Fedora.png"
 
 	case "hitler":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Hitler(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1710,17 +1436,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Hitler.png"
 
 	case "lego":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Lego(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1732,17 +1447,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Lego.png"
 
 	case "wanted":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Wanted(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1754,16 +1458,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Wanted.png"
 
 	case "stringify":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Stringify(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1775,16 +1469,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Stringify.png"
 
 	case "burn":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Burn(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1796,16 +1480,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Burn.png"
 
 	case "earth":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Earth(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1817,17 +1491,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Earth.png"
 
 	case "freeze":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Freeze(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1839,17 +1502,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Freeze.png"
 
 	case "ground":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Ground(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1861,16 +1513,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Ground.png"
 
 	case "mosiac":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Mosiac(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1882,17 +1524,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Mosiac.png"
 
 	case "sithlord":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Sithlord(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1904,17 +1535,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Sithlord.png"
 
 	case "jail":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Jail(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1926,17 +1546,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Jail.png"
 
 	case "shatter":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Shatter(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1972,16 +1581,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "pride.png"
 
 	case "trash":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Trash(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -1993,16 +1592,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Trash.png"
 
 	case "deepfry":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Deepfry(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2014,16 +1603,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "deepfry.png"
 
 	case "ascii":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Ascii(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2035,16 +1614,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Ascii.png"
 
 	case "charcoal":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Charcoal(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2056,16 +1625,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Charcoal.png"
 
 	case "posterize":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Posterize(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2077,16 +1636,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Posterize.png"
 
 	case "sepia":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Sepia(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2098,16 +1647,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Sepia.png"
 
 	case "swirl":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Swirl(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2119,17 +1658,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Swirl.png"
 
 	case "paint":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Paint(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2141,16 +1669,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Paint.png"
 
 	case "night":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Night(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2162,16 +1680,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "night.png"
 
 	case "rainbow":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Rainbow(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2183,16 +1691,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Rainbow.png"
 
 	case "magik":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Magik(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2232,16 +1730,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "slap.png"
 
 	case "obama":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Obama(user.AvatarURL("300"), user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2411,16 +1899,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "why_are_you_gay.png"
 
 	case "elmo":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Elmo(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2432,16 +1910,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "elmo.png"
 
 	case "tv-static":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.TvStatic(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2453,16 +1921,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "static.png"
 
 	case "rain":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Rain(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2474,17 +1932,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "rain.png"
 
 	case "glitch":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Glitch(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2496,16 +1943,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "glitch.png"
 
 	case "sȶǟȶɨƈ-ɢʟɨȶƈɦ":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.GlitchStatic(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2517,17 +1954,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "static.png"
 
 	case "album":
-		switch len(options.Options) {
-		case 0:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 1:
-			user = options.Options[0].UserValue(s)
-		}
-
 		bufferImage, err = client.Album(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
@@ -2561,9 +1987,9 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	return nil
 }
 
-//endregion
+// endregion
 
-//region RateThis Commands
+// region RateThis Commands
 
 func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	options := i.ApplicationCommandData().Options[0]
@@ -2644,9 +2070,9 @@ func getRateTitleAndDesc(ratingName string, user string, score string) (string, 
 	}
 }
 
-//endregion
+// endregion
 
-//region Txt Commands
+// region Txt Commands
 
 func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	options := i.ApplicationCommandData().Options[0]
@@ -2701,9 +2127,9 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error
 	return nil
 }
 
-//endregion
+// endregion
 
-//region Daily Commands
+// region Daily Commands
 
 func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	client := cfg.Clients.Dagpi
@@ -2773,18 +2199,18 @@ func getHoroscopeResponseData() *discordgo.InteractionResponseData {
 						CustomID:    "horo-select",
 						Placeholder: "Zodiac",
 						Options: []discordgo.SelectMenuOption{
-							{Label: "Aquarius", Value: "aquarius", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🌊"}},
-							{Label: "Aries", Value: "aries", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🐏"}},
-							{Label: "Cancer", Value: "cancer", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🦀"}},
-							{Label: "Capricorn", Value: "capricorn", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🐐"}},
-							{Label: "Gemini", Value: "gemini", Default: false, Emoji: discordgo.ComponentEmoji{Name: "♊"}},
-							{Label: "Leo", Value: "leo", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🦁"}},
-							{Label: "Libra", Value: "libra", Default: false, Emoji: discordgo.ComponentEmoji{Name: "⚖️"}},
-							{Label: "Pisces", Value: "pisces", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🐠"}},
-							{Label: "Sagittarius", Value: "sagittarius", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🏹"}},
-							{Label: "Scorpio", Value: "scorpio", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🦂"}},
-							{Label: "Taurus", Value: "taurus", Default: false, Emoji: discordgo.ComponentEmoji{Name: "🐃"}},
-							{Label: "Virgo", Value: "virgo", Default: false, Emoji: discordgo.ComponentEmoji{Name: "♍"}},
+							{Label: "Aquarius", Value: "aquarius", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🌊"}},
+							{Label: "Aries", Value: "aries", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🐏"}},
+							{Label: "Cancer", Value: "cancer", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🦀"}},
+							{Label: "Capricorn", Value: "capricorn", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🐐"}},
+							{Label: "Gemini", Value: "gemini", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "♊"}},
+							{Label: "Leo", Value: "leo", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🦁"}},
+							{Label: "Libra", Value: "libra", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "⚖️"}},
+							{Label: "Pisces", Value: "pisces", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🐠"}},
+							{Label: "Sagittarius", Value: "sagittarius", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🏹"}},
+							{Label: "Scorpio", Value: "scorpio", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🦂"}},
+							{Label: "Taurus", Value: "taurus", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "🐃"}},
+							{Label: "Virgo", Value: "virgo", Default: false, Emoji: &discordgo.ComponentEmoji{Name: "♍"}},
 						},
 					},
 				},
@@ -2975,9 +2401,9 @@ func getSignNumber(sign string) string {
 	return signNum
 }
 
-//endregion
+// endregion
 
-//region Pick Commands
+// region Pick Commands
 
 func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	option := strings.ToLower(i.ApplicationCommandData().Options[0].Name)
@@ -3151,7 +2577,7 @@ func callAlbumPickerAPI(cfg *config.Configs, tagSlice []string, tagStr string) (
 
 	urlTags := ""
 	if tagStr == "" {
-		//we need to separate by commas and spaces and add brackets because API bad
+		// we need to separate by commas and spaces and add brackets because API bad
 		urlTags = strings.Join(tagSlice, ", ")
 	} else {
 		urlTags = tagStr
@@ -3253,7 +2679,7 @@ func getSteamGame(cfg *config.Configs) (string, error) {
 	for steamObj.Applist.Apps[randomIndex].Name == "" {
 		randomIndex = rand.Intn(len(steamObj.Applist.Apps))
 	}
-	//gameURL := fmt.Sprintf("steam://openurl/https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Appid)
+	// gameURL := fmt.Sprintf("steam://openurl/https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Appid)
 	gameURL := fmt.Sprintf("https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Appid)
 
 	return gameURL, nil
@@ -3278,9 +2704,9 @@ func addPollReactions(emojis []string, i *discordgo.InteractionCreate, s *discor
 	return nil
 }
 
-//endregion
+// endregion
 
-//region Component Commands
+// region Component Commands
 
 func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	sign := i.MessageComponentData().Values[0]
@@ -3296,7 +2722,7 @@ func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
 	msgContent := ""
 	msgEdit.Content = &msgContent
-	msgEdit.Embeds = []*discordgo.MessageEmbed{embed}
+	msgEdit.Embeds = &[]*discordgo.MessageEmbed{embed}
 
 	// edit response (i.Interaction) and replace with embed
 	_, err = s.ChannelMessageEditComplex(msgEdit)
@@ -3337,7 +2763,7 @@ func sendAlbumPickCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
 	msgContent := ""
 	msgEdit.Content = &msgContent
-	msgEdit.Embeds = []*discordgo.MessageEmbed{embed}
+	msgEdit.Embeds = &[]*discordgo.MessageEmbed{embed}
 
 	// edit response (i.Interaction) and replace with embed
 	_, err = s.ChannelMessageEditComplex(msgEdit)
@@ -3376,7 +2802,7 @@ func sendWYRCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
 	msgContent := ""
 	msgEdit.Content = &msgContent
-	msgEdit.Embeds = []*discordgo.MessageEmbed{embed}
+	msgEdit.Embeds = &[]*discordgo.MessageEmbed{embed}
 
 	// edit response (i.Interaction) and replace with embed
 	_, err = s.ChannelMessageEditComplex(msgEdit)
@@ -3403,4 +2829,4 @@ func sendWYRCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 	return nil
 }
 
-//endregion
+// endregion
