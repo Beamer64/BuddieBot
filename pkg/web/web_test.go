@@ -80,19 +80,19 @@ func TestFormatAudioFileName(t *testing.T) {
 
 	fileName := "293416960237240320/Audio/welcome_to_the_internet_bo_burnham_frominside-7031555991360336165.mp3"
 
-	//split at "/"
+	// split at "/"
 	splitName := strings.SplitAfterN(fileName, "/", 3)
 	fileName = splitName[2]
 
-	//replace characters
+	// replace characters
 	replacer := strings.NewReplacer("/", "", "_", " ", "-", "", ".mp3", "")
 	fileName = replacer.Replace(fileName)
 
-	//remove numbers
+	// remove numbers
 	numRegex := regexp.MustCompile("[0-9]")
 	fileName = numRegex.ReplaceAllString(fileName, "")
 
-	//capitalize first letters
+	// capitalize first letters
 	caser := cases.Title(language.AmericanEnglish)
 	fileName = caser.String(fileName)
 
@@ -264,19 +264,23 @@ func TestGetMembers(t *testing.T) {
 }
 
 func TestGetYtAudioLink(t *testing.T) {
+	if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
+	}
+
 	start := time.Now()
 	/*if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}*/
 
 	// Bad Link: Won't work with website
-	//badLink := "https://www.youtube.com/watch?v=Y7cgLu0PuQo"
+	// badLink := "https://www.youtube.com/watch?v=Y7cgLu0PuQo"
 
 	// Good Link: Cherry - FLETCHER feat. Hayley Kiyoko
 	goodLink := "https://www.youtube.com/watch?v=5T5tjZzZZDM"
 
-	//Long Link: video is 45 mins
-	//longLink := "https://www.youtube.com/watch?v=YbXMLCdzsCA&t=1744s"
+	// Long Link: video is 45 mins
+	// longLink := "https://www.youtube.com/watch?v=YbXMLCdzsCA&t=1744s"
 
 	/*cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
 	if err != nil {
@@ -366,7 +370,7 @@ func TestGetYtAudioLink(t *testing.T) {
 			if ev, ok := ev.(*network.EventResponseReceived); ok {
 				if strings.Contains(ev.Response.URL, ".mp3") {
 					mpLink = ev.Response.URL
-					//fmt.Println("closing alert:", ev.Response)
+					// fmt.Println("closing alert:", ev.Response)
 				}
 			}
 		},
