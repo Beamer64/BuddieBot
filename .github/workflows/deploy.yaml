@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-release:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
 
@@ -17,56 +17,57 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.18
+          go-version: 1.20
 
-      - name: Test
-        run:  |
-              go test -v ./...
+      #      - name: Test
+      #        run:  |
+      #              go test -v ./...
 
       - name: Build
         run:  |
               go get ./...
               go get -u layeh.com/gopus
               go build -o buddiebot_server cmd/discord-bot/main.go
+      
 
-
-      - name: Send build file to server
-        uses: appleboy/scp-action@master
-        with:
-          host:     ${{ secrets.EC2_HOST_NAME }}
-          username: ${{ secrets.HOST_USERNAME }}
-          password: ${{ secrets.HOST_PASSWORD }}
-          source:   "./buddiebot_server"
-          target:   "/home/ubuntu/${{ github.sha }}"
-
-
-      - name: Send config files to server
-        uses: appleboy/scp-action@master
-        with:
-          host:     ${{ secrets.EC2_HOST_NAME }}
-          username: ${{ secrets.HOST_USERNAME }}
-          password: ${{ secrets.HOST_PASSWORD }}
-          source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
-          target:   "/home/ubuntu/${{ github.sha }}"
+      #      - name: Send build file to server
+      #        uses: appleboy/scp-action@master
+      #        with:
+      #          host:     ${{ secrets.EC2_HOST_NAME }}
+      #          username: ${{ secrets.HOST_USERNAME }}
+      #          password: ${{ secrets.HOST_PASSWORD }}
+      #          source:   "./buddiebot_server"
+      #          target:   "/home/ubuntu/${{ github.sha }}"
+      #
+      #
+      #      - name: Send config files to server
+      #        uses: appleboy/scp-action@master
+      #        with:
+      #          host:     ${{ secrets.EC2_HOST_NAME }}
+      #          username: ${{ secrets.HOST_USERNAME }}
+      #          password: ${{ secrets.HOST_PASSWORD }}
+      #          source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
+      #          target:   "/home/ubuntu/${{ github.sha }}"
 
 
       - name: Stop and restart service
-        uses: appleboy/ssh-action@master
-        with:
-          host:     ${{ secrets.EC2_HOST_NAME }}
-          username: ${{ secrets.HOST_USERNAME }}
-          password: ${{ secrets.HOST_PASSWORD }}
-          script:   |
-                    echo '${{ secrets.CONFIG_KEYS }}' > ${{ github.sha }}/config_files/config.yaml
-                    
-                    sudo mv ${{ github.sha }}/config_files/bot.service /etc/systemd/system
-                    cd /etc/systemd/system
-                    sudo systemctl daemon-reload
-                    sudo systemctl enable bot.service
-                    sudo systemctl start bot.service
-                    sudo unlink current
-                    if [ -d /home/ubuntu/current_build ]; then sudo mv /home/ubuntu/current_build /home/ubuntu/previous_build; fi
-                    sudo mv /home/ubuntu/${{ github.sha }} /home/ubuntu/current_build
-                    sudo ln -sf current_build current
-                    sudo rm -rf previous_build
-                    sudo systemctl restart bot.service
+        #        uses: appleboy/ssh-action@master
+        #        with:
+        #          host:     ${{ secrets.EC2_HOST_NAME }}
+        #          username: ${{ secrets.HOST_USERNAME }}
+        #          password: ${{ secrets.HOST_PASSWORD }}
+        run:  |
+              echo This is working
+#                    echo '${{ secrets.CONFIG_KEYS }}' > ${{ github.sha }}/config_files/config.yaml
+#
+#                    sudo mv ${{ github.sha }}/config_files/bot.service /etc/systemd/system
+#                    cd /etc/systemd/system
+#                    sudo systemctl daemon-reload
+#                    sudo systemctl enable bot.service
+#                    sudo systemctl start bot.service
+#                    sudo unlink current
+#                    if [ -d /home/ubuntu/current_build ]; then sudo mv /home/ubuntu/current_build /home/ubuntu/previous_build; fi
+#                    sudo mv /home/ubuntu/${{ github.sha }} /home/ubuntu/current_build
+#                    sudo ln -sf current_build current
+#                    sudo rm -rf previous_build
+#                    sudo systemctl restart bot.service
