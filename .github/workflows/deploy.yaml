@@ -23,11 +23,11 @@ jobs:
       #        run:  |
       #              go test -v ./...
 
-      #      - name: Build
-      #        run:  |
-      #              go get ./...
-      #              go get -u layeh.com/gopus
-      #              go build -o buddiebot_server cmd/discord-bot/main.go
+      - name: Build
+        run:  |
+              go get ./...
+              go get -u layeh.com/gopus
+              go build -o buddiebot_server cmd/discord-bot/main.go
       
 
       #      - name: Send build file to server
