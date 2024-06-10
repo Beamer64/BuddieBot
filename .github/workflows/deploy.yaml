@@ -27,10 +27,10 @@ jobs:
         run:  |
               go clean -modcache
               go get ./...
-          #              go get -u layeh.com/gopus
-                go build -o buddiebot_server cmd/discord-bot/main.go
+              go build -o buddiebot_server cmd/discord-bot/main.go
+      #              go get -u layeh.com/gopus
       
-
+      
       #      - name: Send build file to server
       #        uses: appleboy/scp-action@master
       #        with:
