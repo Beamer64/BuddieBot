@@ -29,6 +29,7 @@ jobs:
               go get ./...
               go get -u layeh.com/gopus
               go mod tidy
+              go env -w CGO_ENABLED=1
               go build -o buddiebot_server cmd/discord-bot/main.go
       
 
