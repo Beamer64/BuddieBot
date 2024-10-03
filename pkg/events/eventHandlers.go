@@ -10,6 +10,10 @@ import (
 	"log"
 )
 
+type MessageCreateHandler struct {
+	cfg   *config.Configs
+	botID string
+}
 type ReactionHandler struct {
 	cfg   *config.Configs
 	botID string
@@ -19,6 +23,13 @@ type ReadyHandler struct{ cfg *config.Configs }
 type CommandHandler struct{ cfg *config.Configs }
 type GuildHandler struct {
 	cfg *config.Configs
+}
+
+func NewMessageCreateHandler(cfg *config.Configs, u *discordgo.User) *MessageCreateHandler {
+	return &MessageCreateHandler{
+		cfg:   cfg,
+		botID: u.ID,
+	}
 }
 
 func NewCommandHandler(cfg *config.Configs) *CommandHandler {
@@ -112,6 +123,15 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 	}
 }
 
+// MessageCreateHandler handles all messages sent to the discord server
+func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID == d.botID {
+		return
+	}
+
+	commands.ParsePrefixCmds(s, m, d.cfg)
+}
+
 // GuildMemberUpdateHandler Sent when a guild member is updated.
 func (g *GuildHandler) GuildMemberUpdateHandler(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
 	/*embed := &discordgo.MessageEmbed{
@@ -201,7 +221,7 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 
 // GuildDeleteHandler when bot leaves a server
 func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.GuildDelete) {
-	//TODO add this in
+	// TODO add this in
 	/*err := Do sum
 	if err != nil {
 		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)

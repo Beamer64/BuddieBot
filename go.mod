@@ -3,6 +3,7 @@ module github.com/beamer64/buddieBot
 go 1.20
 
 require (
+	github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923
 	github.com/aws/aws-sdk-go v1.44.264
 	github.com/beamer64/godagpi v0.0.0-20220209065335-4a6defdff5de
 	github.com/bwmarrin/dgvoice v0.0.0-20210225172318-caaac756e02e

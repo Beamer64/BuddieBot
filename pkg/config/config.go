@@ -22,14 +22,16 @@ type Configs struct {
 
 type configuration struct {
 	Keys struct {
-		ProdBotToken string `yaml:"prodBotToken"`
-		TestBotToken string `yaml:"testBotToken"`
-		WebHookToken string `yaml:"webHookToken"`
-		BotPublicKey string `yaml:"botPublicKey"`
-		TenorAPIkey  string `yaml:"tenorAPIkey"`
-		DagpiAPIkey  string `yaml:"dagpiAPIkey"`
-		NinjaAPIKey  string `yaml:"ninjaAPIKey"`
-		DoggoAPIkey  string `yaml:"doggoAPIkey"`
+		ProdBotToken     string `yaml:"prodBotToken"`
+		TestBotToken     string `yaml:"testBotToken"`
+		WebHookToken     string `yaml:"webHookToken"`
+		BotPublicKey     string `yaml:"botPublicKey"`
+		TenorAPIkey      string `yaml:"tenorAPIkey"`
+		DagpiAPIkey      string `yaml:"dagpiAPIkey"`
+		NinjaAPIKey      string `yaml:"ninjaAPIKey"`
+		DoggoAPIkey      string `yaml:"doggoAPIkey"`
+		ModerationPATKey string `yaml:"moderationPATKey"`
+		ImgbbAPIkey      string `yaml:"imgbbAPIkey"`
 	} `yaml:"keys"`
 
 	ApiURLs struct {
@@ -43,24 +45,28 @@ type configuration struct {
 		WYRAPI         string `yaml:"wyrAPI"`
 		FakePersonAPI  string `yaml:"fakePersonAPI"`
 		XkcdAPI        string `yaml:"xkcdAPI"`
+		ImgbbAPI       string `yaml:"imgbbAPI"`
 	} `yaml:"apiURLs"`
 
 	DiscordIDs struct {
-		CurrentBotAppID     string `yaml:"currentBotAppID"`
-		ProdBotAppID        string `yaml:"prodBotAppID"`
-		TestBotAppID        string `yaml:"testBotAppID"`
-		MasterGuildID       string `yaml:"masterGuildID"`
-		TestGuildID         string `yaml:"testGuildID"`
-		WebHookID           string `yaml:"webHookID"`
-		ErrorLogChannelID   string `yaml:"errorLogChannelID"`
-		EventNotifChannelID string `yaml:"eventNotifChannelID"`
+		CurrentBotAppID         string `yaml:"currentBotAppID"`
+		ProdBotAppID            string `yaml:"prodBotAppID"`
+		TestBotAppID            string `yaml:"testBotAppID"`
+		MasterGuildID           string `yaml:"masterGuildID"`
+		TestGuildID             string `yaml:"testGuildID"`
+		WebHookID               string `yaml:"webHookID"`
+		ErrorLogChannelID       string `yaml:"errorLogChannelID"`
+		EventNotifChannelID     string `yaml:"eventNotifChannelID"`
+		FeatureTestingChannelID string `yaml:"featureTestingChannelID"`
 	} `yaml:"discordIDs"`
 
 	Settings struct {
-		BotPrefix     string `yaml:"botPrefix"`
-		BotAdminRole  string `yaml:"botAdminRole"`
-		Email         string `yaml:"email"`
-		EmailPassword string `yaml:"emailPassword"`
+		BotPrefix            string `yaml:"botPrefix"`
+		BotAdminRole         string `yaml:"botAdminRole"`
+		Email                string `yaml:"email"`
+		EmailPassword        string `yaml:"emailPassword"`
+		EnableNSFWModeration bool   `yaml:"enableNSFWModeration"`
+		NsfwChannelName      string `yaml:"nsfwChannelName"`
 	} `yaml:"settings"`
 
 	Database struct {

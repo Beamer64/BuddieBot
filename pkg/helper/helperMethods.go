@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
+	"image"
+	"image/png"
 	"io"
 	"math/rand"
 	"os"
@@ -212,4 +214,28 @@ func getLetters() (map[string][]map[string][]string, error) {
 	}
 
 	return letters, nil
+}
+
+func CreateImgFile(imgPath string, img image.Image) error {
+	// save imageData
+	toimg, err := os.Create(imgPath)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Created image location...")
+
+	defer func(toimg *os.File) {
+		err = toimg.Close()
+	}(toimg)
+	if err != nil {
+		return err
+	}
+
+	err = png.Encode(toimg, img)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Image Encoded...")
+
+	return nil
 }

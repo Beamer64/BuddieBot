@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/beamer64/buddieBot/pkg/api"
@@ -9,6 +10,7 @@ import (
 	"github.com/beamer64/buddieBot/pkg/database"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
+	"github.com/chromedp/chromedp"
 	"github.com/gocolly/colly/v2"
 	"github.com/mitchellh/mapstructure"
 	"io"
@@ -16,6 +18,7 @@ import (
 	"mvdan.cc/xurls/v2"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -854,6 +857,18 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			Content: fmt.Sprintf("%s\n(ง ͠° ͟ل͜ ͡°)ง", content),
 		}
 
+	case "landsat":
+		text := options.Options[0].StringValue()
+		embed, err = getLandSatImage(text)
+
+		data = &discordgo.InteractionResponseData{
+			Attachments: &[]*discordgo.MessageAttachment{
+				{
+					Filename: "F:\\Projects\\Go_Projects\\DiscordBot\\cmd\\discord-bot\\fullScreenshot.png",
+				},
+			},
+		}
+
 	case "joke":
 		clientData, err := client.Joke()
 		if err != nil {
@@ -969,10 +984,56 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("error sendind Interaction: %v", err)
+		return fmt.Errorf("error sending Interaction: %v", err)
 	}
 
 	return nil
+}
+
+func getLandSatImage(text string) (*discordgo.MessageEmbed, error) {
+	landsatUrl := "https://landsat.gsfc.nasa.gov/apps/YourNameInLandsat-main/index.html"
+
+	ctx, cancel := chromedp.NewContext(context.Background()) // options: chromedp.WithDebugf(log.Printf)
+	ctx, cancel = context.WithTimeout(ctx, 40*time.Second)
+	defer cancel()
+
+	txtCount := strings.ReplaceAll(text, " ", "")
+	count := float64(len(txtCount))
+
+	wait := count * (26.3 / 100.0)
+	if wait < 4 {
+		wait = 4
+	}
+
+	var buf []byte
+
+	// navigate to url and submit text
+	err := chromedp.Run(
+		ctx,
+		chromedp.Navigate(landsatUrl),
+		chromedp.WaitVisible(`nameInput`, chromedp.ByID),
+		chromedp.SendKeys(`nameInput`, text),
+		chromedp.Click(`enterButton`, chromedp.ByID),
+		chromedp.Sleep(time.Duration(wait)*time.Second),
+		chromedp.Screenshot(`nameBoxes`, &buf),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = os.WriteFile("fullScreenshot.png", buf, 0o644); err != nil {
+		return nil, err
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title: "Sunfay Dunnies",
+		Color: helper.RangeIn(1, 16777215),
+		Image: &discordgo.MessageEmbedImage{
+			URL: "F:\\Projects\\Go_Projects\\DiscordBot\\cmd\\discord-bot\\fullScreenshot.png",
+		},
+	}
+
+	return embed, nil
 }
 
 func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
