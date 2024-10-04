@@ -282,7 +282,7 @@ func sendCistercianNumeral(s *discordgo.Session, m *discordgo.MessageCreate, cfg
 				return err
 			}
 
-			imgURL, err := getImgbbUploadURL(cfg, imgPath, 60)
+			imgURL, err := getImgbbUploadURL(cfg, imgPath, 10)
 			if err != nil {
 				return err
 			}
@@ -320,7 +320,7 @@ func sendCistercianNumeral(s *discordgo.Session, m *discordgo.MessageCreate, cfg
 }
 
 func drawCistLines(hasPrefix bool, posNum string) (image.Image, error) {
-	var imgRect = image.Rect(0, 0, 100, 100)
+	var imgRect = image.Rect(0, 0, 200, 200)
 	var img = image.NewRGBA(imgRect)
 	r := helper.RangeIn(0, 255)
 	g := helper.RangeIn(0, 255)
@@ -329,11 +329,11 @@ func drawCistLines(hasPrefix bool, posNum string) (image.Image, error) {
 
 	if hasPrefix {
 		// draw horizontal line
-		bresenham.DrawLine(img, 30, 50, 70, 50, col)
+		bresenham.DrawLine(img, 60, 100, 140, 100, col)
 	}
 
 	// draw vertical line
-	bresenham.DrawLine(img, 50, 10, 50, 90, col)
+	bresenham.DrawLine(img, 100, 20, 100, 180, col)
 
 	var x1 int
 	var x2 int
@@ -345,14 +345,14 @@ func drawCistLines(hasPrefix bool, posNum string) (image.Image, error) {
 		case 0: // thous
 			switch char {
 			case '5':
-				bresenham.DrawLine(img, 30, 90, 50, 70, col)
+				bresenham.DrawLine(img, 60, 180, 100, 140, col)
 			case '7':
-				bresenham.DrawLine(img, 30, 90, 30, 70, col)
+				bresenham.DrawLine(img, 60, 180, 60, 140, col)
 			case '8':
-				bresenham.DrawLine(img, 30, 70, 30, 90, col)
+				bresenham.DrawLine(img, 60, 140, 60, 180, col)
 			case '9':
-				bresenham.DrawLine(img, 30, 90, 30, 70, col)
-				bresenham.DrawLine(img, 30, 70, 50, 70, col)
+				bresenham.DrawLine(img, 60, 180, 60, 140, col)
+				bresenham.DrawLine(img, 60, 140, 100, 140, col)
 			}
 
 			x1 = thous[string(char)].x1
@@ -362,14 +362,14 @@ func drawCistLines(hasPrefix bool, posNum string) (image.Image, error) {
 		case 1: // hunds
 			switch char {
 			case '5':
-				bresenham.DrawLine(img, 70, 90, 50, 70, col)
+				bresenham.DrawLine(img, 140, 180, 100, 140, col)
 			case '7':
-				bresenham.DrawLine(img, 70, 90, 70, 70, col)
+				bresenham.DrawLine(img, 140, 180, 140, 140, col)
 			case '8':
-				bresenham.DrawLine(img, 70, 70, 70, 90, col)
+				bresenham.DrawLine(img, 140, 140, 140, 180, col)
 			case '9':
-				bresenham.DrawLine(img, 70, 90, 70, 70, col)
-				bresenham.DrawLine(img, 70, 70, 50, 70, col)
+				bresenham.DrawLine(img, 140, 180, 140, 140, col)
+				bresenham.DrawLine(img, 140, 140, 100, 140, col)
 			}
 
 			x1 = hunds[string(char)].x1
@@ -379,14 +379,14 @@ func drawCistLines(hasPrefix bool, posNum string) (image.Image, error) {
 		case 2: // tens
 			switch char {
 			case '5':
-				bresenham.DrawLine(img, 30, 10, 50, 30, col)
+				bresenham.DrawLine(img, 60, 20, 100, 60, col)
 			case '7':
-				bresenham.DrawLine(img, 30, 10, 30, 30, col)
+				bresenham.DrawLine(img, 60, 20, 60, 60, col)
 			case '8':
-				bresenham.DrawLine(img, 30, 30, 30, 10, col)
+				bresenham.DrawLine(img, 60, 60, 60, 20, col)
 			case '9':
-				bresenham.DrawLine(img, 30, 10, 30, 30, col)
-				bresenham.DrawLine(img, 30, 30, 50, 30, col)
+				bresenham.DrawLine(img, 60, 20, 60, 60, col)
+				bresenham.DrawLine(img, 60, 60, 100, 60, col)
 			}
 
 			x1 = tens[string(char)].x1
@@ -396,14 +396,14 @@ func drawCistLines(hasPrefix bool, posNum string) (image.Image, error) {
 		case 3: // ones
 			switch char {
 			case '5':
-				bresenham.DrawLine(img, 50, 30, 70, 10, col)
+				bresenham.DrawLine(img, 100, 60, 140, 20, col)
 			case '7':
-				bresenham.DrawLine(img, 70, 10, 70, 30, col)
+				bresenham.DrawLine(img, 140, 20, 140, 60, col)
 			case '8':
-				bresenham.DrawLine(img, 70, 30, 70, 10, col)
+				bresenham.DrawLine(img, 140, 60, 140, 20, col)
 			case '9':
-				bresenham.DrawLine(img, 70, 10, 70, 30, col)
-				bresenham.DrawLine(img, 70, 30, 50, 30, col)
+				bresenham.DrawLine(img, 140, 20, 140, 60, col)
+				bresenham.DrawLine(img, 140, 60, 100, 60, col)
 			}
 
 			x1 = ones[string(char)].x1
