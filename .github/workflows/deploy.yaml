@@ -35,7 +35,7 @@ jobs:
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
-                password: ${{ secrets.HOST_PASSWORD }}
+                key:      ${{ secrets.RSA_KEY }}
                 source:   "./buddiebot_server"
                 target:   "/home/harley/${{ github.sha }}"
       
@@ -45,7 +45,7 @@ jobs:
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
-                password: ${{ secrets.HOST_PASSWORD }}
+                key:      ${{ secrets.RSA_KEY }}
                 source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
                 target:   "/home/harley/${{ github.sha }}"
 
