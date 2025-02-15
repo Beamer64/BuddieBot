@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-release:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
 
@@ -25,32 +25,29 @@ jobs:
 
       - name: Build
         run:  |
-              go clean -modcache
               go get ./...
               go get -u layeh.com/gopus
-              go mod tidy
-              go env -w CGO_ENABLED=1
               go build -o buddiebot_server cmd/discord-bot/main.go
       
 
-      #      - name: Send build file to server
-      #        uses: appleboy/scp-action@master
-      #        with:
-      #          host:     ${{ secrets.EC2_HOST_NAME }}
-      #          username: ${{ secrets.HOST_USERNAME }}
-      #          password: ${{ secrets.HOST_PASSWORD }}
-      #          source:   "./buddiebot_server"
-      #          target:   "/home/ubuntu/${{ github.sha }}"
-      #
-      #
-      #      - name: Send config files to server
-      #        uses: appleboy/scp-action@master
-      #        with:
-      #          host:     ${{ secrets.EC2_HOST_NAME }}
-      #          username: ${{ secrets.HOST_USERNAME }}
-      #          password: ${{ secrets.HOST_PASSWORD }}
-      #          source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
-      #          target:   "/home/ubuntu/${{ github.sha }}"
+      - name: Send build file to server
+        uses: appleboy/scp-action@master
+        with:
+                host:     ${{ secrets.HOST_IP }}
+                username: ${{ secrets.HOST_USERNAME }}
+                password: ${{ secrets.HOST_PASSWORD }}
+                source:   "./buddiebot_server"
+                target:   "/home/harley/${{ github.sha }}"
+      
+      
+      - name: Send config files to server
+        uses: appleboy/scp-action@master
+        with:
+                host:     ${{ secrets.HOST_IP }}
+                username: ${{ secrets.HOST_USERNAME }}
+                password: ${{ secrets.HOST_PASSWORD }}
+                source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
+                target:   "/home/harley/${{ github.sha }}"
 
 
       - name: Stop and restart service
