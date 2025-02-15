@@ -33,16 +33,6 @@ jobs:
        # run: |
         #  ping -c 4 ${{ secrets.HOST_IP }}
         #  nc -zv ${{ secrets.HOST_IP }} 22
-
-      - name: Stop and restart service
-        uses: appleboy/ssh-action@master
-        with:
-                host:     ${{ secrets.HOST_IP }}
-                username: ${{ secrets.HOST_USERNAME }}
-                password: ${{ secrets.HOST_PASSWORD }}
-                key:      ${{ secrets.RSA_KEY }}
-                script:  |
-                  echo This is working
       
       - name: Send build file to server
         uses: appleboy/scp-action@master
