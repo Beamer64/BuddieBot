@@ -39,8 +39,9 @@ jobs:
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
+                password: ${{ secrets.HOST_PASSWORD }}
                 port:     22
-                key:      ${{ secrets.RSA_KEY }}
+                #key:      ${{ secrets.RSA_KEY }}
                 source:   "./buddiebot_server"
                 target:   "/home/${{ secrets.HOST_USERNAME }}/${{ github.sha }}"
       
@@ -50,8 +51,9 @@ jobs:
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
+                password: ${{ secrets.HOST_PASSWORD }}
                 port:     22
-                key:      ${{ secrets.RSA_KEY }}
+                #key:      ${{ secrets.RSA_KEY }}
                 source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
                 target:   "/home/${{ secrets.HOST_USERNAME }}/${{ github.sha }}"
 
