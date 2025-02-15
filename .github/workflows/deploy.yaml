@@ -29,7 +29,6 @@ jobs:
               go get -u layeh.com/gopus
               go build -o buddiebot_server cmd/discord-bot/main.go
       
-
       - name: Send build file to server
         uses: appleboy/scp-action@v0.1.3
         with:
