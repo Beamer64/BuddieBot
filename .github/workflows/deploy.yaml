@@ -31,7 +31,7 @@ jobs:
       
 
       - name: Send build file to server
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v.0.1.3
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
@@ -42,7 +42,7 @@ jobs:
       
       
       - name: Send config files to server
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v.0.1.3
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
