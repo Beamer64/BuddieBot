@@ -37,7 +37,7 @@ jobs:
                 # password: ${{ secrets.HOST_PASSWORD }}
                 key:      ${{ secrets.RSA_KEY }}
                 source:   "./buddiebot_server"
-                target:   "/home/${{ secrets.HOST_USERNAME }}/${{ github.sha }}"
+                target:   "~/${{ github.sha }}"
       
       
       - name: Send config files to server
