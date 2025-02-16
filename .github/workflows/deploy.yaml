@@ -30,12 +30,13 @@ jobs:
               go build -o buddiebot_server cmd/discord-bot/main.go
       
       - name: Send build file to server
-        uses: appleboy/scp-action@v0.1.3
+        uses: appleboy/scp-action@master
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
                 # password: ${{ secrets.HOST_PASSWORD }}
                 key:      ${{ secrets.RSA_KEY }}
+                timeout:  120s
                 source:   "./buddiebot_server"
                 target:   "/home/${{ secrets.HOST_USERNAME }}/${{ github.sha }}"
       
