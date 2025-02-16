@@ -31,8 +31,8 @@ jobs:
 
       - name: Debug SSH Connection
         run: |
-          ping -c 4 ${{ secrets.SSH_HOST }}
-          nc -zv ${{ secrets.SSH_HOST }} 22
+          ping -c 4 ${{ secrets.HOST_IP  }}
+          nc -zv ${{ secrets.HOST_IP  }} 22
       
       - name: Send build file to server
         uses: appleboy/scp-action@v0.1.3
