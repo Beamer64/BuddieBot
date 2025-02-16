@@ -34,18 +34,19 @@ jobs:
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
-                password: ${{ secrets.HOST_PASSWORD }}
+                # password: ${{ secrets.HOST_PASSWORD }}
                 key:      ${{ secrets.RSA_KEY }}
+                timeout:  120
                 source:   "./buddiebot_server"
                 target:   "/home/${{ secrets.HOST_USERNAME }}/${{ github.sha }}"
       
       
       - name: Send config files to server
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.3
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
-                password: ${{ secrets.HOST_PASSWORD }}
+                # password: ${{ secrets.HOST_PASSWORD }}
                 key:      ${{ secrets.RSA_KEY }}
                 source:   "config_files/config.yaml,config_files/cmd.yaml,config_files/bot.service,config_files/loading_messages.txt,config_files/emojis.txt,config_files/text_fonts.json"
                 target:   "/home/${{ secrets.HOST_USERNAME }}/${{ github.sha }}"
