@@ -31,7 +31,7 @@ jobs:
 
       - name: Debug SSH Connection
         run: |
-          ping -c 4 ${{ secrets.HOST_IP  }}
+          ping -n 4 ${{ secrets.HOST_IP  }}
           nc -zv ${{ secrets.HOST_IP  }} 22
       
       - name: Send build file to server
