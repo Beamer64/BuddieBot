@@ -28,18 +28,14 @@ jobs:
               go get ./...
               go get -u layeh.com/gopus
               go build -o buddiebot_server cmd/discord-bot/main.go
-
-      - name: Debug SSH Connection
-        run: |
-          nc -zv ${{ secrets.HOST_IP  }} 22
       
       - name: Send build file to server
-        uses: appleboy/scp-action@v0.1.3
+        uses: appleboy/scp-action@v0.1.7
         with:
                 host:     ${{ secrets.HOST_IP }}
                 username: ${{ secrets.HOST_USERNAME }}
-                # password: ${{ secrets.HOST_PASSWORD }}
-                key:      ${{ secrets.RSA_KEY }}
+                password: ${{ secrets.HOST_PASSWORD }}
+                # key:      ${{ secrets.RSA_KEY }}
                 source:   "./buddiebot_server"
                 target:   "~/${{ github.sha }}"
       
