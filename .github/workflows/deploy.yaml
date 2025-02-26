@@ -28,6 +28,16 @@ jobs:
               go get ./...
               go get -u layeh.com/gopus
               go build -o buddiebot_server cmd/discord-bot/main.go
+
+      - name: create New Build Dir
+        uses: appleboy/ssh-action@master
+        with:
+                host:     ${{ secrets.HOST_IP }}
+                username: ${{ secrets.HOST_USERNAME }}
+                password: ${{ secrets.HOST_PASSWORD }}
+                key:      ${{ secrets.RSA_KEY }}
+                script:  |
+                  sudo mkdir ~/${{ github.sha }}
       
       - name: Send build file to server
         uses: appleboy/scp-action@v0.1.7
@@ -37,7 +47,7 @@ jobs:
                 password: ${{ secrets.HOST_PASSWORD }}
                 # key:      ${{ secrets.RSA_KEY }}
                 source:   "./buddiebot_server"
-                target:   "~/${{ github.sha }}"
+                target:   "/home/debian/${{ github.sha }}"
       
       
       - name: Send config files to server
