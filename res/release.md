@@ -1,4 +1,4 @@
-# release Notes 7/10/2022
+# release Notes 02/25/25
 
 <h2> Here is a more detailed look at the most recent release notes.</h2>
 These notes may include any changes from bot behavior to commands to comment and future changes.
