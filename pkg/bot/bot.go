@@ -17,10 +17,10 @@ func Init(cfg *config.Configs) error {
 	botENV := ""
 	if helper.IsLaunchedByDebugger() {
 		token = cfg.Configs.Keys.TestBotToken
-		botENV = "BB Test is ready to go!"
+		botENV = "BB Test is ready for commands!"
 	} else {
 		token = cfg.Configs.Keys.ProdBotToken
-		botENV = "BuddieBot is ready to go!"
+		botENV = "BuddieBot is ready for commands!"
 	}
 
 	botSession, err := discordgo.New("Bot " + token)
