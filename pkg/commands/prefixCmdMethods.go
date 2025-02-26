@@ -40,9 +40,9 @@ func testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) 
 }
 
 func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	embed := ReleaseNotesEmbed
+	embed := releaseNotesEmbed
 
-	embed.Author.URL = m.Author.Username
+	embed.Author.Name = m.Author.Username
 	embed.Author.IconURL = m.Author.AvatarURL("")
 
 	msg := &discordgo.MessageSend{
