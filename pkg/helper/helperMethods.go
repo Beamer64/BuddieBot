@@ -1,36 +1,25 @@
 package helper
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 	"image"
 	"image/png"
 	"io"
 	"math/rand"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 )
-
-var ApprovalWords = []string{
-	"enabled",
-	"on",
-	"true",
-	"yes",
-	"sure",
-}
-
-var DisapprovalWords = []string{
-	"disabled",
-	"off",
-	"false",
-	"no",
-	"nope",
-}
 
 func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.MessageEmbed {
 	var guild *discordgo.Guild
@@ -238,4 +227,61 @@ func CreateImgFile(imgPath string, img image.Image) error {
 	fmt.Println("Image Encoded...")
 
 	return nil
+}
+
+func GetImgbbUploadURL(cfg *config.Configs, imgPath string, expireSecs ...int) (string, error) {
+	apiUrl := fmt.Sprintf("%s&key=%s", cfg.Configs.ApiURLs.ImgbbAPI, cfg.Configs.Keys.ImgbbAPIkey)
+	if expireSecs != nil {
+		apiUrl = fmt.Sprintf("%sexpiration=%s&key=%s", cfg.Configs.ApiURLs.ImgbbAPI, strconv.Itoa(expireSecs[0]), cfg.Configs.Keys.ImgbbAPIkey)
+	}
+
+	// Read the entire file into a byte slice
+	imgBytes, err := os.ReadFile(imgPath)
+	if err != nil {
+		return "", err
+	}
+
+	// Create a buffer to write out multipart form data to
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// Add the imageData field
+	base64img := base64.StdEncoding.EncodeToString(imgBytes)
+	err = writer.WriteField("image", base64img)
+	if err != nil {
+		return "", fmt.Errorf("failed to write field: %w", err)
+	}
+
+	// Close the writer to finalize the form data
+	err = writer.Close()
+	if err != nil {
+		return "", fmt.Errorf("failed to close writer: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", apiUrl, body)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var imgbbDataObject imgBBData
+	err = json.Unmarshal(respBody, &imgbbDataObject)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal response body: %w", err)
+	}
+
+	return imgbbDataObject.Data.URL, nil
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/beamer64/buddieBot/pkg/api"
 	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/beamer64/buddieBot/pkg/database"
@@ -15,7 +16,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"io"
 	"math/rand"
-	"mvdan.cc/xurls/v2"
 	"net/http"
 	"net/url"
 	"os"
@@ -826,10 +826,19 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	options := i.ApplicationCommandData().Options[0]
 
 	var embed *discordgo.MessageEmbed
-	var data *discordgo.InteractionResponseData
+	var data *discordgo.MessageSend
 	var err error
 
 	errRespMsg := "Unable to fetch data atm, Try again later."
+
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error sending deferred Interaction: %v", err)
+	}
 
 	switch options.Name {
 	case "rekd":
@@ -853,19 +862,17 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			content = fmt.Sprintf("<@!%s>\n%s", user.ID, clientData)
 		}
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Content: fmt.Sprintf("%s\n(ง ͠° ͟ل͜ ͡°)ง", content),
 		}
 
 	case "landsat":
 		text := options.Options[0].StringValue()
-		embed, err = getLandSatImage(text)
+		embed, err = getLandSatImageEmbed(cfg, text)
 
-		data = &discordgo.InteractionResponseData{
-			Attachments: &[]*discordgo.MessageAttachment{
-				{
-					Filename: "F:\\Projects\\Go_Projects\\DiscordBot\\cmd\\discord-bot\\fullScreenshot.png",
-				},
+		data = &discordgo.MessageSend{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
 			},
 		}
 
@@ -884,7 +891,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return err
 		}
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Content: fmt.Sprintf("%s", jokeObj.Joke),
 		}
 
@@ -897,7 +904,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return err
 		}
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Content: fmt.Sprintf("%s", clientData),
 		}
 
@@ -920,7 +927,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			content = fmt.Sprintf("<@!%s>\n%s", user.ID, clientData)
 		}
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Content: content,
 		}
 
@@ -939,7 +946,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return err
 		}
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Content: fmt.Sprintf("%s", pickupObj.Joke),
 		}
 
@@ -954,7 +961,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		embed = getFakePersonEmbed(personData)
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Embeds: []*discordgo.MessageEmbed{
 				embed,
 			},
@@ -963,7 +970,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "xkcd":
 		embed, err = getXkcdEmbed(cfg)
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Embeds: []*discordgo.MessageEmbed{
 				embed,
 			},
@@ -977,63 +984,88 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 	}
 
-	err = s.InteractionRespond(
+	err = s.InteractionResponseDelete(i.Interaction)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.ChannelMessageSendComplex(
+		i.ChannelID, &discordgo.MessageSend{
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
+			},
+		},
+	)
+	/*err = s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: data,
 		},
-	)
+	)*/
 	if err != nil {
 		return fmt.Errorf("error sending Interaction: %v", err)
 	}
 
+	fmt.Println(data)
+
 	return nil
 }
 
-func getLandSatImage(text string) (*discordgo.MessageEmbed, error) {
-	landsatUrl := "https://landsat.gsfc.nasa.gov/apps/YourNameInLandsat-main/index.html"
-
-	ctx, cancel := chromedp.NewContext(context.Background()) // options: chromedp.WithDebugf(log.Printf)
-	ctx, cancel = context.WithTimeout(ctx, 40*time.Second)
-	defer cancel()
-
-	txtCount := strings.ReplaceAll(text, " ", "")
-	count := float64(len(txtCount))
-
-	wait := count * (26.3 / 100.0)
-	if wait < 4 {
-		wait = 4
-	}
-
-	var buf []byte
-
-	// navigate to url and submit text
-	err := chromedp.Run(
-		ctx,
-		chromedp.Navigate(landsatUrl),
-		chromedp.WaitVisible(`nameInput`, chromedp.ByID),
-		chromedp.SendKeys(`nameInput`, text),
-		chromedp.Click(`enterButton`, chromedp.ByID),
-		chromedp.Sleep(time.Duration(wait)*time.Second),
-		chromedp.Screenshot(`nameBoxes`, &buf),
-	)
+func getLandSatImageEmbed(cfg *config.Configs, text string) (*discordgo.MessageEmbed, error) {
+	imgPath, err := getLandsatImage(cfg, text)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = os.WriteFile("fullScreenshot.png", buf, 0o644); err != nil {
+	imgURL, err := helper.GetImgbbUploadURL(cfg, imgPath, 10)
+	if err != nil {
 		return nil, err
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title: "Sunfay Dunnies",
+		Title: "Landsat, more like...landFLAT...amirite non-round supporters??.",
 		Color: helper.RangeIn(1, 16777215),
 		Image: &discordgo.MessageEmbedImage{
-			URL: "F:\\Projects\\Go_Projects\\DiscordBot\\cmd\\discord-bot\\fullScreenshot.png",
+			URL: imgURL,
+		},
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:    cfg.Configs.ApiURLs.LandsatAPI,
+			IconURL: imgURL,
 		},
 	}
 
 	return embed, nil
+}
+
+func getLandsatImage(cfg *config.Configs, text string) (string, error) {
+	landsatUrl := cfg.Configs.ApiURLs.LandsatAPI
+
+	ctx, cancel := chromedp.NewContext(context.Background())
+	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	var buf []byte
+	// Navigate to the page, insert text, and click the button
+	err := chromedp.Run(
+		ctx,
+		chromedp.Navigate(landsatUrl),
+		chromedp.WaitVisible(`#nameInput`),
+		chromedp.SendKeys(`#nameInput`, text, chromedp.NodeVisible),
+		chromedp.WaitVisible(`#enterButton`),
+		chromedp.Click(`#enterButton`),
+		chromedp.Sleep(5*time.Second),
+		chromedp.Screenshot("#nameBoxes", &buf, chromedp.NodeVisible),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	filename := "../../res/genFiles/landSat.png"
+	if err = os.WriteFile(filename, buf, 0644); err != nil {
+		return "", err
+	}
+
+	return filename, nil
 }
 
 func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
@@ -1041,7 +1073,6 @@ func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(resp.Body)
@@ -1050,29 +1081,31 @@ func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 		return nil, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
 	}
 
-	html, err := io.ReadAll(resp.Body)
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	doc := fmt.Sprintf("%s", html)
-
-	rxRelaxed := xurls.Strict()
-	links := rxRelaxed.FindAllString(doc, -1)
-
-	img := ""
-	for _, l := range links {
-		if strings.Contains(l, "https://imgs.xkcd.com/comics/") {
-			img = l
-			break
-		}
-	}
+	imgURL := "https:"
+	doc.Find("#comic img").EachWithBreak(
+		func(i int, s *goquery.Selection) bool {
+			if src, exists := s.Attr("src"); exists {
+				imgURL = imgURL + src
+				return false // Stop after finding the first image
+			}
+			return true
+		},
+	)
 
 	embed := &discordgo.MessageEmbed{
-		Title: "Sunfay Dunnies",
+		Title: "People used to read comics.",
 		Color: helper.RangeIn(1, 16777215),
 		Image: &discordgo.MessageEmbedImage{
-			URL: img,
+			URL: imgURL,
+		},
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:    "Generated with xkcd.com",
+			IconURL: imgURL,
 		},
 	}
 

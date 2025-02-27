@@ -1,22 +1,18 @@
 package commands
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/StephaneBunel/bresenham"
 	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/chromedp/chromedp"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 )
@@ -48,52 +44,6 @@ func TestPickChoices(t *testing.T) {
 
 		println(choice)
 	}
-}
-
-func Test(t *testing.T) {
-	if os.Getenv("INTEGRATION") != "true" {
-		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}
-
-	landsatUrl := "https://landsat.gsfc.nasa.gov/apps/YourNameInLandsat-main/index.html"
-
-	ctx, cancel := chromedp.NewContext(context.Background()) // options: chromedp.WithDebugf(log.Printf)
-	ctx, cancel = context.WithTimeout(ctx, 40*time.Second)
-	defer cancel()
-
-	// text := "Pablo Diego Jose Francisco" // 23
-	text := "Harley" // 6
-	// text := "Harley Quinn" // 11
-	// origTxtCount := len(text)
-	txtCount := strings.ReplaceAll(text, " ", "")
-	count := float64(len(txtCount))
-
-	wait := count * (26.3 / 100.0)
-	if wait < 4 {
-		wait = 4
-	}
-
-	var buf []byte
-
-	// navigate to url and submit text
-	err := chromedp.Run(
-		ctx,
-		chromedp.Navigate(landsatUrl),
-		chromedp.WaitVisible(`nameInput`, chromedp.ByID),
-		chromedp.SendKeys(`nameInput`, text),
-		chromedp.Click(`enterButton`, chromedp.ByID),
-		chromedp.Sleep(time.Duration(wait)*time.Second),
-		chromedp.Screenshot(`nameBoxes`, &buf),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err = os.WriteFile("fullScreenshot.png", buf, 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	log.Printf("wrote elementScreenshot.png and fullScreenshot.png")
 }
 
 func TestCistercianNumber(t *testing.T) {

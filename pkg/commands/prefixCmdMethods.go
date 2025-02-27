@@ -1,10 +1,7 @@
 package commands
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/StephaneBunel/bresenham"
@@ -16,11 +13,7 @@ import (
 	"github.com/subosito/shorturl"
 	"image"
 	"image/color"
-	"io"
-	"mime/multipart"
-	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -243,7 +236,7 @@ func sendCistercianNumeral(s *discordgo.Session, m *discordgo.MessageCreate, cfg
 				return err
 			}
 
-			imgURL, err := getImgbbUploadURL(cfg, imgPath, 10)
+			imgURL, err := helper.GetImgbbUploadURL(cfg, imgPath, 10)
 			if err != nil {
 				return err
 			}
@@ -379,63 +372,6 @@ func drawCistLines(hasPrefix bool, posNum string) (image.Image, error) {
 	return img, nil
 }
 
-func getImgbbUploadURL(cfg *config.Configs, imgPath string, expireSecs ...int) (string, error) {
-	apiUrl := fmt.Sprintf("%s&key=%s", cfg.Configs.ApiURLs.ImgbbAPI, cfg.Configs.Keys.ImgbbAPIkey)
-	if expireSecs != nil {
-		apiUrl = fmt.Sprintf("%sexpiration=%s&key=%s", cfg.Configs.ApiURLs.ImgbbAPI, strconv.Itoa(expireSecs[0]), cfg.Configs.Keys.ImgbbAPIkey)
-	}
-
-	// Read the entire file into a byte slice
-	imgBytes, err := os.ReadFile(imgPath)
-	if err != nil {
-		return "", err
-	}
-
-	// Create a buffer to write out multipart form data to
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	// Add the imageData field
-	base64img := base64.StdEncoding.EncodeToString(imgBytes)
-	err = writer.WriteField("image", base64img)
-	if err != nil {
-		return "", fmt.Errorf("failed to write field: %w", err)
-	}
-
-	// Close the writer to finalize the form data
-	err = writer.Close()
-	if err != nil {
-		return "", fmt.Errorf("failed to close writer: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", apiUrl, body)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var imgbbDataObject imgBBData
-	err = json.Unmarshal(respBody, &imgbbDataObject)
-	if err != nil {
-		return "", fmt.Errorf("failed to unmarshal response body: %w", err)
-	}
-
-	return imgbbDataObject.Data.URL, nil
-}
-
 func sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	_, err := s.ChannelMessageSend(
 		m.ChannelID,
@@ -563,10 +499,10 @@ func modNSFWimgs(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.C
 			}
 
 		} else {
-			_, err := s.ChannelMessageSend(m.ChannelID, "There is no attachment")
+			/*_, err := s.ChannelMessageSend(m.ChannelID, "There is no attachment")
 			if err != nil {
 				return nil
-			}
+			}*/
 		}
 	}
 	return nil

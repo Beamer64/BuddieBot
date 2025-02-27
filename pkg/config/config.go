@@ -46,6 +46,7 @@ type configuration struct {
 		FakePersonAPI  string `yaml:"fakePersonAPI"`
 		XkcdAPI        string `yaml:"xkcdAPI"`
 		ImgbbAPI       string `yaml:"imgbbAPI"`
+		LandsatAPI     string `yaml:"landsatAPI"`
 	} `yaml:"apiURLs"`
 
 	DiscordIDs struct {
