@@ -2,7 +2,8 @@ package events
 
 import (
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/commands"
+	"github.com/beamer64/buddieBot/pkg/commands/prefix"
+	"github.com/beamer64/buddieBot/pkg/commands/slash"
 	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
@@ -59,11 +60,11 @@ func NewReadyHandler(cfg *config.Configs) *ReadyHandler {
 func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
-		if h, ok := commands.CommandHandlers[i.ApplicationCommandData().Name]; ok {
+		if h, ok := slash.CommandHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i, c.cfg)
 		}
 	case discordgo.InteractionMessageComponent:
-		if h, ok := commands.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
+		if h, ok := slash.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
 			h(s, i, c.cfg)
 		}
 	}
@@ -129,7 +130,7 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 		return
 	}
 
-	commands.ParsePrefixCmds(s, m, d.cfg)
+	prefix.ParsePrefixCmds(s, m, d.cfg)
 }
 
 // GuildMemberUpdateHandler Sent when a guild member is updated.

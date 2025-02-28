@@ -1,4 +1,4 @@
-package commands
+package slash
 
 import (
 	"time"
@@ -135,7 +135,7 @@ type albumPicker struct {
 	AlbumName   string `json:"Album_Name"`
 	SecGenres   string `json:"Sec_Genres"`
 	URL         string `json:"url"`
-	//SpotifyAlbumURL string `json:"spotify_album_url"`
+	// SpotifyAlbumURL string `json:"spotify_album_url"`
 }
 
 // region FakePerson Structs
@@ -216,4 +216,4 @@ type fakePersonInfo struct {
 	Version string `json:"version"`
 }
 
-//endregion
+// endregion

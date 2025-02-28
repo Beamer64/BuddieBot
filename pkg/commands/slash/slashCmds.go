@@ -1,4 +1,4 @@
-package commands
+package slash
 
 import (
 	"github.com/beamer64/buddieBot/pkg/config"

@@ -2,7 +2,7 @@ package bot
 
 import (
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/commands"
+	"github.com/beamer64/buddieBot/pkg/commands/slash"
 	"github.com/beamer64/buddieBot/pkg/config"
 	"github.com/beamer64/buddieBot/pkg/events"
 	"github.com/beamer64/buddieBot/pkg/helper"
@@ -76,7 +76,7 @@ func registerCommands(s *discordgo.Session) error {
 	// added sleep timer to allow time for
 	// ApplicationCommandBulkOverwrite after creating bot session
 	time.Sleep(3 * time.Second)
-	commandsRegistered, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, "", commands.Commands)
+	commandsRegistered, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, "", slash.Commands)
 	if err != nil {
 		return err
 	}
