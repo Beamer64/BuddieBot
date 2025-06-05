@@ -22,7 +22,7 @@
 
 <div align="center">
   <a target="_blank">
-    <img src="https://img.shields.io/badge/Total%20Lines-7508-maroon.svg" alt="shield.png">
+    <img src="https://img.shields.io/badge/Total%20Lines-7571-maroon.svg" alt="shield.png">
   </a>
 </div>
 
@@ -52,7 +52,9 @@
 
 ## About
 
-BuddieBot is an open source Discord bot written in Golang that I initially created to develop and maintain new Golang technologies and practices. What originally started as a fun idea and grown into a full personal pet project. I love working on BuddieBot to improve it with new features and utilities all the time. I enjoy using BuddieBot in my personal servers and plan to continue growing this bot for the foreseeable future!
+BuddieBot is an open source Discord bot written in Golang that I initially created to develop and maintain new Golang technologies and practices. What originally started as a fun
+idea and grown into a full personal pet project. I love working on BuddieBot to improve it with new features and utilities all the time. I enjoy using BuddieBot in my personal
+servers and plan to continue growing this bot for the foreseeable future!
 
 If you liked this repository, feel free to leave a star ⭐ to help promote BuddieBot!
 
@@ -145,14 +147,17 @@ database:
 
 *Sections like "database" and various "IDs" are used for specfic functions or features. This can be omitted if unused. That part of the bot just wont work until supplied.*
 
-Visit the Discord [developer portal](https://discordapp.com/developers/applications/) to create an app and use the client token you are given for the `token` option. To get keys for supported APIs,
+Visit the Discord [developer portal](https://discordapp.com/developers/applications/) to create an app and use the client token you are given for the `token` option. To get keys
+for supported APIs,
 visit:
 
 * [Tenor API](https://tenor.com/gifapi/documentation)
 * [Dagpi API](https://dagpi.xyz)
 
-After your `config.yaml` file is built, you have to enable `Privileged Intents` on your Discord [developer portal](https://discordapp.com/developers/applications/). You can find these intents under
-the "Bot" section, and there are two ticks you have to switch on. For more information on Gateway Intents, check out [this](https://discordpy.readthedocs.io/en/latest/intents.html) link.
+After your `config.yaml` file is built, you have to enable `Privileged Intents` on your Discord [developer portal](https://discordapp.com/developers/applications/). You can find
+these intents under
+the "Bot" section, and there are two ticks you have to switch on. For more information on Gateway Intents, check out [this](https://discordpy.readthedocs.io/en/latest/intents.html)
+link.
 
 Once done, feel free to launch BuddieBot using the command `go run cmd/discord-bot/main.go`.
 
@@ -180,7 +185,8 @@ BuddieBot is in a continuous state of development. New features/updates may come
 - *Guild* - This is what Discord refers to your server as. Servers are 'Guilds'.
 - *botToken* - Given when a new bot is created. Located in the [Bot section](https://discord.com/developers/applications/866151939472883762/bot) of the Discord Dev portal.
 - *webHookToken* - Can be easily found in the Webhook URL.††
-- *botPublicKey* - Given when a new bot is created. Located in the [Gen Info section](https://discord.com/developers/applications/866151939472883762/information) of the Discord Dev portal.
+- *botPublicKey* - Given when a new bot is created. Located in the [Gen Info section](https://discord.com/developers/applications/866151939472883762/information) of the Discord Dev
+  portal.
 - *webHookID* - Can be easily found in the Webhook URL.††
 - *errorLogChannelID* - The ID of the Channel you'd like the bot to update with any errors it encounters.†
 - *botPrefix* - The prefix given when the bot recognizes a command. For example, the one I use is '$'.
@@ -188,7 +194,8 @@ BuddieBot is in a continuous state of development. New features/updates may come
 
 † **To get the ID's of things in Discord, you will need to [Enable Dev Mode](https://techswift.org/2020/09/17/how-to-enable-developer-mode-in-discord) in Discord.**
 
-†† **You will need to [Create a Webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) in Discord first. Then the ID and Token respectively can be found in the Webhook
+†† **You will need to [Create a Webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) in Discord first. Then the ID and Token respectively can be
+found in the Webhook
 URL. E.g. `https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN`**
 
 ---
@@ -214,19 +221,15 @@ This is just a list of various credits to any person(s) whose work are contribut
 
 <img src="https://www.gstatic.com/tenor/web/attribution/PB_tenor_logo_blue_horizontal.png" width="600" height="100"  alt=""/>
 
-The Tenor API is used to deliver gifs from the BuddieBot. The website can be found [here](https://tenor.com/). The API site can be found [here](https://tenor.com/gifapi/documentation#quickstart).
+The Tenor API is used to deliver gifs from the BuddieBot. The website can be found [here](https://tenor.com/). The API site can be
+found [here](https://tenor.com/gifapi/documentation#quickstart).
 
 ---
 
 <img src="https://www.horoscope.com/images-US/horoscope-logo.svg" width="500" height="150"  alt=""/>
 
-The horoscope.com daily horoscopes are used to allow our BuddieBot to deliver a daily horoscope to our users. The website can be found [here](https://www.horoscope.com/us/index.aspx).
-
----
-
-<img src="https://cdn-icons-png.flaticon.com/512/4698/4698821.png" width="128" height="128"  alt=""/>
-
-The icon for BuddieBot was made by [wanicon](https://www.flaticon.com/authors/wanicon) from www.flaticon.com
+The horoscope.com daily horoscopes are used to allow our BuddieBot to deliver a daily horoscope to our users. The website can be
+found [here](https://www.horoscope.com/us/index.aspx).
 
 ---
 

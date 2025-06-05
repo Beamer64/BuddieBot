@@ -11,7 +11,7 @@ In regards to some names of commands and groups like "img-set", "get" or any ind
 
 For some of these newer commands, I will be testing them more in the future but haven't fully tested them at this moment. Please feel free to inform me of any that aren't working.
 If you feel one
-isn't working, make sure to retry the command but not in quick succession. If after multiple attempts, the command will not work then just let me know with what info you have.
+isn't working, make sure to retry the command but not in quick succession. If after multiple attempts, the command will not work then let me know with what info you have.
 
 &nbsp;
 
