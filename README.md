@@ -213,6 +213,18 @@ Released under the [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html) li
 
 ---
 
+## TOS
+
+The Terms of Service for BuddieBot can be found [Here](https://github.com/Beamer64/BuddieBot/blob/master/res/legal/TOS.md).
+
+---
+
+## Privacy Policy
+
+The Privacy Policy for BuddieBot can be found [Here](https://github.com/Beamer64/BuddieBot/blob/master/res/legal/priv_policy.md)
+
+---
+
 ## Credits
 
 This is just a list of various credits to any person(s) whose work are contributed to this open source project.
