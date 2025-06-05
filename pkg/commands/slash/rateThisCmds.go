@@ -21,7 +21,7 @@ func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	embed, err := getRateThisEmbed(options.Name, user)
 	if err != nil {
 		go func() {
-			err = helper.SendResponseError(s, i, "Unable to Rate atm, try again later.")
+			err = helper.SendResponseErrorToUser(s, i, "Unable to Rate atm, try again later.")
 		}()
 		return err
 	}

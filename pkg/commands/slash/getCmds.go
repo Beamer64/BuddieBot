@@ -33,7 +33,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("error sending deferred Interaction: %v", err)
+		return fmt.Errorf("error sending deferred Interaction for /get command %s: %v", options.Name, err)
 	}
 
 	switch options.Name {
@@ -41,7 +41,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.Roast()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -76,7 +76,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.Joke()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -95,7 +95,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.Eightball()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -108,7 +108,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.Yomama()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -131,7 +131,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.PickupLine()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -150,7 +150,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		personData, err := callFakePersonAPI(cfg)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}

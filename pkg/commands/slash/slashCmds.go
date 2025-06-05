@@ -1669,21 +1669,21 @@ var (
 		"horo-select": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendHoroscopeCompResponse(s, i)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"album-suggest": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendAlbumPickCompResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"wyr-button": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendWYRCompResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 	}
@@ -1693,84 +1693,84 @@ var (
 		"animals": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendAnimalsResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"txt": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendTxtResponse(s, i)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"rate-this": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendRateThisResponse(s, i)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"get": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendGetResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"img-b": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"img-e": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"img-wbs": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendImgResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"daily": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendDailyResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"pick": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendPickResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"tuuck": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendTuuckResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"play": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendPlayResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 
 		"config-settings": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
 			err := sendConfigResponse(s, i, cfg)
 			if err != nil {
-				helper.LogErrors(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}
 		},
 	}

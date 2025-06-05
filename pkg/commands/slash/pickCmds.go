@@ -33,7 +33,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	}
 	if err != nil {
 		go func() {
-			err = helper.SendResponseError(s, i, "Unable to pick atm, try again later.")
+			err = helper.SendResponseErrorToUser(s, i, "Unable to pick atm, try again later.")
 		}()
 		return err
 	}
@@ -318,7 +318,7 @@ func sendAlbumPickCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 	embed, err := getAlbumPickerEmbed(tags, cfg)
 	if err != nil {
 		go func() {
-			err = helper.SendResponseError(s, i, "Unable to fetch Albums atm, try again later.")
+			err = helper.SendResponseErrorToUser(s, i, "Unable to fetch Albums atm, try again later.")
 		}()
 		return err
 	}

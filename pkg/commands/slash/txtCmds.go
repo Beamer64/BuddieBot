@@ -23,7 +23,7 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error
 		content, err = helper.ToConvertedText(text, options.Name)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, "Unable to convert text atm, try again later.")
+				err = helper.SendResponseErrorToUser(s, i, "Unable to convert text atm, try again later.")
 			}()
 			return err
 		}

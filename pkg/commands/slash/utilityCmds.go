@@ -23,7 +23,7 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 	cmdInfo := getCommandInfo(cmdName, cfg)
 	if cmdInfo == nil {
-		return helper.SendResponseError(s, i, fmt.Sprintf("Invalid command: %s", cmdName))
+		return helper.SendResponseErrorToUser(s, i, fmt.Sprintf("Invalid command: %s", cmdName))
 	}
 
 	embed := &discordgo.MessageEmbed{

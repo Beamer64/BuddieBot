@@ -28,7 +28,7 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		embed, err = getCoinFlipEmbed(cfg)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, "Unable to flip coin atm, try again later.")
+				err = helper.SendResponseErrorToUser(s, i, "Unable to flip coin atm, try again later.")
 			}()
 			return err
 		}
@@ -86,7 +86,7 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		embed, err = getGTLembed(clientData)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, "Unable to fetch game atm, try again later.")
+				err = helper.SendResponseErrorToUser(s, i, "Unable to fetch game atm, try again later.")
 			}()
 			return err
 		}
@@ -106,7 +106,7 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		embed, err = getWTPembed(clientData, false)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, "Unable to fetch game atm, try again later.")
+				err = helper.SendResponseErrorToUser(s, i, "Unable to fetch game atm, try again later.")
 			}()
 			return err
 		}
@@ -121,7 +121,7 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		embed, err = getWYREmbed(cfg)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, "Unable to fetch game atm, try again later.")
+				err = helper.SendResponseErrorToUser(s, i, "Unable to fetch game atm, try again later.")
 			}()
 			return err
 		}
@@ -270,7 +270,7 @@ func sendWYRCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 	embed, err := getWYREmbed(cfg)
 	if err != nil {
 		go func() {
-			err = helper.SendResponseError(s, i, "Unable to fetch WYR atm, try again later.")
+			err = helper.SendResponseErrorToUser(s, i, "Unable to fetch WYR atm, try again later.")
 		}()
 		return err
 	}

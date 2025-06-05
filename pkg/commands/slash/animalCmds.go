@@ -15,21 +15,31 @@ func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 	commandName := i.ApplicationCommandData().Options[0].Name
 
 	var embed *discordgo.MessageEmbed
-	var data *discordgo.InteractionResponseData
+	var data *discordgo.MessageSend
 	var err error
+
 	errRespMsg := "Unable to make call at this moment, please try later :("
+
+	err = s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error sending deferred Interaction for /get command %s: %v", commandName, err)
+	}
 
 	switch commandName {
 	case "doggo":
 		embed, err = getDoggoEmbed(cfg)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Embeds: []*discordgo.MessageEmbed{
 				embed,
 			},
@@ -39,25 +49,29 @@ func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 		embed, err = getKatzEmbed(cfg)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
 
-		data = &discordgo.InteractionResponseData{
+		data = &discordgo.MessageSend{
 			Embeds: []*discordgo.MessageEmbed{
 				embed,
 			},
 		}
 	}
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: data,
-		},
-	)
+
+	// delete the interaction response
+	err = s.InteractionResponseDelete(i.Interaction)
 	if err != nil {
-		return fmt.Errorf("error sendind Interaction: %v", err)
+		return err
+	}
+
+	// send the new response
+	// data must be of type *discordgo.MessageSend
+	_, err = s.ChannelMessageSendComplex(i.ChannelID, data)
+	if err != nil {
+		return fmt.Errorf("error sending Interaction for command %s: %v", commandName, err)
 	}
 
 	return nil

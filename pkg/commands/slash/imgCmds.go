@@ -31,7 +31,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Pixelate(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -42,7 +42,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Mirror(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -53,7 +53,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.FlipImage(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -64,7 +64,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Colors(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -75,7 +75,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.America(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -86,7 +86,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Communism(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -97,7 +97,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Triggered(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -108,7 +108,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.ExpandImage(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -119,7 +119,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Wasted(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -130,7 +130,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Sketch(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -141,7 +141,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.SpinImage(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -152,7 +152,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.PetPet(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -163,7 +163,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Bonk(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -174,7 +174,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Bomb(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -185,7 +185,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Shake(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -196,7 +196,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Invert(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -207,7 +207,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Sobel(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -218,7 +218,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Hog(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -229,7 +229,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Triangle(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -240,7 +240,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Blur(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -251,7 +251,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.RGB(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -262,7 +262,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Angel(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -273,7 +273,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Satan(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -284,7 +284,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Delete(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -295,7 +295,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Fedora(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -306,7 +306,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Hitler(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -317,7 +317,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Lego(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -328,7 +328,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Wanted(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -339,7 +339,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Stringify(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -350,7 +350,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Burn(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -361,7 +361,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Earth(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -372,7 +372,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Freeze(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -383,7 +383,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Ground(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -394,7 +394,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Mosiac(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -405,7 +405,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Sithlord(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -416,7 +416,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Jail(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -427,7 +427,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Shatter(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -451,7 +451,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Pride(user.AvatarURL("300"), flag)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -462,7 +462,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Trash(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -473,7 +473,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Deepfry(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -484,7 +484,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Ascii(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -495,7 +495,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Charcoal(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -506,7 +506,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Posterize(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -517,7 +517,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Sepia(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -528,7 +528,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Swirl(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -539,7 +539,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Paint(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -550,7 +550,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Night(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -561,7 +561,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Rainbow(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -572,7 +572,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Magik(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -586,7 +586,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.FivegOneg(guy.AvatarURL("300"), girl.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -600,7 +600,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Slap(slapper.AvatarURL("300"), slapped.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -611,7 +611,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Obama(user.AvatarURL("300"), user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -635,7 +635,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Tweet(user.AvatarURL("300"), user.Username, tweet)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -658,7 +658,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.YouTubeComment(user.AvatarURL("300"), user.Username, comment, false)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -681,7 +681,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Discord(user.AvatarURL("300"), user.Username, msg, true)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -706,7 +706,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Retromeme(user.AvatarURL("300"), topText, bottomText)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -731,7 +731,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Motivational(user.AvatarURL("300"), topText, bottomText)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -755,7 +755,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Modernmeme(user.AvatarURL("300"), text)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -769,7 +769,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.WhyAreYouGay(user1.AvatarURL("300"), user2.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -780,7 +780,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Elmo(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -791,7 +791,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.TvStatic(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -802,7 +802,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Rain(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -813,7 +813,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Glitch(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -824,7 +824,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.GlitchStatic(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -835,7 +835,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		bufferImage, err = client.Album(user.AvatarURL("300"))
 		if err != nil {
 			go func() {
-				err = helper.SendResponseError(s, i, errRespMsg)
+				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}

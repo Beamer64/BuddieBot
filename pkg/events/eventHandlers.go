@@ -74,7 +74,7 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 	err := s.UpdateGameStatus(0, "try /tuuck")
 	if err != nil {
-		helper.LogErrors(s, h.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, "")
+		helper.LogErrorsToErrorChannel(s, h.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, "")
 		return
 	}
 
@@ -91,13 +91,13 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 
 	channel, err := s.Channel(mr.ChannelID)
 	if err != nil {
-		helper.LogErrors(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
+		helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 		return
 	}
 
 	msg, err := s.ChannelMessage(channel.ID, mr.MessageID)
 	if err != nil {
-		helper.LogErrors(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
+		helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (g *GuildHandler) GuildMemberUpdateHandler(s *discordgo.Session, e *discord
 func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	guild, err := s.Guild(m.GuildID)
 	if err != nil {
-		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
+		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 		return
 	}
 
@@ -169,7 +169,7 @@ func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.Guild
 func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
 	guild, err := s.Guild(m.GuildID)
 	if err != nil {
-		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
+		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 		return
 	}
 
@@ -215,7 +215,7 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 
 	_, err := s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
 	if err != nil {
-		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)
+		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)
 		return
 	}
 }
@@ -225,7 +225,7 @@ func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.Gui
 	// TODO add this in
 	/*err := Do sum
 	if err != nil {
-		helper.LogErrors(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)
+		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)
 		return
 	}*/
 }

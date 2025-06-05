@@ -58,7 +58,7 @@ func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.Messa
 	return embed
 }
 
-func SendResponseError(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
+func SendResponseErrorToUser(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
 	err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -72,8 +72,8 @@ func SendResponseError(s *discordgo.Session, i *discordgo.InteractionCreate, mes
 	return err
 }
 
-// LogErrors logs any errors to console and send to the Error Discord Channel
-func LogErrors(s *discordgo.Session, errorLogChannelID string, err error, guildID string) {
+// LogErrorsToErrorChannel logs any errors to console and send to the Error Discord Channel
+func LogErrorsToErrorChannel(s *discordgo.Session, errorLogChannelID string, err error, guildID string) {
 	fmt.Printf("%+v", errors.WithStack(err))
 	_, _ = s.ChannelMessageSendEmbed(errorLogChannelID, GetErrorEmbed(err, s, guildID))
 }

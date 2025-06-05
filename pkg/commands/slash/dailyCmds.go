@@ -23,15 +23,20 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	switch optionName {
 	case "advice":
 		data, err = getDailyEmbed(cfg, getDailyAdviceEmbed)
+
 	case "kanye":
 		data, err = getDailyEmbed(cfg, getDailyKanyeEmbed)
+
 	case "affirmation":
 		data, err = getDailyEmbed(cfg, getDailyAffirmationEmbed)
+
 	case "horoscope":
 		data = getHoroscopeResponseData()
+
 	case "fact":
 		var clientData interface{}
 		clientData, err = client.Fact()
+
 		data = &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf("%s", clientData),
 		}
@@ -40,7 +45,9 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	}
 	if err != nil {
 		go func() {
-			_ = helper.SendResponseError(s, i, "Unable to fetch Daily command atm. Try again later.")
+			if err = helper.SendResponseErrorToUser(s, i, "Unable to fetch data atm, Try again later."); err != nil {
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+			}
 		}()
 		return err
 	}
@@ -107,7 +114,7 @@ func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 	embed, err := getHoroscopeEmbed(sign)
 	if err != nil {
 		go func() {
-			err = helper.SendResponseError(s, i, "Unable to fetch Horoscope atm, try again later.")
+			err = helper.SendResponseErrorToUser(s, i, "Unable to fetch Horoscope atm, try again later.")
 		}()
 		return err
 	}
