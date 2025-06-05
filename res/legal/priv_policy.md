@@ -1,6 +1,6 @@
 # Privacy Policy for BuddieBot
 
-_Last updated: 06/05/2025
+Last updated: 06/05/2025
 
 ## 1. Introduction
 
