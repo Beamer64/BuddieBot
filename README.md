@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/Beamer64/BuddieBot/blob/master/res/repo_imgs/BuddieBot.png" width="500" height="350" alt="">
+  <img src="https://github.com/Beamer64/BuddieBot/blob/master/res/repo_imgs/BuddieBot.png" width="500" height="700" alt="">
   <br>
   BuddieBot
   <br>
