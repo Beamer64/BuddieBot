@@ -221,7 +221,7 @@ The Terms of Service for BuddieBot can be found [Here](https://github.com/Beamer
 
 ## Privacy Policy
 
-The Privacy Policy for BuddieBot can be found [Here](https://github.com/Beamer64/BuddieBot/blob/master/res/legal/priv_policy.md)
+The Privacy Policy for BuddieBot can be found [Here](https://github.com/Beamer64/BuddieBot/blob/master/res/legal/priv_policy.md).
 
 ---
 
