@@ -27,6 +27,8 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 	errRespMsg := "Unable to fetch data atm, Try again later."
 
+	// defer the interaction response to avoid timeout
+	// sends a "Bot is thinking..." message
 	err = s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,

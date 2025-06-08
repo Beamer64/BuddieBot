@@ -17,7 +17,7 @@ type Configs struct {
 	Cmd             *command
 	LoadingMessages []string
 	Emojis          []string
-	Clients         *clients
+	Clients         *dagpiClients
 }
 
 type configuration struct {
@@ -124,7 +124,7 @@ type command struct {
 	} `yaml:"message"`
 }
 
-type clients struct {
+type dagpiClients struct {
 	Dagpi *dagpi.Client
 }
 
@@ -229,8 +229,8 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 	}, nil
 }
 
-func registerClients(cfg *configuration) *clients {
-	return &clients{
+func registerClients(cfg *configuration) *dagpiClients {
+	return &dagpiClients{
 		Dagpi: &dagpi.Client{Auth: cfg.Keys.DagpiAPIkey},
 	}
 }

@@ -7,81 +7,73 @@ import (
 	"github.com/beamer64/buddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
-	"io"
 	"net/http"
 	"strings"
 	"time"
 )
 
 func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	client := cfg.Clients.Dagpi
+	commandName := i.ApplicationCommandData().Options[0].Name
+	errRespMsg := "Unable to make call at this moment, please try later :("
 
-	optionName := i.ApplicationCommandData().Options[0].Name
+	// Defer the interaction response to avoid timeout
+	if err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		},
+	); err != nil {
+		return fmt.Errorf("failed to defer interaction for /get command %s: %w", commandName, err)
+	}
+
+	var webhookEdit *discordgo.WebhookEdit
 	var err error
-	var data *discordgo.InteractionResponseData
 
-	switch optionName {
-	case "advice":
-		data, err = getDailyEmbed(cfg, getDailyAdviceEmbed)
+	embeds := map[string]func(*config.Configs) (*discordgo.MessageEmbed, error){
+		"advice":      getDailyAdviceEmbed,
+		"kanye":       getDailyKanyeEmbed,
+		"affirmation": getDailyAffirmationEmbed,
+		"fact":        getDailyFactEmbed,
+	}
 
-	case "kanye":
-		data, err = getDailyEmbed(cfg, getDailyKanyeEmbed)
+	switch commandName {
+	case "advice",
+		"kanye",
+		"affirmation",
+		"fact":
+		var embed *discordgo.MessageEmbed
 
-	case "affirmation":
-		data, err = getDailyEmbed(cfg, getDailyAffirmationEmbed)
+		embed, err = embeds[commandName](cfg)
+		if err == nil {
+			webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
+		}
 
 	case "horoscope":
-		data = getHoroscopeResponseData()
+		webhookEdit = getHoroscopeWebHookEdit()
 
-	case "fact":
-		var clientData interface{}
-		clientData, err = client.Fact()
-
-		data = &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s", clientData),
-		}
 	default:
-		return fmt.Errorf("unknown option: %s", optionName)
+		return fmt.Errorf("unknown option: %s", commandName)
 	}
 	if err != nil {
-		go func() {
-			if err = helper.SendResponseErrorToUser(s, i, "Unable to fetch data atm, Try again later."); err != nil {
-				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
-			}
-		}()
-		return err
+		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
+		return fmt.Errorf("error in dailyCmds.sendDailyResponse() : %w", err)
 	}
 
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: data,
-		},
-	)
-	if err != nil {
-		return err
+	// Edit the interaction response with the generated data
+	if _, err = s.InteractionResponseEdit(
+		i.Interaction, webhookEdit,
+	); err != nil {
+		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
+		return fmt.Errorf("failed to send message for command %s: %w", commandName, err)
 	}
 
 	return nil
 }
 
-func getDailyEmbed(cfg *config.Configs, embedFunc func(*config.Configs) (*discordgo.MessageEmbed, error)) (*discordgo.InteractionResponseData, error) {
-	embed, err := embedFunc(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return &discordgo.InteractionResponseData{
-		Embeds: []*discordgo.MessageEmbed{
-			embed,
-		},
-	}, nil
-}
-
-func getHoroscopeResponseData() *discordgo.InteractionResponseData {
-	return &discordgo.InteractionResponseData{
-		Content: "Choose a zodiac sign",
-		Components: []discordgo.MessageComponent{
+func getHoroscopeWebHookEdit() *discordgo.WebhookEdit {
+	content := "Choose a zodiac sign"
+	return &discordgo.WebhookEdit{
+		Content: &content,
+		Components: &[]discordgo.MessageComponent{
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
@@ -111,101 +103,105 @@ func getHoroscopeResponseData() *discordgo.InteractionResponseData {
 func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	sign := i.MessageComponentData().Values[0]
 
+	// Defer the response to prevent interaction timeout
+	if err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredMessageUpdate,
+		},
+	); err != nil {
+		return fmt.Errorf("failed to defer interaction: %w", err)
+	}
+
 	embed, err := getHoroscopeEmbed(sign)
 	if err != nil {
-		go func() {
-			err = helper.SendResponseErrorToUser(s, i, "Unable to fetch Horoscope atm, try again later.")
-		}()
-		return err
+		// Respond to user with a fallback message if something goes wrong
+		_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch Horoscope atm, try again later.")
+		return fmt.Errorf("failed to get horoscope embed: %w", err)
 	}
 
-	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
-	msgContent := ""
-	msgEdit.Content = &msgContent
-	msgEdit.Embeds = &[]*discordgo.MessageEmbed{embed}
-
-	// edit response (i.Interaction) and replace with embed
-	_, err = s.ChannelMessageEditComplex(msgEdit)
-	if err != nil {
-		return err
-	}
-
-	// 'This interaction failed' will show if not included
-	// todo fix later
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "",
-			},
+	// Replace the interaction message with new content
+	_, err = s.ChannelMessageEditComplex(
+		&discordgo.MessageEdit{
+			Channel: i.ChannelID,
+			ID:      i.Message.ID,
+			Content: new(string), // Empty string to clear content
+			Embeds:  &[]*discordgo.MessageEmbed{embed},
 		},
 	)
 	if err != nil {
-		if !strings.Contains(err.Error(), "Cannot send an empty message") {
-			return err
-		}
+		return fmt.Errorf("failed to edit interaction message: %w", err)
 	}
 
 	return nil
 }
 
-func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	res, err := http.Get(cfg.Configs.ApiURLs.AdviceAPI)
+func getDailyFactEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
+	client := cfg.Clients.Dagpi
+	var clientData interface{}
+
+	clientData, err := client.Fact()
 	if err != nil {
-		return nil, err
-	}
-
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(res.Body)
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
-	}
-
-	var adviceObj advice
-	err = json.NewDecoder(res.Body).Decode(&adviceObj)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch daily fact: %w", err)
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title:       "( ಠ ͜ʖರೃ)",
+		Title:       "Fun Fact",
 		Color:       helper.RangeIn(1, 16777215),
-		Description: adviceObj.Slip.Advice,
+		Description: fmt.Sprintf("%v", clientData),
 	}
 
 	return embed, nil
 }
 
-func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	res, err := http.Get(cfg.Configs.ApiURLs.KanyeAPI)
+func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
+	resp, err := http.Get(cfg.Configs.ApiURLs.AdviceAPI)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch advice: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("advice API returned status %d", resp.StatusCode)
 	}
 
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(res.Body)
+	var adviceObj advice
+	if err = json.NewDecoder(resp.Body).Decode(&adviceObj); err != nil {
+		return nil, fmt.Errorf("failed to decode advice JSON: %w", err)
+	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
+	adv := "404 Advice Not Found, So here's a tip instead: Plan for bad API calls."
+	if adviceObj.Slip.Advice != "" {
+		adv = adviceObj.Slip.Advice
+	}
+
+	return &discordgo.MessageEmbed{
+		Title:       "( ಠ ͜ʖರೃ)",
+		Color:       helper.RangeIn(1, 16777215),
+		Description: adv,
+	}, nil
+}
+
+func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
+	resp, err := http.Get(cfg.Configs.ApiURLs.KanyeAPI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch Kanye quote: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("kanye API returned status code %d", resp.StatusCode)
 	}
 
 	var kanyeObj kanye
-	err = json.NewDecoder(res.Body).Decode(&kanyeObj)
-	if err != nil {
-		return nil, err
+	if err = json.NewDecoder(resp.Body).Decode(&kanyeObj); err != nil {
+		return nil, fmt.Errorf("failed to decode Kanye API response: %w", err)
 	}
 
 	embed := &discordgo.MessageEmbed{
 		Title: "(▀̿Ĺ̯▀̿ ̿)",
 		Color: helper.RangeIn(1, 16777215),
 		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:  fmt.Sprintf("\"%s\"", kanyeObj.Quote),
-				Value: "- Kanye",
-			},
+			{Name: fmt.Sprintf("\"%s\"", kanyeObj.Quote), Value: "\\- Kanye"},
 		},
 	}
 
@@ -213,30 +209,23 @@ func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 }
 
 func getDailyAffirmationEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	res, err := http.Get(cfg.Configs.ApiURLs.AffirmationAPI)
+	resp, err := http.Get(cfg.Configs.ApiURLs.AffirmationAPI)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch affirmation: %w", err)
 	}
+	defer resp.Body.Close()
 
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(res.Body)
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("affirmation API returned status code %d", resp.StatusCode)
 	}
 
 	var affirmObj affirmation
-	err = json.NewDecoder(res.Body).Decode(&affirmObj)
-	if err != nil {
-		return nil, err
+	if err = json.NewDecoder(resp.Body).Decode(&affirmObj); err != nil {
+		return nil, fmt.Errorf("failed to decode affirmation response: %w", err)
 	}
 
-	current := time.Now()
-	timeFormat := current.Format("Jan 2, 2006")
-
 	embed := &discordgo.MessageEmbed{
-		Title:       timeFormat,
+		Title:       time.Now().Format("Jan 2, 2006"),
 		Color:       helper.RangeIn(1, 16777215),
 		Description: affirmObj.Affirmation,
 	}
@@ -253,6 +242,10 @@ func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
 	horoscope, err := scrapeHoroscope(signNum)
 	if err != nil {
 		return nil, err
+	}
+
+	if horoscope == "" {
+		horoscope = "404 Horoscope Not Found, So here's a tip instead: Plan for bad API calls."
 	}
 
 	embed := &discordgo.MessageEmbed{
@@ -297,36 +290,20 @@ func scrapeHoroscope(signNum string) (string, error) {
 }
 
 func getSignNumber(sign string) string {
-	sign = strings.ToLower(sign)
-	signNum := ""
-
-	switch sign {
-	case "aries":
-		signNum = "1"
-	case "taurus":
-		signNum = "2"
-	case "gemini":
-		signNum = "3"
-	case "cancer":
-		signNum = "4"
-	case "leo":
-		signNum = "5"
-	case "virgo":
-		signNum = "6"
-	case "libra":
-		signNum = "7"
-	case "scorpio":
-		signNum = "8"
-	case "sagittarius":
-		signNum = "9"
-	case "capricorn":
-		signNum = "10"
-	case "aquarius":
-		signNum = "11"
-	case "pisces":
-		signNum = "12"
-	default:
-		signNum = ""
+	signMap := map[string]string{
+		"aries":       "1",
+		"taurus":      "2",
+		"gemini":      "3",
+		"cancer":      "4",
+		"leo":         "5",
+		"virgo":       "6",
+		"libra":       "7",
+		"scorpio":     "8",
+		"sagittarius": "9",
+		"capricorn":   "10",
+		"aquarius":    "11",
+		"pisces":      "12",
 	}
-	return signNum
+
+	return signMap[strings.ToLower(sign)]
 }
