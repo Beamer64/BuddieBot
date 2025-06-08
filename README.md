@@ -47,7 +47,7 @@
 </p>
 
 <div align="center">
-<img src="https://github.com/Beamer64/BuddieBot/blob/master/res/under-construction-tape-png-program-under-construction-removebg-preview.png" width="770" height="250" alt="">
+<img src="https://github.com/Beamer64/BuddieBot/blob/master/res/repo_imgs/under-construction-tape-png-program-under-construction-removebg-preview.png" width="770" height="250" alt="">
 </div>
 
 ## About
