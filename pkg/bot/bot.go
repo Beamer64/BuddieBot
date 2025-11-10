@@ -2,12 +2,13 @@ package bot
 
 import (
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/commands/slash"
-	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/beamer64/buddieBot/pkg/events"
-	"github.com/beamer64/buddieBot/pkg/helper"
-	"github.com/bwmarrin/discordgo"
 	"log"
+
+	"github.com/Beamer64/BuddieBot/pkg/commands/slash"
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/events"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/bwmarrin/discordgo"
 
 	"time"
 )

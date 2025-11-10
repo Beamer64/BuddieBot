@@ -2,11 +2,12 @@ package prefix
 
 import (
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/beamer64/buddieBot/pkg/helper"
-	"github.com/beamer64/buddieBot/pkg/web"
-	"github.com/bwmarrin/discordgo"
 	"strings"
+
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/Beamer64/BuddieBot/pkg/web"
+	"github.com/bwmarrin/discordgo"
 )
 
 func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) {

@@ -5,9 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/bwmarrin/discordgo"
-	"github.com/pkg/errors"
 	"image"
 	"image/png"
 	"io"
@@ -19,6 +16,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/errors"
 )
 
 func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.MessageEmbed {
@@ -173,13 +174,12 @@ func ToConvertedText(text string, convertGroup string) (string, error) {
 	}
 
 	return convertedText, nil
-
 }
 
 func getLetters() (map[string][]map[string][]string, error) {
-	fontsDir := "config_files/text_fonts.json"
+	fontsDir := "datasets/text_fonts.json"
 	if IsLaunchedByDebugger() {
-		fontsDir = "../../config_files/text_fonts.json"
+		fontsDir = "../../datasets/text_fonts.json"
 	}
 
 	jsonFile, err := os.Open(fontsDir)

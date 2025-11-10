@@ -2,7 +2,7 @@ package slash
 
 import (
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/helper"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
 	"strconv"

@@ -4,19 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/StephaneBunel/bresenham"
-	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/beamer64/buddieBot/pkg/helper"
-	"github.com/beamer64/buddieBot/pkg/voice_chat"
-	"github.com/beamer64/buddieBot/pkg/web"
-	"github.com/bwmarrin/discordgo"
-	"github.com/subosito/shorturl"
 	"image"
 	"image/color"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/Beamer64/BuddieBot/pkg/voice_chat"
+	"github.com/Beamer64/BuddieBot/pkg/web"
+	"github.com/StephaneBunel/bresenham"
+	"github.com/bwmarrin/discordgo"
+	"github.com/subosito/shorturl"
 )
 
 // functions here should mostly be used for the prefix commands ($)

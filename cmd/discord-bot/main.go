@@ -1,18 +1,17 @@
 package main
 
 import (
-	"github.com/beamer64/buddieBot/pkg/bot"
-	"github.com/beamer64/buddieBot/pkg/config"
 	"math/rand"
 	"time"
+
+	"github.com/Beamer64/BuddieBot/pkg/bot"
+	"github.com/Beamer64/BuddieBot/pkg/config"
 )
 
 func main() {
-	// deprecated
-	//rand.Seed(time.Now().UnixNano())
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		panic(err)
 	}

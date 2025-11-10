@@ -1,42 +1,44 @@
 package slash
 
 import (
-	"encoding/json"
+	"encoding/csv"
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/api"
-	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/beamer64/buddieBot/pkg/helper"
-	"github.com/bwmarrin/discordgo"
-	"github.com/mitchellh/mapstructure"
-	"io"
 	"math/rand"
-	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Beamer64/BuddieBot/pkg/api"
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/bwmarrin/discordgo"
+	"github.com/mitchellh/mapstructure"
 )
 
 func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	client := cfg.Clients.Dagpi
-	options := i.ApplicationCommandData().Options[0]
+	commandName := i.ApplicationCommandData().Options[0].Name
+	errRespMsg := "Unable to fetch game atm, try again later."
 
+	// Defer the interaction response to avoid timeout
+	if err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		},
+	); err != nil {
+		return fmt.Errorf("failed to defer interaction for /get command %s: %w", commandName, err)
+	}
+
+	var webhookEdit *discordgo.WebhookEdit
 	var embed *discordgo.MessageEmbed
-	var data *discordgo.InteractionResponseData
 	var err error
 
-	switch options.Name {
+	switch commandName {
 	case "coin-flip":
 		embed, err = getCoinFlipEmbed(cfg)
-		if err != nil {
-			go func() {
-				err = helper.SendResponseErrorToUser(s, i, "Unable to flip coin atm, try again later.")
-			}()
-			return err
-		}
-
-		data = &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
-			},
+		if err == nil {
+			webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
 		}
 
 	case "just-lost":
@@ -61,11 +63,7 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			Color: helper.RangeIn(1, 16777215),
 		}
 
-		data = &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
-			},
-		}
+		webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
 
 	// todo finish this
 	case "nim":
@@ -77,81 +75,62 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	// todo finish this
 	case "typeracer":
 
-	case "gtl":
+	case "gtl": // todo: cmd not currently registered in slashCmds.go
 		clientData, err := client.GTL()
 		if err != nil {
 			return err
 		}
 
 		embed, err = getGTLembed(clientData)
-		if err != nil {
-			go func() {
-				err = helper.SendResponseErrorToUser(s, i, "Unable to fetch game atm, try again later.")
-			}()
-			return err
+		if err == nil {
+			webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
 		}
 
-		data = &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
-			},
-		}
-
-	case "wtp":
+	case "wtp": // todo: cmd not currently registered in slashCmds.go
 		clientData, err := client.WTP()
 		if err != nil {
 			return err
 		}
 
 		embed, err = getWTPembed(clientData, false)
-		if err != nil {
-			go func() {
-				err = helper.SendResponseErrorToUser(s, i, "Unable to fetch game atm, try again later.")
-			}()
-			return err
-		}
-
-		data = &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
-			},
+		if err == nil {
+			webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
 		}
 
 	case "wyr":
 		embed, err = getWYREmbed(cfg)
-		if err != nil {
-			go func() {
-				err = helper.SendResponseErrorToUser(s, i, "Unable to fetch game atm, try again later.")
-			}()
-			return err
-		}
-
-		data = &discordgo.InteractionResponseData{
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.Button{
-							Label:    "Another One! (▀̿Ĺ̯▀̿ ̿)",
-							Style:    1,
-							CustomID: "wyr-button",
+		if err == nil {
+			webhookEdit = &discordgo.WebhookEdit{
+				Components: &[]discordgo.MessageComponent{
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.Button{
+								Label:    "Another One! (▀̿Ĺ̯▀̿ ̿)",
+								Style:    1,
+								CustomID: "wyr-button",
+							},
 						},
 					},
 				},
-			},
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
-			},
+				Embeds: &[]*discordgo.MessageEmbed{embed},
+			}
 		}
+
+	default:
+		return fmt.Errorf("unknown option: %s", commandName)
 	}
 
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: data,
-		},
-	)
 	if err != nil {
-		return fmt.Errorf("error sendind Interaction: %v", err)
+		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
+		return fmt.Errorf("error in gameCmds.sendPlayResponse() : %w", err)
+	}
+
+	// Edit the interaction response with the generated data
+	if _, err = s.InteractionResponseEdit(
+		i.Interaction, webhookEdit,
+	); err != nil {
+		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
+		return fmt.Errorf("failed to send message for command %s: %w", commandName, err)
 	}
 
 	return nil
@@ -181,32 +160,59 @@ func getGTLembed(data interface{}) (*discordgo.MessageEmbed, error) {
 }
 
 func getWYREmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	res, err := http.Get(cfg.Configs.ApiURLs.WYRAPI)
+	/*fontsDir := "datasets/WRY.csv"
+	if helper.IsLaunchedByDebugger() {
+		fontsDir = "../../datasets/text_fonts.json"
+	}*/
+
+	file, err := os.Open(cfg.Configs.ReqFileDirs.Datasets + "WYR.csv")
 	if err != nil {
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
-	}
+	defer file.Close()
 
-	var wyrObj wyr
-	err = json.NewDecoder(res.Body).Decode(&wyrObj)
+	// Create a CSV reader
+	reader := csv.NewReader(file)
+
+	// Read all records (assuming first row is headers)
+	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, err
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-	}(res.Body)
-	if err != nil {
-		return nil, err
+	if len(records) <= 1 {
+		return nil, fmt.Errorf("no data rows found in CSV: %w", err)
 	}
+
+	// Parse rows into a slice of Poll structs
+	var polls []wyrPoll
+	for _, row := range records[1:] { // skip header
+		if len(row) < 4 {
+			continue
+		}
+
+		votesA, _ := strconv.Atoi(row[1])
+		votesB, _ := strconv.Atoi(row[3])
+
+		polls = append(
+			polls, wyrPoll{
+				OptionA: row[0],
+				VotesA:  votesA,
+				OptionB: row[2],
+				VotesB:  votesB,
+			},
+		)
+	}
+
+	// Select a random poll
+	randomIndex := rand.Intn(len(polls))
+	randomPoll := polls[randomIndex]
 
 	embed := &discordgo.MessageEmbed{
 		Title:       "Would You Rather?",
 		Color:       helper.RangeIn(1, 16777215),
-		Description: wyrObj.Data,
+		Description: fmt.Sprintf("%s OR %s", randomPoll.OptionA, randomPoll.OptionB),
 	}
 
 	return embed, nil

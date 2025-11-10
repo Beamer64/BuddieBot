@@ -2,14 +2,15 @@ package config
 
 import (
 	"bufio"
-	"github.com/beamer64/godagpi/dagpi"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/beamer64/godagpi/dagpi"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 type Configs struct {
@@ -42,7 +43,6 @@ type configuration struct {
 		DoggoAPI       string `yaml:"doggoAPI"`
 		NinjaKatzAPI   string `yaml:"ninjaKatzAPI"`
 		AlbumPickerAPI string `yaml:"albumPickerAPI"`
-		WYRAPI         string `yaml:"wyrAPI"`
 		FakePersonAPI  string `yaml:"fakePersonAPI"`
 		XkcdAPI        string `yaml:"xkcdAPI"`
 		ImgbbAPI       string `yaml:"imgbbAPI"`
@@ -75,7 +75,11 @@ type configuration struct {
 		Region    string `yaml:"region"`
 		AccessKey string `yaml:"accessKey"`
 		SecretKey string `yaml:"secretKey"`
-	}
+	} `yaml:"database"`
+
+	ReqFileDirs struct {
+		Datasets string `yaml:"datasets"`
+	} `yaml:"reqFileDirs"`
 }
 
 type command struct {
@@ -128,7 +132,84 @@ type dagpiClients struct {
 	Dagpi *dagpi.Client
 }
 
-func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
+func ReadConfig() (*Configs, error) {
+	configs, err := marshalConfigs("config_files/", "../config_files/", "../../config_files/")
+	if err != nil {
+		return nil, err
+	}
+
+	configs, err = marshalDatasets(configs, "datasets/", "../datasets/", "../../datasets/")
+	if err != nil {
+		return nil, err
+	}
+
+	return configs, nil
+}
+
+func marshalDatasets(configs *Configs, possibleDsPaths ...string) (*Configs, error) {
+	var datasetDir string
+	for _, cp := range possibleDsPaths {
+		if !strings.HasSuffix(cp, "/") {
+			return nil, errors.New(cp + " is not a valid path, needs to end with '/'")
+		}
+
+		// attempt to open dir
+		files, err := os.ReadDir(cp)
+		if err != nil {
+			log.Printf("Couldn't find file in dir %s\n", cp)
+			continue
+		}
+
+		// build a map of necessary Dataset files
+		requiredDatasetFiles := map[string]bool{
+			"loading_messages.txt": false,
+			"emojis.txt":           false,
+		}
+
+		// loops through all files in dir, check if any of them are required
+		for _, f := range files {
+			if _, ok := requiredDatasetFiles[f.Name()]; ok {
+				requiredDatasetFiles[f.Name()] = true
+			}
+		}
+
+		allDatasetsFound := true
+		for _, v := range requiredDatasetFiles {
+			if !v {
+				allDatasetsFound = false
+				break
+			}
+		}
+
+		if !allDatasetsFound {
+			log.Printf("missing one or more required Dataset files in directory %s: \n %+v \n", cp, requiredDatasetFiles)
+		} else {
+			log.Printf("SUCCESS found Required Files dir %s\n", cp)
+			datasetDir = cp
+			break
+		}
+	}
+
+	log.Println("Reading from loading messages file...")
+	msgs, err := grabStringLists(datasetDir + "loading_messages.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("Reading from emojis file...")
+	emojis, err := grabStringLists(datasetDir + "emojis.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	configs.Emojis = emojis
+	configs.LoadingMessages = msgs
+	configs.Configs.ReqFileDirs.Datasets = datasetDir
+
+	return configs, nil
+}
+
+func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 	var configDir string
 	for _, cp := range possibleConfigPaths {
 		if !strings.HasSuffix(cp, "/") {
@@ -142,34 +223,32 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 			continue
 		}
 
-		// build a map of necessary files
-		requiredFiles := map[string]bool{
-			"config.yaml":          false,
-			"cmd.yaml":             false,
-			"loading_messages.txt": false,
-			"emojis.txt":           false,
+		// build a map of necessary Config files
+		requiredConfigFiles := map[string]bool{
+			"config.yaml": false,
+			"cmd.yaml":    false,
 		}
 
 		// loops through all files in dir, check if any of them are required
 		for _, f := range files {
-			if _, ok := requiredFiles[f.Name()]; ok {
-				requiredFiles[f.Name()] = true
+			if _, ok := requiredConfigFiles[f.Name()]; ok {
+				requiredConfigFiles[f.Name()] = true
 			}
 		}
 
 		// check if all values are set to true, meaning that all files were found
-		allFound := true
-		for _, v := range requiredFiles {
+		allConfigsFound := true
+		for _, v := range requiredConfigFiles {
 			if !v {
-				allFound = false
+				allConfigsFound = false
 				break
 			}
 		}
 
-		if !allFound {
-			log.Printf("missing one or more required files in directory %s: \n%+v\n", cp, requiredFiles)
+		if !allConfigsFound {
+			log.Printf("missing one or more required Config files in directory %s: \n %+v \n", cp, requiredConfigFiles)
 		} else {
-			log.Printf("SUCCESS found config_files dir %s\n", cp)
+			log.Printf("SUCCESS found Required Files dir %s\n", cp)
 			configDir = cp
 			break
 		}
@@ -206,26 +285,12 @@ func ReadConfig(possibleConfigPaths ...string) (*Configs, error) {
 		return nil, err
 	}
 
-	log.Println("Reading from loading messages file...")
-	msgs, err := grabStringLists(configDir + "loading_messages.txt")
-	if err != nil {
-		return nil, err
-	}
-
-	log.Println("Reading from emojis file...")
-	emojis, err := grabStringLists(configDir + "emojis.txt")
-	if err != nil {
-		return nil, err
-	}
-
 	clients := registerClients(cfg)
 
 	return &Configs{
-		Configs:         cfg,
-		Cmd:             cmd,
-		LoadingMessages: msgs,
-		Emojis:          emojis,
-		Clients:         clients,
+		Configs: cfg,
+		Cmd:     cmd,
+		Clients: clients,
 	}, nil
 }
 

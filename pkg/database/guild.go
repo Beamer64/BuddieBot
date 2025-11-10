@@ -2,7 +2,7 @@ package database
 
 import (
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/config"
 	"reflect"
 )
 

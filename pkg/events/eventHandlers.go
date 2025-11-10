@@ -2,10 +2,10 @@ package events
 
 import (
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/commands/prefix"
-	"github.com/beamer64/buddieBot/pkg/commands/slash"
-	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/beamer64/buddieBot/pkg/helper"
+	"github.com/Beamer64/BuddieBot/pkg/commands/prefix"
+	"github.com/Beamer64/BuddieBot/pkg/commands/slash"
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 	"log"

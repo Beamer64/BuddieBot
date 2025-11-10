@@ -2,21 +2,23 @@ package web
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/bwmarrin/dgvoice"
-	"github.com/bwmarrin/discordgo"
-	"github.com/chromedp/cdproto/network"
-	"github.com/chromedp/chromedp"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
+
+	// "github.com/bwmarrin/dgvoice"
+	"github.com/bwmarrin/discordgo"
+	"github.com/chromedp/chromedp"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var StopPlaying chan bool
@@ -24,7 +26,8 @@ var IsPlaying bool
 var MpFileQueue []string
 
 func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mpFileLink string, fileName string, err error) {
-	replacer := strings.NewReplacer("m.", "", "https", "http", "youtube", "youtubex2")
+	// replacer := strings.NewReplacer("m.", "", "https", "http", "youtube", "youtubex2")
+	replacer := strings.NewReplacer("m.", "", "youtube.com", "notube.net")
 	url := replacer.Replace(link)
 
 	ctx, cancel := chromedp.NewContext(context.Background()) // options: chromedp.WithDebugf(log.Printf)
@@ -51,11 +54,14 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 
 	// navigate to redirect and click button
 	// Grey 'Download file MP3' button
-	button := "/html/body/div[1]/main/section[2]/div[2]/div/div[2]/div/div[2]/div/a"
+	// button := "/html/body/div[1]/main/section[2]/div[2]/div/div[2]/div/div[2]/div/a"
+	button := "/html/body/div[2]/main/section/div/div/a[1]"
+
 	err = chromedp.Run(
 		ctx,
 		chromedp.Navigate(res),
-		chromedp.Click(button),
+		// chromedp.Click(button),
+		chromedp.AttributeValue(button, "href", &res, ok),
 	)
 	if err != nil {
 		return "", "", err
@@ -66,7 +72,7 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 		return "", "", err
 	}
 
-	// wait for page to load and get button redirect url
+	/*// wait for page to load and get button redirect url
 	searchElem := "/html/body/div/main/section[1]/div/div/div[5]/div/div[1]/div"
 	err = chromedp.Run(
 		ctx,
@@ -75,14 +81,14 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	)
 	if err != nil {
 		return "", "", err
-	}
+	}*/
 
 	msg, err = s.ChannelMessageEdit(msg.ChannelID, msg.ID, "Prepping vidya...50% [#####     ]")
 	if err != nil {
 		return "", "", err
 	}
 
-	// navigate to button redirect and get download link
+	/*// navigate to button redirect and get download link
 	button = "/html/body/div[1]/main/section/div/div[2]/div/div[2]/div[1]/div[3]/a[1]"
 	resURL := res
 	err = chromedp.Run(
@@ -92,7 +98,7 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	)
 	if err != nil {
 		return "", "", err
-	}
+	}*/
 
 	msg, err = s.ChannelMessageEdit(msg.ChannelID, msg.ID, "Prepping vidya...70% [#######   ]")
 	if err != nil {
@@ -100,13 +106,12 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 	}
 
 	// listen for response containing mp3 link
-	mpLink := ""
-	chromedp.ListenTarget(
+	mpLink := res
+	/*chromedp.ListenTarget(
 		ctx, func(ev interface{}) {
 			if ev, ok := ev.(*network.EventResponseReceived); ok {
 				if strings.Contains(ev.Response.URL, ".mp3") {
 					mpLink = ev.Response.URL
-					//fmt.Println("closing alert:", ev.Response)
 				}
 			}
 		},
@@ -118,7 +123,7 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 		if !strings.Contains(err.Error(), "net::ERR_ABORTED") {
 			return "", "", err
 		}
-	}
+	}*/
 
 	msg, err = s.ChannelMessageEdit(msg.ChannelID, msg.ID, "Prepping vidya...90% [######### ]")
 	if err != nil {
@@ -131,7 +136,9 @@ func GetYtAudioLink(s *discordgo.Session, m *discordgo.Message, link string) (mp
 		},
 	)
 
-	fileName = strings.SplitAfterN(mpLink, "/", 12)[11]
+	// fileName = strings.SplitAfterN(mpLink, "/", 12)[11]
+	fileName = strings.SplitAfterN(mpLink, "=", 3)[2]
+	fileName = strings.ReplaceAll(fileName, "=", "")
 
 	return mpLink, fileName, nil
 }
@@ -179,7 +186,7 @@ func DownloadMpFile(m *discordgo.MessageCreate, link string, fileName string) er
 	return nil
 }
 
-func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo.MessageCreate, s *discordgo.Session) error {
+func PlayAudioFile(vc *discordgo.VoiceConnection, fileName string, m *discordgo.MessageCreate, s *discordgo.Session) error {
 	dir := fmt.Sprintf("%s/Audio", m.GuildID)
 
 	var err error
@@ -194,6 +201,8 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 			MpFileQueue = append(MpFileQueue, filepath.Join(dir, filepath.Base(fileName)))
 		}
 
+		defer vc.Speaking(false)
+
 		IsPlaying = true
 		for i, v := range MpFileQueue {
 			log.Println("PlayAudioFile: ", v)
@@ -203,16 +212,48 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 				return err
 			}
 
-			dgvoice.PlayAudioFile(dgv, v, StopPlaying)
+			ffmpeg := exec.Command(
+				"ffmpeg",
+				"-i", v, // input file
+				"-f", "s16le", // raw PCM output
+				"-ar", "48000", // 48kHz sample rate
+				"-ac", "2", // 2 channels (stereo)
+				"pipe:1", // output to stdout
+			)
+
+			stdout, err := ffmpeg.StdoutPipe()
+			if err != nil {
+				return err
+			}
+
+			if err = ffmpeg.Start(); err != nil {
+				return err
+			}
+
+			// Mark speaking
+			err = vc.Speaking(true)
+			if err != nil {
+				return err
+			}
+
+			// Send PCM data to Discord
+			sendPCM(vc, stdout)
+
+			// Wait for ffmpeg to finish
+			if err = ffmpeg.Wait(); err != nil {
+				log.Println("ffmpeg exited with error:", err)
+			}
+
+			// dgvoice.PlayAudioFile(dgv, v, StopPlaying)
 
 			MpFileQueue = append(MpFileQueue[:i], MpFileQueue[i+1:]...)
 		}
-		//remove file from queue
-		//MpFileQueue = nil
+		// remove file from queue
+		// MpFileQueue = nil
 
-		if dgv != nil {
+		if vc != nil {
 			IsPlaying = false
-			err = dgv.Disconnect()
+			err = vc.Disconnect()
 			if err != nil {
 				return err
 			}
@@ -235,17 +276,39 @@ func PlayAudioFile(dgv *discordgo.VoiceConnection, fileName string, m *discordgo
 	return nil
 }
 
+func sendPCM(vc *discordgo.VoiceConnection, pcm io.Reader) {
+	const frameSize = 960 * 2 * 2 // 960 samples * 2 bytes * 2 channels = 3840 bytes per 20ms frame
+	buffer := make([]byte, frameSize)
+
+	for {
+		n, err := io.ReadFull(pcm, buffer)
+		if err == io.EOF || errors.Is(err, io.ErrUnexpectedEOF) {
+			break
+		}
+		if err != nil {
+			log.Println("error reading PCM:", err)
+			break
+		}
+
+		// Send audio frame to Discord
+		vc.OpusSend <- buffer[:n]
+	}
+
+	// Cleanly end transmission
+	close(vc.OpusSend)
+}
+
 // formatAudioFileName formats audio file name to look better
 func formatAudioFileName(fileName string) (string, error) {
-	//replace characters
+	// replace characters
 	replacer := strings.NewReplacer("/", "", "_", " ", "-", "", ".mp3", "")
 	fileName = replacer.Replace(fileName)
 
-	//remove numbers
+	// remove numbers
 	numRegex := regexp.MustCompile("[0-9]")
 	fileName = numRegex.ReplaceAllString(fileName, "")
 
-	//capitalize first letters
+	// capitalize first letters
 	c := cases.Title(language.AmericanEnglish)
 	fileName = c.String(fileName)
 

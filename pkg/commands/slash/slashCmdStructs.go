@@ -10,6 +10,13 @@ type tuuckCmdInfo struct {
 	Example string
 }
 
+type wyrPoll struct {
+	OptionA string
+	VotesA  int
+	OptionB string
+	VotesB  int
+}
+
 type steamGames struct {
 	Applist steamAppList `json:"applist"`
 }

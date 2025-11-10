@@ -5,7 +5,14 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/beamer64/buddieBot/pkg/config"
+	"net/http"
+	"os"
+	"regexp"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
@@ -13,12 +20,6 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	gomail "gopkg.in/mail.v2"
-	"net/http"
-	"os"
-	"regexp"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestSendEmail(t *testing.T) {

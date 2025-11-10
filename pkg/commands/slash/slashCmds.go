@@ -1,8 +1,8 @@
 package slash
 
 import (
-	"github.com/beamer64/buddieBot/pkg/config"
-	"github.com/beamer64/buddieBot/pkg/helper"
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 )
 
