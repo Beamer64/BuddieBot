@@ -27,7 +27,7 @@ func TestSendEmail(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +178,7 @@ func TestGroupChat(t *testing.T) {
 	var err error
 	var session *discordgo.Session
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -218,7 +218,7 @@ func TestGetMembers(t *testing.T) {
 	var err error
 	var session *discordgo.Session
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -283,7 +283,7 @@ func TestGetYtAudioLink(t *testing.T) {
 	// Long Link: video is 45 mins
 	// longLink := "https://www.youtube.com/watch?v=YbXMLCdzsCA&t=1744s"
 
-	/*cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	/*cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}*/

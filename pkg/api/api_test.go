@@ -3,20 +3,21 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Beamer64/BuddieBot/pkg/config"
-	"github.com/bwmarrin/discordgo"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/bwmarrin/discordgo"
 )
 
 func TestGetGifURL(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +66,7 @@ func TestPostInsult(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}

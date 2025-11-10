@@ -3,11 +3,12 @@ package events
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Beamer64/BuddieBot/pkg/config"
-	"github.com/bwmarrin/discordgo"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/bwmarrin/discordgo"
 )
 
 func TestGetAuditLog(t *testing.T) {
@@ -15,7 +16,7 @@ func TestGetAuditLog(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +46,7 @@ func TestStateMembers(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +101,7 @@ func TestModNSFWimgs(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}*/
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -11,7 +11,7 @@ func TestReadConfig(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}

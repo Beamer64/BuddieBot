@@ -3,7 +3,6 @@ package slash
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Beamer64/BuddieBot/pkg/config"
 	"io"
 	"math/rand"
 	"net/http"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/Beamer64/BuddieBot/pkg/config"
 )
 
 func TestPickChoices(t *testing.T) {
@@ -18,7 +19,7 @@ func TestPickChoices(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	/*cfg, err := config_files.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	/*cfg, err := config_files.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}*/
@@ -47,7 +48,7 @@ func TestCallKatzAPI(t *testing.T) {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
 	}
 
-	cfg, err := config.ReadConfig("config_files/", "../config_files/", "../../config_files/")
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
