@@ -25,7 +25,8 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 
 		switch strings.ToLower(command) {
 
-		// ///////////Dev///////////////////
+		// ------------Dev-------------
+
 		case "test":
 			err := testMethod(s, m, param)
 			if err != nil {
@@ -60,7 +61,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 				}
 			}
 
-		// ///////////Misc///////////////////
+		// -------------Misc-------------
 
 		case "cistercian":
 			err := sendCistercianNumeral(s, m, cfg, param)
@@ -86,13 +87,9 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 			}
 
-		// ///////////Misc///////////////////
+		// -------------Games-------------
 
-		// ///////////Games///////////////////
-
-		// ///////////Games///////////////////
-
-		// ///////////Audio///////////////////
+		// -------------Audio-------------
 
 		// Play audio
 		case "play":
@@ -140,7 +137,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 				}
 			}
 
-		// ///////////NSFW///////////////////
+		// -------------NSFW-------------
 
 		// Sends the "Invalid" command Message
 		default:

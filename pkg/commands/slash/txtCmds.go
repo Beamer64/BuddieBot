@@ -2,9 +2,10 @@ package slash
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
-	"strings"
 )
 
 func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
@@ -23,7 +24,7 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error
 		content, err = helper.ToConvertedText(text, options.Name)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseErrorToUser(s, i, "Unable to convert text atm, try again later.")
+				_ = helper.SendResponseErrorToUser(s, i, "Unable to convert text atm, try again later.")
 			}()
 			return err
 		}

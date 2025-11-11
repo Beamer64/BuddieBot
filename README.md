@@ -62,7 +62,7 @@ If you liked this repository, feel free to leave a star ⭐ to help promote Budd
 
 ## Features
 
-100+ commands and counting!
+130+ commands and counting!
 
 BuddieBot also comes packed with a variety of features, such as:
 

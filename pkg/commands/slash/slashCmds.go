@@ -1680,8 +1680,15 @@ var (
 			}
 		},
 
-		"wyr-button": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-			err := sendWYRCompResponse(s, i, cfg)
+		"wyr-reroll": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			err := sendWYRrerollResp(s, i, cfg)
+			if err != nil {
+				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
+			}
+		},
+		"wyr-votes": func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
+			customID := i.MessageComponentData().CustomID
+			err := sendWYRvotesResp(s, i, cfg, customID)
 			if err != nil {
 				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, i.GuildID)
 			}

@@ -2,13 +2,15 @@ package events
 
 import (
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/Beamer64/BuddieBot/pkg/commands/prefix"
 	"github.com/Beamer64/BuddieBot/pkg/commands/slash"
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
-	"log"
 )
 
 type MessageCreateHandler struct {
@@ -64,9 +66,18 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 			h(s, i, c.cfg)
 		}
 	case discordgo.InteractionMessageComponent:
-		if h, ok := slash.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
-			h(s, i, c.cfg)
+		customID := i.MessageComponentData().CustomID
+
+		for key, h := range slash.ComponentHandlers {
+			if strings.HasPrefix(customID, key) { // or strings.Contains(customID, key)
+				h(s, i, c.cfg)
+				return
+			}
 		}
+
+		/*if h, ok := slash.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
+			h(s, i, c.cfg)
+		}*/
 	}
 }
 

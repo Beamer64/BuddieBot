@@ -82,6 +82,12 @@ func registerCommands(s *discordgo.Session) error {
 		return err
 	}
 
-	log.Printf("%d commands registered\n", len(commandsRegistered))
+	subCmds := 0
+	for _, v := range commandsRegistered {
+		subCmds += len(v.Options)
+	}
+
+	log.Printf("%d Commands Registered\n", len(commandsRegistered))
+	log.Printf("%d Sub-Commands Registered\n", subCmds)
 	return nil
 }

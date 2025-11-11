@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/bwmarrin/discordgo"
 	"github.com/chromedp/chromedp"
 	"github.com/mitchellh/mapstructure"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-	"time"
 )
 
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
@@ -43,7 +44,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.Roast()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
+				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -78,7 +79,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.Joke()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
+				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -97,7 +98,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.Eightball()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
+				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -110,7 +111,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.Yomama()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
+				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -133,7 +134,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		clientData, err := client.PickupLine()
 		if err != nil {
 			go func() {
-				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
+				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}
@@ -152,7 +153,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		personData, err := callFakePersonAPI(cfg)
 		if err != nil {
 			go func() {
-				err = helper.SendResponseErrorToUser(s, i, errRespMsg)
+				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
 			}()
 			return err
 		}

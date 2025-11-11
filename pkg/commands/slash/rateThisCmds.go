@@ -2,11 +2,12 @@ package slash
 
 import (
 	"fmt"
-	"github.com/Beamer64/BuddieBot/pkg/helper"
-	"github.com/bwmarrin/discordgo"
 	"math/rand"
 	"strconv"
 	"strings"
+
+	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/bwmarrin/discordgo"
 )
 
 func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
@@ -21,7 +22,7 @@ func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	embed, err := getRateThisEmbed(options.Name, user)
 	if err != nil {
 		go func() {
-			err = helper.SendResponseErrorToUser(s, i, "Unable to Rate atm, try again later.")
+			_ = helper.SendResponseErrorToUser(s, i, "Unable to Rate atm, try again later.")
 		}()
 		return err
 	}

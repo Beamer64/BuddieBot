@@ -3,10 +3,11 @@ package slash
 import (
 	"encoding/csv"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/api"
@@ -98,23 +99,7 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		}
 
 	case "wyr":
-		embed, err = getWYREmbed(cfg)
-		if err == nil {
-			webhookEdit = &discordgo.WebhookEdit{
-				Components: &[]discordgo.MessageComponent{
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.Button{
-								Label:    "Another One! (▀̿Ĺ̯▀̿ ̿)",
-								Style:    1,
-								CustomID: "wyr-button",
-							},
-						},
-					},
-				},
-				Embeds: &[]*discordgo.MessageEmbed{embed},
-			}
-		}
+		webhookEdit, err = getWYRwebhook(cfg)
 
 	default:
 		return fmt.Errorf("unknown option: %s", commandName)
@@ -159,12 +144,54 @@ func getGTLembed(data interface{}) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func getWYREmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	/*fontsDir := "datasets/WRY.csv"
-	if helper.IsLaunchedByDebugger() {
-		fontsDir = "../../datasets/text_fonts.json"
-	}*/
+func getWYRvotesWebhook(cfg *config.Configs, customID string) (*discordgo.WebhookEdit, error) {
+	voteA := ""
+	voteB := ""
 
+	re := regexp.MustCompile(`L(\d+)-R(\d+)|R(\d+)-L(\d+)`)
+	match := re.FindStringSubmatch(customID)
+	if len(match) != 0 {
+		if match[1] != "" { // L first
+			voteA = match[1]
+			voteB = match[2]
+		} else if match[3] != "" { // R first
+			voteB = match[3]
+			voteA = match[4]
+		}
+	}
+
+	webhookEdit := &discordgo.WebhookEdit{
+		Components: &[]discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    voteA + "%",
+						Emoji:    &discordgo.ComponentEmoji{Name: "👈"},
+						Style:    discordgo.SuccessButton,
+						CustomID: fmt.Sprintf("wyr-votes:%v", voteA),
+						Disabled: true,
+					},
+					discordgo.Button{
+						Label:    voteB + "%",
+						Emoji:    &discordgo.ComponentEmoji{Name: "👉"},
+						Style:    discordgo.DangerButton,
+						CustomID: fmt.Sprintf("wyr-votes:%v", voteB),
+						Disabled: true,
+					},
+					discordgo.Button{
+						Label:    "Reroll",
+						Style:    discordgo.SecondaryButton,
+						CustomID: "wyr-reroll",
+					},
+				},
+			},
+		},
+	}
+
+	return webhookEdit, nil
+}
+
+func getWYRwebhook(cfg *config.Configs) (*discordgo.WebhookEdit, error) {
 	file, err := os.Open(cfg.Configs.ReqFileDirs.Datasets + "WYR.csv")
 	if err != nil {
 		return nil, err
@@ -209,13 +236,60 @@ func getWYREmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	randomIndex := rand.Intn(len(polls))
 	randomPoll := polls[randomIndex]
 
+	voteSum := randomPoll.VotesA + randomPoll.VotesB
+	percentA := math.Round((float64(randomPoll.VotesA) / float64(voteSum)) * 100)
+	percentB := math.Round((float64(randomPoll.VotesB) / float64(voteSum)) * 100)
+
 	embed := &discordgo.MessageEmbed{
-		Title:       "Would You Rather?",
-		Color:       helper.RangeIn(1, 16777215),
-		Description: fmt.Sprintf("%s OR %s", randomPoll.OptionA, randomPoll.OptionB),
+		Title: "Would You Rather?",
+		Color: helper.RangeIn(1, 16777215),
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Option 1",
+				Value:  randomPoll.OptionA,
+				Inline: true,
+			},
+			{
+				Name:   "|",
+				Value:  "| \n | \n |",
+				Inline: true,
+			},
+			{
+				Name:   "Option 2",
+				Value:  randomPoll.OptionB,
+				Inline: true,
+			},
+		},
 	}
 
-	return embed, nil
+	webhookEdit := &discordgo.WebhookEdit{
+		Components: &[]discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    "Left",
+						Emoji:    &discordgo.ComponentEmoji{Name: "👈"},
+						Style:    discordgo.SuccessButton,
+						CustomID: fmt.Sprintf("wyr-votes:L%v-R%v", percentA, percentB),
+					},
+					discordgo.Button{
+						Label:    "Right",
+						Emoji:    &discordgo.ComponentEmoji{Name: "👉"},
+						Style:    discordgo.DangerButton,
+						CustomID: fmt.Sprintf("wyr-votes:R%v-L%v", percentB, percentA),
+					},
+					discordgo.Button{
+						Label:    "Reroll",
+						Style:    discordgo.SecondaryButton,
+						CustomID: "wyr-reroll",
+					},
+				},
+			},
+		},
+		Embeds: &[]*discordgo.MessageEmbed{embed},
+	}
+
+	return webhookEdit, nil
 }
 
 func getWTPembed(data interface{}, isAnswer bool) (*discordgo.MessageEmbed, error) {
@@ -272,40 +346,61 @@ func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func sendWYRCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	embed, err := getWYREmbed(cfg)
+func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, customID string) error {
+	// errRespMsg := "Unable to make call at this moment, please try later :("
+
+	webhookEdit, err := getWYRvotesWebhook(cfg, customID)
 	if err != nil {
-		go func() {
-			err = helper.SendResponseErrorToUser(s, i, "Unable to fetch WYR atm, try again later.")
-		}()
+		_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch WYR atm, try again later.")
 		return err
 	}
 
-	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
-	msgContent := ""
-	msgEdit.Content = &msgContent
-	msgEdit.Embeds = &[]*discordgo.MessageEmbed{embed}
+	_, err = s.ChannelMessageEditComplex(
+		&discordgo.MessageEdit{
+			ID:         i.Message.ID, // message ID of the original message with the buttons
+			Channel:    i.ChannelID,  // channel where the message is
+			Content:    new(string),  // new text or nil if only editing embeds
+			Components: webhookEdit.Components,
+		},
+	)
 
-	// edit response (i.Interaction) and replace with embed
-	_, err = s.ChannelMessageEditComplex(msgEdit)
-	if err != nil {
-		return err
-	}
-
-	// 'This interaction failed' will show if not included
-	// todo fix later
+	// respond with an update to acknowledge interaction
 	err = s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "",
-			},
+			Type: discordgo.InteractionResponseDeferredMessageUpdate,
 		},
 	)
 	if err != nil {
-		if !strings.Contains(err.Error(), "Cannot send an empty message") {
-			return err
-		}
+		_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch WYR atm, try again later.")
+		return err
+	}
+
+	return nil
+}
+
+func sendWYRrerollResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	errRespMsg := "Unable to make call at this moment, please try later :("
+
+	// Defer the interaction response to avoid timeout
+	if err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		},
+	); err != nil {
+		return fmt.Errorf("failed to defer interaction for /get command WYR: %w", err)
+	}
+
+	webhookEdit, err := getWYRwebhook(cfg)
+	if err != nil {
+		_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch WYR atm, try again later.")
+		return err
+	}
+
+	if _, err = s.InteractionResponseEdit(
+		i.Interaction, webhookEdit,
+	); err != nil {
+		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
+		return fmt.Errorf("failed to send message for command WYR: %w", err)
 	}
 
 	return nil

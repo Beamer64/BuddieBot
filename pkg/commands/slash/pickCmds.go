@@ -3,14 +3,15 @@ package slash
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Beamer64/BuddieBot/pkg/config"
-	"github.com/Beamer64/BuddieBot/pkg/helper"
-	"github.com/bwmarrin/discordgo"
 	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/bwmarrin/discordgo"
 )
 
 func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
@@ -33,7 +34,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	}
 	if err != nil {
 		go func() {
-			err = helper.SendResponseErrorToUser(s, i, "Unable to pick atm, try again later.")
+			_ = helper.SendResponseErrorToUser(s, i, "Unable to pick atm, try again later.")
 		}()
 		return err
 	}
@@ -318,7 +319,7 @@ func sendAlbumPickCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 	embed, err := getAlbumPickerEmbed(tags, cfg)
 	if err != nil {
 		go func() {
-			err = helper.SendResponseErrorToUser(s, i, "Unable to fetch Albums atm, try again later.")
+			_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch Albums atm, try again later.")
 		}()
 		return err
 	}
