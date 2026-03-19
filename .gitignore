@@ -90,6 +90,9 @@ out/
 .idea_modules/
 *.idea/
 
+# claude
+/.claude
+
 # JIRA plugin
 atlassian-ide-plugin.xml
 

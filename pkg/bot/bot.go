@@ -3,14 +3,13 @@ package bot
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/commands/slash"
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/events"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
-
-	"time"
 )
 
 func Init(cfg *config.Configs) error {
@@ -55,13 +54,12 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 	s.AddHandler(events.NewReadyHandler(cfg).ReadyHandler)
 
 	// Guild
-	s.AddHandler(events.NewGuildHandler(cfg).GuildCreateHandler)
-	s.AddHandler(events.NewGuildHandler(cfg).GuildDeleteHandler)
-	s.AddHandler(events.NewGuildHandler(cfg).GuildJoinHandler)
-	s.AddHandler(events.NewGuildHandler(cfg).GuildLeaveHandler)
-
-	// Members
-	s.AddHandler(events.NewGuildHandler(cfg).GuildMemberUpdateHandler)
+	guildHandler := events.NewGuildHandler(cfg)
+	s.AddHandler(guildHandler.GuildCreateHandler)
+	s.AddHandler(guildHandler.GuildDeleteHandler)
+	s.AddHandler(guildHandler.GuildJoinHandler)
+	s.AddHandler(guildHandler.GuildLeaveHandler)
+	s.AddHandler(guildHandler.GuildMemberUpdateHandler)
 
 	// Messages
 	s.AddHandler(events.NewMessageCreateHandler(cfg, u).MessageCreateHandler)
@@ -83,8 +81,12 @@ func registerCommands(s *discordgo.Session) error {
 	}
 
 	subCmds := 0
-	for _, v := range commandsRegistered {
-		subCmds += len(v.Options)
+	for _, cmd := range commandsRegistered {
+		for _, opt := range cmd.Options {
+			if opt.Type == discordgo.ApplicationCommandOptionSubCommand {
+				subCmds++
+			}
+		}
 	}
 
 	log.Printf("%d Commands Registered\n", len(commandsRegistered))

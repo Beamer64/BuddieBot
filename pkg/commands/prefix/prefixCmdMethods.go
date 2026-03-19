@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
@@ -17,7 +15,6 @@ import (
 	"github.com/Beamer64/BuddieBot/pkg/web"
 	"github.com/StephaneBunel/bresenham"
 	"github.com/bwmarrin/discordgo"
-	"github.com/subosito/shorturl"
 )
 
 // functions here should mostly be used for the prefix commands ($)
@@ -67,42 +64,6 @@ func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 
 // endregion dev commands
 
-func sendLmgtfy(s *discordgo.Session, m *discordgo.Message) error {
-	strEnc := url.QueryEscape(m.Content)
-	lmgtfyURL := fmt.Sprintf("http://lmgtfy.com/?q=%s", strEnc)
-
-	lmgtfyShortURL, err := shorturl.Shorten(lmgtfyURL, "tinyurl")
-	if err != nil {
-		return err
-	}
-
-	_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("\"%s\"\n%s", m.Content, string(lmgtfyShortURL)))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// sendStartUpMessages is used when spinning up servers for minecraft for example
-func sendStartUpMessages(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) error {
-	// sleep for 1 minute while saying funny things and to wait for instance to start up
-	sm := 0
-	for i := 1; i < 5; i++ {
-		loadingMessage := helper.GetRandomStringFromSet(cfg.LoadingMessages)
-		time.Sleep(3 * time.Second)
-
-		_, err := s.ChannelMessageSend(m.ChannelID, loadingMessage)
-		if err != nil {
-			return err
-		}
-
-		sm += i
-	}
-	time.Sleep(3 * time.Second)
-	return nil
-}
-
 // region audio commands
 func playAudioLink(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
 	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
@@ -133,25 +94,13 @@ func playAudioLink(s *discordgo.Session, m *discordgo.MessageCreate, link string
 		return err
 	}
 
-	err = web.PlayAudioFile(dgv, fileName, m, s)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return web.PlayAudioFile(dgv, fileName, m, s)
 }
 
 func stopAudioPlayback() error {
-	// vc := voice_chat.VoiceConnection{}
-
 	if web.StopPlaying != nil {
 		close(web.StopPlaying)
 		web.IsPlaying = false
-
-		/*if vc.Dgv != nil {
-			vc.Dgv.Close()
-
-		}*/
 	}
 
 	return nil
@@ -166,11 +115,7 @@ func sendQueue(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	}
 
 	_, err := s.ChannelMessageSend(m.ChannelID, queue)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func sendSkipMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
@@ -186,12 +131,7 @@ func sendSkipMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
 		return err
 	}
 
-	err = skipPlayback(s, m)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return skipPlayback(s, m)
 }
 
 func skipPlayback(s *discordgo.Session, m *discordgo.MessageCreate) error {
@@ -380,38 +320,29 @@ func sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {
 			"───────────██▒▒▒▒▒▒▒▒▒██▀────────\n"+
 			"──────────██▒▒▒▒▒▒▒▒▒▒██─────────\n─────────██▒▒▒▒▒▒▒▒▒▒▒██─────────\n────────██▒████▒████▒▒██─────────\n────────██▒▒▒▒▒▒▒▒▒▒▒▒██─────────\n────────██▒────▒▒────▒██─────────\n────────██▒─██─▒▒─██─▒██─────────\n────────██▒────▒▒────▒██─────────\n────────██▒▒▒▒▒▒▒▒▒▒▒▒██─────────\n───────██▒▒█▀▀▀▀▀▀▀█▒▒▒▒██───────\n─────██▒▒▒▒▒█▄▄▄▄▄█▒▒▒▒▒▒▒██─────\n───██▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒██───\n─██▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒██─\n█▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒█\n█▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒█\n█▒▒████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒████▒▒█\n▀████▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▒▒▒▒▒▒████▀\n──█▌▌▌▌▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▌▌▌███──\n───█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌█────\n───█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌█────\n────▀█▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌██▀─────\n─────█▌▌▌▌▌▌████████▌▌▌▌▌██──────\n──────██▒▒██────────██▒▒██───────\n──────▀████▀────────▀████▀───────",
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func checkPalindrome(s *discordgo.Session, m *discordgo.MessageCreate, str string) error {
-	revStr := ""
+	// Convert to runes so multi-byte characters (emoji, accented letters, etc.) are handled correctly
+	runes := []rune(str)
 	isPalindrome := true
-	for i := len(str) - 1; i >= 0; i-- {
-		revStr += string(str[i])
-	}
-	for i := range str {
-		if str[i] != revStr[i] {
+
+	// Compare from both ends moving inward — only need to check half the string
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		if runes[i] != runes[j] {
 			isPalindrome = false
 			break
 		}
 	}
 
+	msg := "No is palindrome 👎"
 	if isPalindrome {
-		_, err := s.ChannelMessageSend(m.ChannelID, "Is palindrome 👍")
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err := s.ChannelMessageSend(m.ChannelID, "No is palindrome 👎")
-		if err != nil {
-			return err
-		}
+		msg = "Is palindrome 👍"
 	}
-	return nil
+
+	_, err := s.ChannelMessageSend(m.ChannelID, msg)
+	return err
 }
 
 func romanNums(s *discordgo.Session, m *discordgo.MessageCreate, str string) error {
@@ -452,7 +383,7 @@ func romanNums(s *discordgo.Session, m *discordgo.MessageCreate, str string) err
 	} else if errors.Is(err, strconv.ErrSyntax) {
 		str = strings.ToUpper(str)
 		strUp := str
-		romanNums := map[rune]int{
+		romanValues := map[rune]int{
 			'I': 1,
 			'V': 5,
 			'X': 10,
@@ -469,7 +400,7 @@ func romanNums(s *discordgo.Session, m *discordgo.MessageCreate, str string) err
 
 		total := 0
 		for _, v := range str {
-			total += romanNums[v]
+			total += romanValues[v]
 		}
 
 		content := fmt.Sprintf("%s as numeric value: %v", strUp, total)
@@ -486,25 +417,3 @@ func romanNums(s *discordgo.Session, m *discordgo.MessageCreate, str string) err
 }
 
 // endregion misc
-
-// region moderation
-func modNSFWimgs(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) error {
-	if cfg.Configs.Settings.EnableNSFWModeration {
-		if m.Attachments != nil && len(m.Attachments) > 0 {
-			for _, attachment := range m.Attachments {
-				/*_, err := s.ChannelMessageSend(m.ChannelID, attachment.URL)
-				if err != nil {
-					return err
-				}*/
-				fmt.Println(attachment.URL)
-			}
-
-		} else {
-			/*_, err := s.ChannelMessageSend(m.ChannelID, "There is no attachment")
-			if err != nil {
-				return nil
-			}*/
-		}
-	}
-	return nil
-}

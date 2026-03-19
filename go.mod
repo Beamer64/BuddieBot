@@ -1,12 +1,11 @@
 module github.com/Beamer64/BuddieBot
 
-go 1.25.3
+go 1.26.1
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923
 	github.com/beamer64/godagpi v0.0.0-20220209065335-4a6defdff5de
-	github.com/bwmarrin/dgvoice v0.0.0-20210225172318-caaac756e02e
 	github.com/bwmarrin/discordgo v0.29.0
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d
 	github.com/chromedp/chromedp v0.14.2
@@ -47,5 +46,5 @@ require (
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
-	//layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32 // indirect
+//layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32 // indirect
 )

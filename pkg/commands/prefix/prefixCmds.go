@@ -10,12 +10,18 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// isAudioGuild checks if the message is from a guild that has audio commands enabled
+func isAudioGuild(guildID string, cfg *config.Configs) bool {
+	return guildID == cfg.Configs.DiscordIDs.MasterGuildID || guildID == cfg.Configs.DiscordIDs.TestGuildID
+}
+
 func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) {
 	// If the message is a command
 	if strings.HasPrefix(m.Content, cfg.Configs.Settings.BotPrefix) {
 
-		messageSlices := strings.SplitAfterN(m.Content, " ", 2)                                       // split command from param
-		command := strings.Trim(messageSlices[0], fmt.Sprintf("%s ", cfg.Configs.Settings.BotPrefix)) // trim spaces and prefix
+		messageSlices := strings.SplitAfterN(m.Content, " ", 2)
+		command := strings.TrimPrefix(messageSlices[0], cfg.Configs.Settings.BotPrefix) // remove prefix
+		command = strings.TrimSpace(command)                                            // remove trailing space from SplitAfterN
 
 		// get command parameter
 		param := ""
@@ -40,18 +46,6 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 					if err != nil {
 						helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 					}
-
-				} else {
-					_, err := s.ChannelMessageSend(m.ChannelID, cfg.Cmd.Msg.NotBotAdmin)
-					if err != nil {
-						helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-					}
-				}
-			}
-
-		case "updatedbitems":
-			if m.GuildID == cfg.Configs.DiscordIDs.TestGuildID {
-				if helper.MemberHasRole(s, m.Member, m.GuildID, cfg.Configs.Settings.BotAdminRole) {
 
 				} else {
 					_, err := s.ChannelMessageSend(m.ChannelID, cfg.Cmd.Msg.NotBotAdmin)
@@ -87,13 +81,10 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 			}
 
-		// -------------Games-------------
-
 		// -------------Audio-------------
 
-		// Play audio
 		case "play":
-			if m.GuildID == cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == cfg.Configs.DiscordIDs.TestGuildID {
+			if isAudioGuild(m.GuildID, cfg) {
 				err := playAudioLink(s, m, param)
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
@@ -101,7 +92,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 			}
 
 		case "stop":
-			if m.GuildID == cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == cfg.Configs.DiscordIDs.TestGuildID {
+			if isAudioGuild(m.GuildID, cfg) {
 				err := stopAudioPlayback()
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
@@ -109,7 +100,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 			}
 
 		case "queue":
-			if m.GuildID == cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == cfg.Configs.DiscordIDs.TestGuildID {
+			if isAudioGuild(m.GuildID, cfg) {
 				err := sendQueue(s, m)
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
@@ -117,7 +108,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 			}
 
 		case "skip":
-			if m.GuildID == cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == cfg.Configs.DiscordIDs.TestGuildID {
+			if isAudioGuild(m.GuildID, cfg) {
 				err := sendSkipMessage(s, m)
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
@@ -125,7 +116,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 			}
 
 		case "clear":
-			if m.GuildID == cfg.Configs.DiscordIDs.MasterGuildID || m.GuildID == cfg.Configs.DiscordIDs.TestGuildID {
+			if isAudioGuild(m.GuildID, cfg) {
 				err := web.MpFileCleanUp(fmt.Sprintf("%s/Audio", m.GuildID))
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
@@ -137,8 +128,6 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 				}
 			}
 
-		// -------------NSFW-------------
-
 		// Sends the "Invalid" command Message
 		default:
 			_, err := s.ChannelMessageSend(m.ChannelID, cfg.Cmd.Msg.Invalid)
@@ -146,14 +135,5 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 			}
 		}
-
-		// If the message is not a command
-	} else {
-		// moderate NSFW content
-		err := modNSFWimgs(s, m, cfg)
-		if err != nil {
-			helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-		}
-
 	}
 }
