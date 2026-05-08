@@ -25,24 +25,28 @@ func Init(cfg *config.Configs) error {
 
 	botSession, err := discordgo.New("Bot " + token)
 	if err != nil {
-		return fmt.Errorf("failed to create Discord session: %v", err)
+		return fmt.Errorf("failed to create Discord session: %w", err)
+	}
+
+	if err := slash.LoadStaticData(cfg); err != nil {
+		return fmt.Errorf("failed to load static data: %w", err)
 	}
 
 	user, err := botSession.User("@me")
 	if err != nil {
-		return fmt.Errorf("failed to grab Discord session User: %v", err)
+		return fmt.Errorf("failed to grab Discord session User: %w", err)
 	}
 
 	registerEvents(botSession, cfg, user)
 
 	botSession.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
 	if err = botSession.Open(); err != nil {
-		return fmt.Errorf("failed to open Discord session: %v", err)
+		return fmt.Errorf("failed to open Discord session: %w", err)
 	}
 
 	err = registerCommands(botSession)
 	if err != nil {
-		return fmt.Errorf("failed to register commands: %v", err)
+		return fmt.Errorf("failed to register commands: %w", err)
 	}
 
 	log.Println(botENV)

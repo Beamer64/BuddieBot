@@ -101,7 +101,7 @@ func getHoroscopeWebHookEdit() *discordgo.WebhookEdit {
 	}
 }
 
-func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *config.Configs) error {
 	sign := i.MessageComponentData().Values[0]
 
 	// Defer the response to prevent interaction timeout
@@ -147,7 +147,7 @@ func getDailyFactEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	embed := &discordgo.MessageEmbed{
 		Title:       "Fun Fact",
-		Color:       helper.RangeIn(1, 16777215),
+		Color:       helper.RandomDiscordColor(),
 		Description: fmt.Sprintf("%v", clientData),
 	}
 
@@ -177,7 +177,7 @@ func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	return &discordgo.MessageEmbed{
 		Title:       "( ಠ ͜ʖರೃ)",
-		Color:       helper.RangeIn(1, 16777215),
+		Color:       helper.RandomDiscordColor(),
 		Description: adv,
 	}, nil
 }
@@ -200,7 +200,7 @@ func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	embed := &discordgo.MessageEmbed{
 		Title: "(▀̿Ĺ̯▀̿ ̿)",
-		Color: helper.RangeIn(1, 16777215),
+		Color: helper.RandomDiscordColor(),
 		Fields: []*discordgo.MessageEmbedField{
 			{Name: fmt.Sprintf("\"%s\"", kanyeObj.Quote), Value: "\\- Kanye"},
 		},
@@ -227,7 +227,7 @@ func getDailyAffirmationEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, err
 
 	embed := &discordgo.MessageEmbed{
 		Title:       time.Now().Format("Jan 2, 2006"),
-		Color:       helper.RangeIn(1, 16777215),
+		Color:       helper.RandomDiscordColor(),
 		Description: affirmObj.Affirmation,
 	}
 
@@ -252,7 +252,7 @@ func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {
 	embed := &discordgo.MessageEmbed{
 		Title:       sign,
 		Description: horoscope,
-		Color:       helper.RangeIn(1, 16777215),
+		Color:       helper.RandomDiscordColor(),
 		Footer: &discordgo.MessageEmbedFooter{
 			Text:    "Via Horoscopes.com",
 			IconURL: "https://www.horoscope.com/images-US/horoscope-logo.svg",
@@ -284,7 +284,7 @@ func scrapeHoroscope(signNum string) (string, error) {
 
 	err := c.Visit("https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-today.aspx?sign=" + signNum)
 	if err != nil {
-		return "", fmt.Errorf("failed to scrape horoscope: %v", err)
+		return "", fmt.Errorf("failed to scrape horoscope: %w", err)
 	}
 
 	return horoscope, nil
@@ -307,4 +307,43 @@ func getSignNumber(sign string) string {
 	}
 
 	return signMap[strings.ToLower(sign)]
+}
+
+func dailySpec() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        "daily",
+		Description: "Receive daily quotes, horoscopes, affirmations, etc.",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "affirmation",
+				Description: "Gives daily affirmation",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "advice",
+				Description: "Words of wisdom",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "fact",
+				Description: "Read a fun fact",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "horoscope",
+				Description: "Gives daily horoscope",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "kanye",
+				Description: "Gifts us with a quote from the man himself",
+				Required:    false,
+			},
+		},
+	}
 }

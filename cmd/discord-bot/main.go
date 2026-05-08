@@ -1,15 +1,14 @@
 package main
 
 import (
-	"math/rand"
-	"time"
+	"log"
 
 	"github.com/Beamer64/BuddieBot/pkg/bot"
 	"github.com/Beamer64/BuddieBot/pkg/config"
 )
 
 func main() {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	cfg, err := config.ReadConfig()
 	if err != nil {

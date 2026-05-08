@@ -45,11 +45,23 @@ type adviceSlip struct {
 }
 
 type doggo struct {
-	Breeds []doggoBreeds `json:"breeds"`
-	ID     string        `json:"id"`
-	URL    string        `json:"url"`
-	Width  int           `json:"width"`
-	Height int           `json:"height"`
+	Weight           animalWeight `json:"weight"`
+	Height           doggoHeight  `json:"height"`
+	ID               int          `json:"id"`
+	Name             string       `json:"name"`
+	BredFor          string       `json:"bred_for"`
+	BreedGroup       string       `json:"breed_group"`
+	LifeSpan         string       `json:"life_span"`
+	Temperament      string       `json:"temperament"`
+	Origin           string       `json:"origin"`
+	ReferenceImageID string       `json:"reference_image_id"`
+	Image            doggoImage   `json:"image"`
+}
+type doggoImage struct {
+	ID     string `json:"id"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+	URL    string `json:"url"`
 }
 type animalWeight struct {
 	Imperial string `json:"imperial"`
@@ -58,19 +70,6 @@ type animalWeight struct {
 type doggoHeight struct {
 	Imperial string `json:"imperial"`
 	Metric   string `json:"metric"`
-}
-type doggoBreeds struct {
-	Weight           animalWeight `json:"weight"`
-	Height           doggoHeight  `json:"height"`
-	ID               int          `json:"id"`
-	Name             string       `json:"name"`
-	CountryCode      string       `json:"country_code"`
-	BredFor          string       `json:"bred_for"`
-	BreedGroup       string       `json:"breed_group"`
-	LifeSpan         string       `json:"life_span"`
-	Temperament      string       `json:"temperament"`
-	Origin           string       `json:"origin"`
-	ReferenceImageID string       `json:"reference_image_id"`
 }
 
 type katz struct {
@@ -107,32 +106,6 @@ type pickupLine struct {
 type wyr struct {
 	ID   string `json:"id"`
 	Data string `json:"data"`
-}
-
-type gtl struct {
-	Answer   string `json:"answer"`
-	Brand    string `json:"brand"`
-	Clue     string `json:"clue"`
-	Easy     bool   `json:"easy"`
-	Hint     string `json:"hint"`
-	Question string `json:"question"`
-	WikiURL  string `json:"wiki_url"`
-}
-
-type wtp struct {
-	Data     wtpData `json:"Data"`
-	Answer   string  `json:"answer"`
-	Question string  `json:"question"`
-}
-type wtpData struct {
-	Type      []string `json:"Type"`
-	Abilities []string `json:"abilities"`
-	ASCII     string   `json:"ascii"`
-	Height    float64  `json:"height"`
-	ID        int      `json:"id"`
-	Link      string   `json:"link"`
-	Name      string   `json:"name"`
-	Weight    float64  `json:"weight"`
 }
 
 type albumPicker struct {

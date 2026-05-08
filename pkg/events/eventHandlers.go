@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strings"
 
 	"github.com/Beamer64/BuddieBot/pkg/commands/prefix"
@@ -10,8 +11,17 @@ import (
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
-	"github.com/pkg/errors"
 )
+
+// recoverPanic should be deferred at the top of each event handler so a
+// single bad event can't crash the whole bot. Logs the panic + stack to the
+// error channel and console.
+func recoverPanic(s *discordgo.Session, cfg *config.Configs, guildID string) {
+	if r := recover(); r != nil {
+		err := fmt.Errorf("panic in event handler: %v\n%s", r, debug.Stack())
+		helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, guildID)
+	}
+}
 
 type MessageCreateHandler struct {
 	cfg   *config.Configs
@@ -60,6 +70,7 @@ func NewReadyHandler(cfg *config.Configs) *ReadyHandler {
 
 // CommandHandler new commands
 func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	defer recoverPanic(s, c.cfg, i.GuildID)
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
 		if h, ok := slash.CommandHandlers[i.ApplicationCommandData().Name]; ok {
@@ -83,6 +94,7 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 
 // ReadyHandler session is created
 func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
+	defer recoverPanic(s, h.cfg, "")
 	err := s.UpdateGameStatus(0, "try /tuuck")
 	if err != nil {
 		helper.LogErrorsToErrorChannel(s, h.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, "")
@@ -96,6 +108,7 @@ func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 
 // ReactHandlerAdd when reactions are added to messages
 func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.MessageReactionAdd) {
+	defer recoverPanic(s, r.cfg, mr.GuildID)
 	if mr.UserID == r.botID {
 		return
 	}
@@ -113,30 +126,29 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 	}
 
 	// find the poll msg
-	if msg.Content == "Poll Time!" {
+	if msg.Content == slash.PollMessageContent {
 		for _, v := range msg.Reactions {
 			// remove extra reactions
 			if v.Emoji.Name == mr.Emoji.Name && v.Count < 2 {
 				err = s.MessageReactionRemove(channel.ID, msg.ID, mr.MessageReaction.Emoji.Name, mr.UserID)
 				if err != nil {
-					fmt.Printf("%+v", errors.WithStack(err))
-					_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, mr.GuildID))
+					helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 				}
 			}
 		}
-	} else if mr.MessageReaction.Emoji.Name == "grey_question" {
+	} else if mr.MessageReaction.Emoji.Name == slash.LmgtfyEmojiName {
 		msg, _ = s.ChannelMessage(mr.ChannelID, mr.MessageID)
 
 		err = r.sendLmgtfy(s, msg)
 		if err != nil {
-			fmt.Printf("%+v", errors.WithStack(err))
-			_, _ = s.ChannelMessageSendEmbed(r.cfg.Configs.DiscordIDs.ErrorLogChannelID, helper.GetErrorEmbed(err, s, mr.GuildID))
+			helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 		}
 	}
 }
 
 // MessageCreateHandler handles all messages sent to the discord server
 func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	defer recoverPanic(s, d.cfg, m.GuildID)
 	if m.Author.ID == d.botID {
 		return
 	}
@@ -167,6 +179,7 @@ func (g *GuildHandler) GuildMemberUpdateHandler(s *discordgo.Session, e *discord
 
 // GuildJoinHandler when someone joins our server
 func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+	defer recoverPanic(s, g.cfg, m.GuildID)
 	guild, err := s.Guild(m.GuildID)
 	if err != nil {
 		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
@@ -178,6 +191,7 @@ func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.Guild
 
 // GuildLeaveHandler when someone leaves our server
 func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
+	defer recoverPanic(s, g.cfg, m.GuildID)
 	guild, err := s.Guild(m.GuildID)
 	if err != nil {
 		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
@@ -189,6 +203,7 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.Guil
 
 // GuildCreateHandler bot joins new guild
 func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
+	defer recoverPanic(s, g.cfg, e.ID)
 	if helper.IsLaunchedByDebugger() {
 		return
 	}
@@ -233,10 +248,38 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 
 // GuildDeleteHandler when bot leaves a server
 func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.GuildDelete) {
-	// TODO add this in
-	/*err := Do sum
-	if err != nil {
-		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)
+	defer recoverPanic(s, g.cfg, e.ID)
+	if helper.IsLaunchedByDebugger() {
 		return
-	}*/
+	}
+
+	guildID := ""
+	guildName := "Unknown"
+	unavailable := false
+	if e.Guild != nil {
+		guildID = e.ID
+		if e.Name != "" {
+			guildName = e.Name
+		}
+		unavailable = e.Unavailable
+	}
+	if guildName == "Unknown" && e.BeforeDelete != nil && e.BeforeDelete.Name != "" {
+		guildName = e.BeforeDelete.Name
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title: "SERVER LEAVE",
+		Color: 1564907,
+		Fields: []*discordgo.MessageEmbedField{
+			{Name: "ServerID", Value: guildID, Inline: true},
+			{Name: "Server Name", Value: guildName, Inline: true},
+			{Name: "Unavailable", Value: fmt.Sprintf("%v", unavailable), Inline: true},
+		},
+	}
+
+	_, err := s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
+	if err != nil {
+		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, guildID)
+		return
+	}
 }

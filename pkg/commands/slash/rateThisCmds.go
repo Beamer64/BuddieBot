@@ -6,11 +6,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 )
 
-func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *config.Configs) error {
 	options := i.ApplicationCommandData().Options[0]
 	user := fmt.Sprintf("<@!%s>", i.Member.User.ID)
 
@@ -21,10 +22,7 @@ func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate) 
 
 	embed, err := getRateThisEmbed(options.Name, user)
 	if err != nil {
-		go func() {
-			_ = helper.SendResponseErrorToUser(s, i, "Unable to Rate atm, try again later.")
-		}()
-		return err
+		return helper.ReturnUserError(s, i, "Unable to Rate atm, try again later.", err)
 	}
 
 	err = s.InteractionRespond(
@@ -48,43 +46,228 @@ func getRateThisEmbed(ratingName string, user string) (*discordgo.MessageEmbed, 
 	embed := &discordgo.MessageEmbed{
 		Title:       rateTitle,
 		Description: rateDesc,
-		Color:       helper.RangeIn(1, 16777215),
+		Color:       helper.RandomDiscordColor(),
 	}
 
 	return embed, nil
 }
 
+var standardRatings = map[string]struct{ Title, ScoreLabel string }{
+	"simp":      {"Rate This Simp", "Simp"},
+	"dank":      {"Dank Rating", "Dank"},
+	"epicgamer": {"Rate This Epic Gamer", "Epic Gamer"},
+	"gay":       {"Gay Rating", "Gay"},
+	"stinky":    {"Rate This Stinky", "Stinky"},
+	"thot":      {"Rate This Thot", "Thot"},
+	"pickme":    {"Rate This Pick-Me", "Pick-Me"},
+	"neckbeard": {"Rate This Neck Beard", "Neck Beard"},
+	"looks":     {"Rate These Looks", "Looks"},
+	"smarts":    {"Rate These Smarts", "Smarts"},
+	"nerd":      {"Rate This Nerd", "Nerd"},
+	"geek":      {"Rate This Geek", "Geek"},
+}
+
 func getRateTitleAndDesc(ratingName string, user string, score string) (string, string) {
-	switch ratingName {
-	case "simp":
-		return "Rate This Simp", fmt.Sprintf("%s's Simp Score: %s/100", user, score)
-	case "dank":
-		return "Dank Rating", fmt.Sprintf("%s's Dank Score: %s/100", user, score)
-	case "epicgamer":
-		return "Rate This Epic Gamer", fmt.Sprintf("%s's Epic Gamer Score: %s/100", user, score)
-	case "gay":
-		return "Gay Rating", fmt.Sprintf("%s's Gay Score: %s/100", user, score)
-	case "schmeat":
+	if ratingName == "schmeat" {
 		size := helper.RangeIn(1, 15)
 		schmeat := "C" + strings.Repeat("=", size) + "8"
 		return "Schmeat Size", fmt.Sprintf("%s's Thang Thangin' \n%s", user, schmeat)
-	case "stinky":
-		return "Rate This Stinky", fmt.Sprintf("%s's Stinky Score: %s/100", user, score)
-	case "thot":
-		return "Rate This Thot", fmt.Sprintf("%s's Thot Score: %s/100", user, score)
-	case "pickme":
-		return "Rate This Pick-Me", fmt.Sprintf("%s's Pick-Me Score: %s/100", user, score)
-	case "neckbeard":
-		return "Rate This Neck Beard", fmt.Sprintf("%s's Neck Beard Score: %s/100", user, score)
-	case "looks":
-		return "Rate These Looks", fmt.Sprintf("%s's Looks Score: %s/100", user, score)
-	case "smarts":
-		return "Rate These Smarts", fmt.Sprintf("%s's Smarts Score: %s/100", user, score)
-	case "nerd":
-		return "Rate This Nerd", fmt.Sprintf("%s's Nerd Score: %s/100", user, score)
-	case "geek":
-		return "Rate This Geek", fmt.Sprintf("%s's Geek Score: %s/100", user, score)
-	default:
+	}
+
+	r, ok := standardRatings[ratingName]
+	if !ok {
 		return "", ""
+	}
+	return r.Title, fmt.Sprintf("%s's %s Score: %s/100", user, r.ScoreLabel, score)
+}
+
+func rateThisSpec() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        "rate-this",
+		Description: "Rate this ...",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "dank",
+				Description: "Dank Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Dank score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "epicgamer",
+				Description: "Epic Gamer Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Epic Gamer score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "gay",
+				Description: "Gay Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Gay score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "geek",
+				Description: "Geek Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Geek score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "looks",
+				Description: "Looks Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Looks score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "neckbeard",
+				Description: "Neck Beard Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Neck Beard score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "nerd",
+				Description: "Nerd Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Nerd score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "pickme",
+				Description: "Pick Me Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Pick Me score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "schmeat",
+				Description: "Schmeat Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Schmeat score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "simp",
+				Description: "Simp Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User simp score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "smarts",
+				Description: "Smarts Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Smarts score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "stinky",
+				Description: "Stinky Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Stinky score",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "thot",
+				Description: "Thot Rating",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "User Thot score",
+						Required:    false,
+					},
+				},
+			},
+		},
 	}
 }

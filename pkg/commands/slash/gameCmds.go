@@ -1,24 +1,19 @@
 package slash
 
 import (
-	"encoding/csv"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
 	"regexp"
-	"strconv"
-	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/api"
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
-	"github.com/mitchellh/mapstructure"
 )
 
 func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	client := cfg.Clients.Dagpi
 	commandName := i.ApplicationCommandData().Options[0].Name
 	errRespMsg := "Unable to fetch game atm, try again later."
 
@@ -45,7 +40,7 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	case "just-lost":
 		embed = &discordgo.MessageEmbed{
 			Title:       "You just lost The Game.",
-			Color:       helper.RangeIn(1, 16777215),
+			Color:       helper.RandomDiscordColor(),
 			Description: "..Told you not to play.",
 		}
 
@@ -61,42 +56,10 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 
 		embed = &discordgo.MessageEmbed{
 			Title: "Check your DM's  👀",
-			Color: helper.RangeIn(1, 16777215),
+			Color: helper.RandomDiscordColor(),
 		}
 
 		webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
-
-	// todo finish this
-	case "nim":
-		/*err := games.SendNimEmbed(s, i, cfg)
-		if err != nil {
-			return err
-		}*/
-
-	// todo finish this
-	case "typeracer":
-
-	case "gtl": // todo: cmd not currently registered in slashCmds.go
-		clientData, err := client.GTL()
-		if err != nil {
-			return err
-		}
-
-		embed, err = getGTLembed(clientData)
-		if err == nil {
-			webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
-		}
-
-	case "wtp": // todo: cmd not currently registered in slashCmds.go
-		clientData, err := client.WTP()
-		if err != nil {
-			return err
-		}
-
-		embed, err = getWTPembed(clientData, false)
-		if err == nil {
-			webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
-		}
 
 	case "wyr":
 		webhookEdit, err = getWYRwebhook(cfg)
@@ -119,29 +82,6 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	}
 
 	return nil
-}
-
-func getGTLembed(data interface{}) (*discordgo.MessageEmbed, error) {
-	var gtlObj gtl
-	err := mapstructure.Decode(data, &gtlObj)
-	if err != nil {
-		return nil, err
-	}
-
-	embed := &discordgo.MessageEmbed{
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "Clue",
-				Value:  gtlObj.Clue,
-				Inline: false,
-			},
-		},
-		Image: &discordgo.MessageEmbedImage{
-			URL: gtlObj.Question,
-		},
-	}
-
-	return embed, nil
 }
 
 func getWYRvotesWebhook(cfg *config.Configs, customID string) (*discordgo.WebhookEdit, error) {
@@ -191,58 +131,29 @@ func getWYRvotesWebhook(cfg *config.Configs, customID string) (*discordgo.Webhoo
 	return webhookEdit, nil
 }
 
+// wyrVotePercents returns the rounded percentage split for a WYR poll's two
+// option vote counts. Extracted for unit testing.
+func wyrVotePercents(votesA, votesB int) (percentA, percentB float64) {
+	sum := votesA + votesB
+	if sum == 0 {
+		return 0, 0
+	}
+	percentA = math.Round((float64(votesA) / float64(sum)) * 100)
+	percentB = math.Round((float64(votesB) / float64(sum)) * 100)
+	return percentA, percentB
+}
+
 func getWYRwebhook(cfg *config.Configs) (*discordgo.WebhookEdit, error) {
-	file, err := os.Open(cfg.Configs.ReqFileDirs.Datasets + "WYR.csv")
-	if err != nil {
-		return nil, err
+	if len(wyrPolls) == 0 {
+		return nil, errors.New("WYR polls not loaded")
 	}
 
-	defer file.Close()
-
-	// Create a CSV reader
-	reader := csv.NewReader(file)
-
-	// Read all records (assuming first row is headers)
-	records, err := reader.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-
-	if len(records) <= 1 {
-		return nil, fmt.Errorf("no data rows found in CSV: %w", err)
-	}
-
-	// Parse rows into a slice of Poll structs
-	var polls []wyrPoll
-	for _, row := range records[1:] { // skip header
-		if len(row) < 4 {
-			continue
-		}
-
-		votesA, _ := strconv.Atoi(row[1])
-		votesB, _ := strconv.Atoi(row[3])
-
-		polls = append(
-			polls, wyrPoll{
-				OptionA: row[0],
-				VotesA:  votesA,
-				OptionB: row[2],
-				VotesB:  votesB,
-			},
-		)
-	}
-
-	// Select a random poll
-	randomIndex := rand.Intn(len(polls))
-	randomPoll := polls[randomIndex]
-
-	voteSum := randomPoll.VotesA + randomPoll.VotesB
-	percentA := math.Round((float64(randomPoll.VotesA) / float64(voteSum)) * 100)
-	percentB := math.Round((float64(randomPoll.VotesB) / float64(voteSum)) * 100)
+	randomPoll := wyrPolls[rand.Intn(len(wyrPolls))]
+	percentA, percentB := wyrVotePercents(randomPoll.VotesA, randomPoll.VotesB)
 
 	embed := &discordgo.MessageEmbed{
 		Title: "Would You Rather?",
-		Color: helper.RangeIn(1, 16777215),
+		Color: helper.RandomDiscordColor(),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Option 1",
@@ -292,32 +203,8 @@ func getWYRwebhook(cfg *config.Configs) (*discordgo.WebhookEdit, error) {
 	return webhookEdit, nil
 }
 
-func getWTPembed(data interface{}, isAnswer bool) (*discordgo.MessageEmbed, error) {
-	var wtpObj wtp
-	err := mapstructure.Decode(data, &wtpObj)
-	if err != nil {
-		return nil, err
-	}
-
-	embed := &discordgo.MessageEmbed{}
-
-	if isAnswer {
-
-	} else {
-		embed = &discordgo.MessageEmbed{
-			Image: &discordgo.MessageEmbedImage{
-				URL: wtpObj.Question,
-			},
-		}
-	}
-
-	return embed, nil
-}
-
 func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	x1 := rand.NewSource(time.Now().UnixNano())
-	y1 := rand.New(x1)
-	randNum := y1.Intn(200)
+	randNum := rand.Intn(200)
 
 	search, results := "", ""
 	if randNum%2 == 0 {
@@ -337,7 +224,7 @@ func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	embed := &discordgo.MessageEmbed{
 		Title:       "Flipping...",
 		Description: fmt.Sprintf("It's %s!", results),
-		Color:       helper.RangeIn(1, 16777215),
+		Color:       helper.RandomDiscordColor(),
 		Image: &discordgo.MessageEmbedImage{
 			URL: gifURL,
 		},
@@ -346,8 +233,8 @@ func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, customID string) error {
-	// errRespMsg := "Unable to make call at this moment, please try later :("
+func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	customID := i.MessageComponentData().CustomID
 
 	webhookEdit, err := getWYRvotesWebhook(cfg, customID)
 	if err != nil {
@@ -404,4 +291,31 @@ func sendWYRrerollResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	}
 
 	return nil
+}
+
+func playSpec() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        "play",
+		Description: "Play some games! *More coming soon",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "coin-flip",
+				Description: "Flips a coin...",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "just-lost",
+				Description: "Don't play this..",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "wyr",
+				Description: "Would You Rather??",
+				Required:    false,
+			},
+		},
+	}
 }

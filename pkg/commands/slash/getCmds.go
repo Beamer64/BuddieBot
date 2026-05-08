@@ -36,22 +36,18 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("error sending deferred Interaction for /get command %s: %v", options.Name, err)
+		return fmt.Errorf("error sending deferred Interaction for /get command %s: %w", options.Name, err)
 	}
 
 	switch options.Name {
 	case "rekd":
 		clientData, err := client.Roast()
 		if err != nil {
-			go func() {
-				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-			}()
-			return err
+			return helper.ReturnUserError(s, i, errRespMsg, err)
 		}
 
 		content := ""
 		switch len(options.Options) {
-		// todo add comments
 		case 0:
 			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, clientData)
 
@@ -78,10 +74,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "joke":
 		clientData, err := client.Joke()
 		if err != nil {
-			go func() {
-				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-			}()
-			return err
+			return helper.ReturnUserError(s, i, errRespMsg, err)
 		}
 
 		var jokeObj joke
@@ -97,10 +90,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "8ball":
 		clientData, err := client.Eightball()
 		if err != nil {
-			go func() {
-				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-			}()
-			return err
+			return helper.ReturnUserError(s, i, errRespMsg, err)
 		}
 
 		data = &discordgo.MessageSend{
@@ -110,10 +100,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "yomomma":
 		clientData, err := client.Yomama()
 		if err != nil {
-			go func() {
-				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-			}()
-			return err
+			return helper.ReturnUserError(s, i, errRespMsg, err)
 		}
 
 		content := ""
@@ -133,10 +120,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "pickup-line":
 		clientData, err := client.PickupLine()
 		if err != nil {
-			go func() {
-				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-			}()
-			return err
+			return helper.ReturnUserError(s, i, errRespMsg, err)
 		}
 
 		var pickupObj pickupLine
@@ -152,10 +136,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "fake-person":
 		personData, err := callFakePersonAPI(cfg)
 		if err != nil {
-			go func() {
-				_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-			}()
-			return err
+			return helper.ReturnUserError(s, i, errRespMsg, err)
 		}
 
 		embed = getFakePersonEmbed(personData)
@@ -193,7 +174,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	// data must be of type *discordgo.MessageSend
 	_, err = s.ChannelMessageSendComplex(i.ChannelID, data)
 	if err != nil {
-		return fmt.Errorf("error sending Interaction for command %s: %v", options.Name, err)
+		return fmt.Errorf("error sending Interaction for command %s: %w", options.Name, err)
 	}
 
 	return nil
@@ -212,7 +193,7 @@ func getLandSatImageEmbed(cfg *config.Configs, text string) (*discordgo.MessageE
 
 	embed := &discordgo.MessageEmbed{
 		Title: "Landsat, more like...landFLAT...amirite non-round supporters??.",
-		Color: helper.RangeIn(1, 16777215),
+		Color: helper.RandomDiscordColor(),
 		Image: &discordgo.MessageEmbedImage{
 			URL: imgURL,
 		},
@@ -287,7 +268,7 @@ func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 
 	embed := &discordgo.MessageEmbed{
 		Title: "People used to read comics.",
-		Color: helper.RangeIn(1, 16777215),
+		Color: helper.RandomDiscordColor(),
 		Image: &discordgo.MessageEmbedImage{
 			URL: imgURL,
 		},
@@ -331,7 +312,7 @@ func getFakePersonEmbed(fakePersonObj fakePerson) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
 		Title:       "Fake Person Generator",
 		Description: "BuddieBot has created life!",
-		Color:       helper.RangeIn(1, 16777215),
+		Color:       helper.RandomDiscordColor(),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Gender",
@@ -406,4 +387,91 @@ func getFakePersonEmbed(fakePersonObj fakePerson) *discordgo.MessageEmbed {
 	}
 
 	return embed
+}
+
+func getSpec() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        "get",
+		Description: "Get a text based response like a joke or pickup line",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "8ball",
+				Description: "Think of a question",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "fake-person",
+				Description: "The miracle of life",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "joke",
+				Description: "Tell a joke",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "pickup-line",
+				Description: "Woah Momma",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "rekd",
+				Description: "Insult someone",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "nerd",
+						Description: "Someone to insult",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "landsat",
+				Description: "it's really cool",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "text",
+						Description: "text to landsat",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "xkcd",
+				Description: "Better than Newspaper Comics",
+				Required:    false,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "yomomma",
+				Description: "is sooooooo fat..",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionUser,
+						Name:        "user",
+						Description: "Somones momma",
+						Required:    false,
+					},
+				},
+			},
+			/*{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "captcha",
+				Description: "Are you a robot?",
+				Required:    false,
+			},*/
+		},
+	}
 }

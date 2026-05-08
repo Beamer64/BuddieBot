@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strconv"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
@@ -61,76 +62,83 @@ func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 }
 
 func getDoggoEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	doggoObj, err := retryDoggoFetch(cfg)
+	dog, err := retryDoggoFetch(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving doggo data after max # of attempts: %w", err)
 	}
 
-	dog := doggoObj[0]
-	breed := dog.Breeds[0]
-
 	get := helper.CheckIfStructValueISEmpty
 
 	embed := &discordgo.MessageEmbed{
-		Title:       breed.Name,
-		Color:       helper.RangeIn(1, 16777215),
-		Description: breed.Temperament,
+		Title:       dog.Name,
+		Color:       helper.RandomDiscordColor(),
+		Description: dog.Temperament,
 		Image: &discordgo.MessageEmbedImage{
-			URL: dog.URL,
+			URL: dog.Image.URL,
 		},
 		Fields: []*discordgo.MessageEmbedField{
-			{Name: "Weight", Value: fmt.Sprintf("%slbs / %skg", get(breed.Weight.Imperial), get(breed.Weight.Metric)), Inline: true},
-			{Name: "Breed Group", Value: get(breed.BreedGroup), Inline: true},
-			{Name: "Origin", Value: get(breed.Origin), Inline: true},
-			{Name: "Height", Value: fmt.Sprintf("%sin / %scm", get(breed.Height.Imperial), get(breed.Height.Metric)), Inline: true},
-			{Name: "Life Span", Value: get(breed.LifeSpan), Inline: true},
+			{Name: "Weight", Value: fmt.Sprintf("%slbs / %skg", get(dog.Weight.Imperial), get(dog.Weight.Metric)), Inline: true},
+			{Name: "Breed Group", Value: get(dog.BreedGroup), Inline: true},
+			{Name: "Origin", Value: get(dog.Origin), Inline: true},
+			{Name: "Height", Value: fmt.Sprintf("%sin / %scm", get(dog.Height.Imperial), get(dog.Height.Metric)), Inline: true},
+			{Name: "Life Span", Value: get(dog.LifeSpan), Inline: true},
 			{Name: "Good Pup", Value: "10/10", Inline: true},
-			{Name: "Bred For", Value: get(breed.BredFor), Inline: false},
+			{Name: "Bred For", Value: get(dog.BredFor), Inline: false},
 		},
 	}
 
 	return embed, nil
 }
 
-// retryDoggoFetch encapsulates retry logic for fetching valid dog data
-func retryDoggoFetch(cfg *config.Configs) ([]doggo, error) {
-	maxAttempts := 5
+// retryDoggoFetch picks random breed IDs and calls the per-breed endpoint
+// until it gets a valid hit or runs out of attempts. About 90% of IDs in the
+// range are valid (the rest 404), so 5 attempts is effectively guaranteed to
+// succeed under normal conditions.
+func retryDoggoFetch(cfg *config.Configs) (doggo, error) {
+	const maxAttempts = 5
+	const maxDoggoBreedID = 697
+
+	var lastErr error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		doggoObj, err := callDoggoAPI(cfg)
-		if err != nil {
-			return nil, err
+		id := rand.Intn(maxDoggoBreedID) + 1
+		dog, err := callDoggoAPI(cfg, id)
+		if err == nil {
+			return dog, nil
 		}
-		if len(doggoObj) > 0 && len(doggoObj[0].Breeds) > 0 {
-			return doggoObj, nil
-		}
+		lastErr = err
 	}
-	return nil, fmt.Errorf("no valid dog data after %d attempts", maxAttempts)
+	return doggo{}, fmt.Errorf("no valid dog data after %d attempts: %w", maxAttempts, lastErr)
 }
 
-func callDoggoAPI(cfg *config.Configs) ([]doggo, error) {
-	req, err := http.NewRequest("GET", cfg.Configs.ApiURLs.DoggoAPI, nil)
+func callDoggoAPI(cfg *config.Configs, id int) (doggo, error) {
+	url := cfg.Configs.ApiURLs.DoggoAPI + strconv.Itoa(id)
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating request to Doggo API: %w", err)
+		return doggo{}, fmt.Errorf("creating request to Doggo API: %w", err)
 	}
 
 	req.Header.Set("x-api-key", cfg.Configs.Keys.DoggoAPIkey)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("making request to Doggo API: %w", err)
+		return doggo{}, fmt.Errorf("making request to Doggo API: %w", err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return doggo{}, fmt.Errorf("breed %d not found", id)
+	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("doggo API returned status code %d", resp.StatusCode)
+		return doggo{}, fmt.Errorf("doggo API returned status code %d", resp.StatusCode)
 	}
 
-	var doggoObj []doggo
-	if err := json.NewDecoder(resp.Body).Decode(&doggoObj); err != nil {
-		return nil, fmt.Errorf("decoding Doggo API response: %w", err)
+	var dog doggo
+	if err := json.NewDecoder(resp.Body).Decode(&dog); err != nil {
+		return doggo{}, fmt.Errorf("decoding Doggo API response: %w", err)
 	}
 
-	return doggoObj, nil
+	return dog, nil
 }
 
 func getKatzEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
@@ -173,7 +181,7 @@ func getKatzEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title: get(breed.Name), Description: "Good Beans", Color: helper.RangeIn(1, 16777215),
+		Title: get(breed.Name), Description: "Good Beans", Color: helper.RandomDiscordColor(),
 		Image:  &discordgo.MessageEmbedImage{URL: breed.ImageLink},
 		Fields: fields,
 	}
@@ -189,12 +197,12 @@ func callKatzAPI(cfg *config.Configs) ([]katz, error) {
 
 	req, err := createNinjaAPIrequest(cfg, url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to request katz API: %v", err)
+		return nil, fmt.Errorf("failed to request katz API: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -204,7 +212,7 @@ func callKatzAPI(cfg *config.Configs) ([]katz, error) {
 
 	var katzObj []katz
 	if err = json.NewDecoder(resp.Body).Decode(&katzObj); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %v", err)
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	return katzObj, nil
@@ -213,9 +221,30 @@ func callKatzAPI(cfg *config.Configs) ([]katz, error) {
 func createNinjaAPIrequest(cfg *config.Configs, url string) (*http.Request, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new request: %v", err)
+		return nil, fmt.Errorf("failed to create new request: %w", err)
 	}
 
 	req.Header.Set("x-api-key", cfg.Configs.Keys.NinjaAPIKey)
 	return req, nil
+}
+
+func animalsSpec() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        "animals",
+		Description: "So CUTE",
+		Options: []*discordgo.ApplicationCommandOption{
+			/*{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "doggo",
+				Description: "🐕",
+				Required:    false,
+			},*/
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "katz",
+				Description: "😻",
+				Required:    false,
+			},
+		},
+	}
 }

@@ -33,10 +33,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		return fmt.Errorf("unknown option: %s", option)
 	}
 	if err != nil {
-		go func() {
-			_ = helper.SendResponseErrorToUser(s, i, "Unable to pick atm, try again later.")
-		}()
-		return err
+		return helper.ReturnUserError(s, i, "Unable to pick atm, try again later.", err)
 	}
 
 	err = s.InteractionRespond(
@@ -79,7 +76,7 @@ func sendChoicesPickResponse(i *discordgo.InteractionCreate) *discordgo.Interact
 
 	embed := &discordgo.MessageEmbed{
 		Title: "I have chosen...",
-		Color: helper.RangeIn(1, 16777215),
+		Color: helper.RandomDiscordColor(),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   choice,
@@ -154,12 +151,12 @@ func sendPollResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 
 	embed := &discordgo.MessageEmbed{
 		Title:  question.StringValue(),
-		Color:  helper.RangeIn(1, 16777215),
+		Color:  helper.RandomDiscordColor(),
 		Fields: fields,
 	}
 
 	data := &discordgo.InteractionResponseData{
-		Content: "Poll Time!",
+		Content: PollMessageContent,
 		Embeds:  []*discordgo.MessageEmbed{embed},
 	}
 
@@ -228,7 +225,7 @@ func getAlbumPickerEmbed(tags string, cfg *config.Configs) (*discordgo.MessageEm
 
 	embed := &discordgo.MessageEmbed{
 		Title: "Check out these albums!",
-		Color: helper.RangeIn(1, 16777215),
+		Color: helper.RandomDiscordColor(),
 		Image: &discordgo.MessageEmbedImage{
 			URL: albumPickerObj[index].URL,
 		},
@@ -318,10 +315,7 @@ func sendAlbumPickCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 
 	embed, err := getAlbumPickerEmbed(tags, cfg)
 	if err != nil {
-		go func() {
-			_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch Albums atm, try again later.")
-		}()
-		return err
+		return helper.ReturnUserError(s, i, "Unable to fetch Albums atm, try again later.", err)
 	}
 
 	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
@@ -352,4 +346,145 @@ func sendAlbumPickCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 	}
 
 	return nil
+}
+
+func pickSpec() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        "pick",
+		Description: "I'll pick stuff for you. I'll also pick a steam game with the 1st choice of 'steam'",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "album",
+				Description: "I can recommend an album for you to listen to!",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "1st",
+						Description: "First tag",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "2nd",
+						Description: "Second tag",
+						Required:    false,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "3rd",
+						Description: "Third tag",
+						Required:    false,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "4th",
+						Description: "Fourth tag",
+						Required:    false,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "5th",
+						Description: "Fifth tag",
+						Required:    false,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "6th",
+						Description: "Sixth tag",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "choices",
+				Description: "Will choose between 2 or more things.",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "1st",
+						Description: "First choice",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "2nd",
+						Description: "Second choice",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "3rd",
+						Description: "Third choice",
+						Required:    false,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "4th",
+						Description: "Fourth choice",
+						Required:    false,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "5th",
+						Description: "Fifth choice",
+						Required:    false,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "6th",
+						Description: "Sixth choice",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "poll",
+				Description: "Gauge the room!",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "request",
+						Description: "Post the Question",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "1st_poll_item",
+						Description: "First Choice",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "2nd_poll_item",
+						Description: "Second Choice",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "3rd_poll_item",
+						Description: "Third Choice",
+						Required:    false,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "4th_poll_item",
+						Description: "Fourth Choice",
+						Required:    false,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "steam",
+				Description: "Will choose a random Steam game to play.",
+				Required:    false,
+			},
+		},
+	}
 }

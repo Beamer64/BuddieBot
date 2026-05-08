@@ -28,7 +28,7 @@ func RequestGifURL(searchStr, tenorAPIkey string) (string, error) {
 
 	resp, err := http.Get(URL)
 	if err != nil {
-		return "", fmt.Errorf("failed to request gif URL: %v", err)
+		return "", fmt.Errorf("failed to request gif URL: %w", err)
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -42,7 +42,7 @@ func RequestGifURL(searchStr, tenorAPIkey string) (string, error) {
 	var gifObj gif
 	err = json.NewDecoder(resp.Body).Decode(&gifObj)
 	if err != nil {
-		return "", fmt.Errorf("failed to decode response body: %v", err)
+		return "", fmt.Errorf("failed to decode response body: %w", err)
 	}
 
 	if len(gifObj.Results) == 0 || len(gifObj.Results[0].Media) == 0 {

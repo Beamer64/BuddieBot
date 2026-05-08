@@ -184,7 +184,7 @@ func sendCistercianNumeral(s *discordgo.Session, m *discordgo.MessageCreate, cfg
 
 			embed := &discordgo.MessageEmbed{
 				Title: fmt.Sprintf("Cistercian Numeral for %v", intNum),
-				Color: helper.RangeIn(1, 16777215),
+				Color: helper.RandomDiscordColor(),
 				Image: &discordgo.MessageEmbedImage{
 					URL: imgURL,
 				},

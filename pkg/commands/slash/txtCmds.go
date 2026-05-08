@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 )
 
-func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *config.Configs) error {
 	options := i.ApplicationCommandData().Options[0]
 
 	var err error
@@ -23,10 +24,7 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error
 		text := strings.ToLower(options.Options[0].StringValue())
 		content, err = helper.ToConvertedText(text, options.Name)
 		if err != nil {
-			go func() {
-				_ = helper.SendResponseErrorToUser(s, i, "Unable to convert text atm, try again later.")
-			}()
-			return err
+			return helper.ReturnUserError(s, i, "Unable to convert text atm, try again later.", err)
 		}
 
 	case "emojiletters":
@@ -59,4 +57,111 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate) error
 	}
 
 	return nil
+}
+
+func txtSpec() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        "txt",
+		Description: "Funky Texts",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "1337",
+				Description: "1337C0D3",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "text",
+						Description: "73X7 70 CH4N63",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "bubble",
+				Description: "Bubble Text",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "text",
+						Description: "Text to change",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "clapback",
+				Description: "Say it with sass",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "text",
+						Description: "Text to change",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "cursed",
+				Description: "Cursed Text",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "text",
+						Description: "Text to change",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "cursive",
+				Description: "Say it with class",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "text",
+						Description: "Text to change",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "emojiletters",
+				Description: "Emoji Text",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "text",
+						Description: "Text to change",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "flipped",
+				Description: "bǝqqilᖷ",
+				Required:    false,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "text",
+						Description: "Text to change",
+						Required:    true,
+					},
+				},
+			},
+		},
+	}
 }
