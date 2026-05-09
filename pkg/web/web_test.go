@@ -1,24 +1,17 @@
 package web
 
 import (
-	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
-	"github.com/chromedp/cdproto/network"
-	"github.com/chromedp/chromedp"
 	"github.com/gocolly/colly/v2"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 	gomail "gopkg.in/mail.v2"
 )
 
@@ -57,47 +50,6 @@ func TestSendEmail(t *testing.T) {
 	if err = d.DialAndSend(m); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func TestAudioLink(t *testing.T) {
-	if os.Getenv("INTEGRATION") != "true" {
-		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}
-
-	/*url := "https://www.youtube.com/watch?v=VXtVrNdD3YA"
-
-	newURL := strings.Replace(url, "youtube", "youtubex2", 1)
-
-	link, fileName, err := GetYtAudioLink("https://www.youtube.com/watch?v=VXtVrNdD3YA")
-	if err != nil {
-		t.Fatal(err)
-	}*/
-}
-
-func TestFormatAudioFileName(t *testing.T) {
-	if os.Getenv("INTEGRATION") != "true" {
-		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}
-
-	fileName := "293416960237240320/Audio/welcome_to_the_internet_bo_burnham_frominside-7031555991360336165.mp3"
-
-	// split at "/"
-	splitName := strings.SplitAfterN(fileName, "/", 3)
-	fileName = splitName[2]
-
-	// replace characters
-	replacer := strings.NewReplacer("/", "", "_", " ", "-", "", ".mp3", "")
-	fileName = replacer.Replace(fileName)
-
-	// remove numbers
-	numRegex := regexp.MustCompile("[0-9]")
-	fileName = numRegex.ReplaceAllString(fileName, "")
-
-	// capitalize first letters
-	caser := cases.Title(language.AmericanEnglish)
-	fileName = caser.String(fileName)
-
-	fmt.Println(fileName)
 }
 
 func TestScrapeHoroscope(t *testing.T) {
@@ -262,135 +214,4 @@ func TestGetMembers(t *testing.T) {
 	for _, mem := range member {
 		fmt.Println(mem.User.Username)
 	}
-}
-
-func TestGetYtAudioLink(t *testing.T) {
-	if os.Getenv("INTEGRATION") != "true" {
-		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}
-
-	start := time.Now()
-	/*if os.Getenv("INTEGRATION") != "true" {
-		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}*/
-
-	// Bad Link: Won't work with website
-	// badLink := "https://www.youtube.com/watch?v=Y7cgLu0PuQo"
-
-	// Good Link: Cherry - FLETCHER feat. Hayley Kiyoko
-	goodLink := "https://www.youtube.com/watch?v=5T5tjZzZZDM"
-
-	// Long Link: video is 45 mins
-	// longLink := "https://www.youtube.com/watch?v=YbXMLCdzsCA&t=1744s"
-
-	/*cfg, err := config.ReadConfig()
-	if err != nil {
-		t.Fatal(err)
-	}*/
-
-	replacer := strings.NewReplacer("m.", "", "https", "http", "youtube", "youtubex2")
-	url := replacer.Replace(goodLink)
-
-	fmt.Println("URL: ", url)
-
-	ctx, cancel := chromedp.NewContext(context.Background()) // options: chromedp.WithDebugf(log.Printf)
-	ctx, cancel = context.WithTimeout(ctx, 40*time.Second)
-	defer cancel()
-
-	var res string
-	var ok *bool
-
-	fmt.Println("Prepping vidya...20% [##        ]")
-
-	// navigate to url and get redirect url
-	NavTasks := chromedp.Tasks{
-		chromedp.Navigate(url),
-		chromedp.Location(&res),
-	}
-	// run navigate task list
-	err := chromedp.Run(ctx, NavTasks)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// navigate to redirect and click button
-	// Grey 'Download file MP3' button
-	button := "/html/body/div[1]/main/section[2]/div[2]/div/div[2]/div/div[2]/div/a"
-	clickTasks := chromedp.Tasks{
-		chromedp.Navigate(res),
-		chromedp.Click(button),
-	}
-	// run clickTask list
-	err = chromedp.Run(ctx, clickTasks)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fmt.Println("Prepping vidya...40% [####      ]")
-
-	// wait for page to load and get button redirect url
-	searchElem := "/html/body/div/main/section[1]/div/div/div[5]/div/div[1]/div"
-	waitTasks := chromedp.Tasks{
-		chromedp.WaitNotPresent(searchElem),
-		chromedp.Location(&res),
-	}
-
-	// run waitTasks list
-	err = chromedp.Run(ctx, waitTasks)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fmt.Println("Prepping vidya...50% [#####     ]")
-
-	// navigate to button redirect and get download link
-	button = "/html/body/div[1]/main/section/div/div[2]/div/div[2]/div[1]/div[3]/a[1]"
-	resURL := res
-	navTasks := chromedp.Tasks{
-		chromedp.Navigate(resURL),
-		chromedp.AttributeValue(button, "href", &res, ok),
-	}
-
-	// run navTasks list
-	err = chromedp.Run(ctx, navTasks)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fmt.Println("Prepping vidya...70% [#######   ]")
-
-	// navigate to download link to parse network response
-	getLinkTasks := chromedp.Tasks{
-		chromedp.Navigate(res),
-	}
-
-	// listen for response containing mp3 link
-	mpLink := ""
-	chromedp.ListenTarget(
-		ctx, func(ev interface{}) {
-			if ev, ok := ev.(*network.EventResponseReceived); ok {
-				if strings.Contains(ev.Response.URL, ".mp3") {
-					mpLink = ev.Response.URL
-					// fmt.Println("closing alert:", ev.Response)
-				}
-			}
-		},
-	)
-
-	// run getLinkTasks list
-	err = chromedp.Run(ctx, getLinkTasks)
-	if err != nil {
-		if !strings.Contains(err.Error(), "net::ERR_ABORTED") {
-			t.Fatal(err)
-		}
-	}
-
-	fmt.Println("Prepping vidya...90% [######### ]")
-
-	fileName := strings.SplitAfterN(mpLink, "/", 12)[11]
-
-	fmt.Printf("\nAudio File Link: %s\n", fileName)
-
-	duration := time.Since(start)
-	fmt.Println("Execution time: ", duration.Seconds(), " seconds")
 }

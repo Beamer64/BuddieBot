@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Beamer64/BuddieBot/pkg/voice_chat"
 	"github.com/beamer64/godagpi/dagpi"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -19,6 +20,7 @@ type Configs struct {
 	LoadingMessages []string
 	Emojis          []string
 	Clients         *dagpiClients
+	Player          *voice_chat.Player
 }
 
 type configuration struct {
@@ -80,6 +82,12 @@ type configuration struct {
 	ReqFileDirs struct {
 		Datasets string `yaml:"datasets"`
 	} `yaml:"reqFileDirs"`
+
+	Lavalink struct {
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+		Password string `yaml:"password"`
+	} `yaml:"lavalink"`
 }
 
 type command struct {

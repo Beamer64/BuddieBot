@@ -2,6 +2,9 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Beamer64/BuddieBot/pkg/bot"
 	"github.com/Beamer64/BuddieBot/pkg/config"
@@ -15,10 +18,15 @@ func main() {
 		panic(err)
 	}
 
-	err = bot.Init(cfg)
-	if err != nil {
+	if err := bot.Init(cfg); err != nil {
+		bot.Shutdown()
 		panic(err)
 	}
 
-	<-make(chan struct{})
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	<-sigCh
+
+	log.Println("shutting down…")
+	bot.Shutdown()
 }

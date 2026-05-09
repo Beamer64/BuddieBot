@@ -146,3 +146,6 @@ launch.json
 
 # version file
 version.txt
+
+# Lavalink dev runtime (jar, plugins, logs) — bot spawns this in debug mode
+/lavalink/

@@ -161,6 +161,95 @@ link.
 
 Once done, feel free to launch BuddieBot using the command `go run cmd/discord-bot/main.go`.
 
+### Audio (Lavalink) — required for `$play` / `$stop`
+
+Audio playback is handled by [Lavalink](https://lavalink.dev/), a Java-based audio service. The bot doesn't open its own
+voice connection — Lavalink does, which is what gives the bot DAVE/E2EE voice support. In **debug mode** the bot spawns
+Lavalink as a child process automatically; in **production** you run Lavalink as a separate service alongside the bot.
+
+#### Dev setup (one-time, on your coding PC)
+
+1. Install Java 17+:
+   * **Windows:** `winget install Microsoft.OpenJDK.21`
+   * **Linux:** `sudo apt install openjdk-21-jre-headless`
+   * Verify with `java -version`.
+2. Create a `lavalink/` directory at the repo root.
+3. Download `Lavalink.jar` from the [latest 4.x release](https://github.com/lavalink-devs/Lavalink/releases) into `lavalink/`.
+4. Create `lavalink/application.yml`:
+
+```yaml
+server:
+  port: 2333
+  address: 127.0.0.1   # localhost-only — never expose this port
+
+plugins:
+  youtube:
+    enabled: true
+    allowSearch: true
+    allowDirectVideoIds: true
+    allowDirectPlaylistIds: true
+    clients:
+      - MUSIC
+      - ANDROID_VR
+      - WEB
+      - WEBEMBEDDED
+
+lavalink:
+  plugins:
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.13.5"
+      repository: "https://maven.lavalink.dev/releases"
+  server:
+    password: "youshallnotpass"
+    sources:
+      youtube: false   # built-in YouTube is deprecated; the plugin above replaces it
+      soundcloud: true
+      bandcamp: true
+      twitch: true
+      vimeo: true
+      http: true
+      local: false
+
+logging:
+  level:
+    root: INFO
+    lavalink: INFO
+```
+
+5. The first debug launch is slow (~30s) while Lavalink downloads the YouTube plugin from Maven. Subsequent launches are fast.
+
+When you run the bot in your debugger, it auto-spawns Lavalink and reaps the Java child on shutdown (signal-based on
+graceful stop; OS-level mechanisms — `Pdeathsig` on Linux, Job Objects on Windows — handle hard kills). If a stuck
+Java process ever survives, kill it manually:
+* **Windows:** `taskkill /IM java.exe /F`
+* **Linux:** `pkill -f Lavalink.jar`
+
+#### Production deployment (same host as the bot)
+
+The bot and Lavalink run as two independent processes on the same machine. Run Lavalink as a systemd unit:
+
+```ini
+# /etc/systemd/system/lavalink.service
+[Unit]
+Description=Lavalink
+After=network.target
+
+[Service]
+Type=simple
+User=lavalink
+WorkingDirectory=/opt/lavalink
+ExecStart=/usr/bin/java -Xmx512M -jar Lavalink.jar
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Lavalink stays bound to `127.0.0.1`, so the port is never reachable from outside the host — no firewall rules needed.
+Resource budget: ~256–512 MB RAM on top of whatever the bot uses. The bot's `lavalink:` config in `config.yaml` points at
+`127.0.0.1:2333` (same as dev). Bot updates and Lavalink updates are independent — restarting one doesn't require
+restarting the other.
+
 ---
 
 ## To-Do

@@ -8,11 +8,11 @@ import (
 	"image/color"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/Beamer64/BuddieBot/pkg/voice_chat"
-	"github.com/Beamer64/BuddieBot/pkg/web"
 	"github.com/StephaneBunel/bresenham"
 	"github.com/bwmarrin/discordgo"
 )
@@ -20,9 +20,9 @@ import (
 // functions here should mostly be used for the prefix commands ($)
 
 // region dev commands
-func testMethod(s *discordgo.Session, m *discordgo.MessageCreate, param string) error {
+func testMethod(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs, param string) error {
 	if helper.IsLaunchedByDebugger() {
-		err := playAudioLink(s, m, param)
+		err := playAudioLink(s, m, cfg, param)
 		if err != nil {
 			return err
 		}
@@ -65,94 +65,279 @@ func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 // endregion dev commands
 
 // region audio commands
-func playAudioLink(s *discordgo.Session, m *discordgo.MessageCreate, link string) error {
-	msg, err := s.ChannelMessageSend(m.ChannelID, "Prepping vidya...")
+
+func playAudioLink(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs, link string) error {
+	urls := strings.Fields(link)
+	if len(urls) == 0 {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Usage: $play <YouTube URL> [more URLs…]")
+		return err
+	}
+
+	if cfg.Player == nil {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Audio is not available right now.")
+		return err
+	}
+
+	if len(urls) == 1 {
+		return playSingle(s, m, cfg, urls[0])
+	}
+	return playBatch(s, m, cfg, urls)
+}
+
+// playSingle handles the original one-URL case. Keeps the historical
+// status messages ("Now playing: X" / "Added to queue: X (position N)").
+func playSingle(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs, url string) error {
+	status, err := s.ChannelMessageSend(m.ChannelID, "Resolving audio…")
 	if err != nil {
 		return err
 	}
 
-	link, fileName, err := web.GetYtAudioLink(s, msg, link)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	result, err := cfg.Player.Play(ctx, m.GuildID, m.ChannelID, m.Author.ID, url)
 	if err != nil {
-		// if context timed out because no link found
-		if errors.Is(err, context.DeadlineExceeded) {
-			_, err = s.ChannelMessageEdit(m.ChannelID, msg.ID, "Audio Unavailable..")
-			if err != nil {
-				return err
-			}
-			err = nil
+		_, editErr := s.ChannelMessageEdit(m.ChannelID, status.ID, friendlyPlayError(err))
+		if editErr != nil {
+			return fmt.Errorf("play: %w (also: edit status: %v)", err, editErr)
+		}
+		if isUserFacingPlayError(err) {
+			return nil
 		}
 		return err
 	}
 
-	err = web.DownloadMpFile(m, link, fileName)
-	if err != nil {
-		return err
-	}
-
-	dgv, err := voice_chat.ConnectVoiceChannel(s, m.Author.ID, m.GuildID)
-	if err != nil {
-		return err
-	}
-
-	return web.PlayAudioFile(dgv, fileName, m, s)
-}
-
-func stopAudioPlayback() error {
-	if web.StopPlaying != nil {
-		close(web.StopPlaying)
-		web.IsPlaying = false
-	}
-
-	return nil
-}
-
-func sendQueue(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	queue := ""
-	if len(web.MpFileQueue) > 0 {
-		queue = strings.Join(web.MpFileQueue, "\n")
+	var finalMsg string
+	if result.Queued {
+		finalMsg = fmt.Sprintf("Added to queue: %s (position %d)", result.Title, result.Position)
 	} else {
-		queue = "Uh owh, song queue is wempty (>.<)"
+		finalMsg = "Now playing: " + result.Title
 	}
-
-	_, err := s.ChannelMessageSend(m.ChannelID, queue)
+	_, err = s.ChannelMessageEdit(m.ChannelID, status.ID, finalMsg)
 	return err
 }
 
-func sendSkipMessage(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	audio := ""
-	if len(web.MpFileQueue) > 0 {
-		audio = fmt.Sprintf("Skipping %s", web.MpFileQueue[0])
-	} else {
-		audio = "Queue is empty, my guy"
-	}
-
-	_, err := s.ChannelMessageSend(m.ChannelID, audio)
+// playBatch handles 2+ URLs in one command. Loops Play sequentially —
+// the first call sets up voice if nothing's playing; subsequent calls
+// see "already playing" inside Play and get queued. Bails out on errors
+// that would affect all remaining URLs (no voice channel, voice timeout,
+// queue full); skips past per-URL errors (unresolvable links).
+func playBatch(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs, urls []string) error {
+	status, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Resolving %d URLs…", len(urls)))
 	if err != nil {
 		return err
 	}
 
-	return skipPlayback(s, m)
-}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
 
-func skipPlayback(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	if len(web.MpFileQueue) > 0 {
-		err := stopAudioPlayback()
-		if err != nil {
-			return err
-		}
-
-		dgv, err := voice_chat.ConnectVoiceChannel(s, m.Author.ID, m.GuildID)
-		if err != nil {
-			return err
-		}
-
-		err = web.PlayAudioFile(dgv, "", m, s)
-		if err != nil {
-			return err
-		}
+	type queuedItem struct {
+		title    string
+		position int
 	}
 
-	return nil
+	var (
+		playingTitle string
+		queued       []queuedItem
+		failures     int
+		fatalMsg     string // set if a bail-out error stopped the batch
+	)
+
+	for _, url := range urls {
+		result, err := cfg.Player.Play(ctx, m.GuildID, m.ChannelID, m.Author.ID, url)
+		if err == nil {
+			if result.Queued {
+				queued = append(queued, queuedItem{title: result.Title, position: result.Position})
+			} else {
+				playingTitle = result.Title
+			}
+			continue
+		}
+
+		// Errors that would also fail every remaining URL — stop here
+		// and surface a single message rather than spamming.
+		if errors.Is(err, voice_chat.ErrNotInVoice) ||
+			errors.Is(err, voice_chat.ErrVoiceTimeout) ||
+			errors.Is(err, voice_chat.ErrQueueFull) {
+			fatalMsg = friendlyPlayError(err)
+			break
+		}
+
+		// Per-URL failure (most commonly ErrNoTrackFound) — skip it,
+		// keep processing the rest.
+		failures++
+	}
+
+	var msg strings.Builder
+	if playingTitle != "" {
+		msg.WriteString("Now playing: ")
+		msg.WriteString(playingTitle)
+		msg.WriteString("\n")
+	}
+	if len(queued) == 1 {
+		fmt.Fprintf(&msg, "Added to queue: %s (position %d)\n", queued[0].title, queued[0].position)
+	} else if len(queued) > 1 {
+		msg.WriteString("Added to queue:\n")
+		for i, item := range queued {
+			line := fmt.Sprintf("  %d. %s\n", item.position, item.title)
+			// Discord caps messages at 2000 chars; leave room for a "...and N more" line.
+			if msg.Len()+len(line) > 1900 {
+				fmt.Fprintf(&msg, "  …and %d more\n", len(queued)-i)
+				break
+			}
+			msg.WriteString(line)
+		}
+	}
+	if failures > 0 {
+		fmt.Fprintf(&msg, "Couldn't resolve %d URL%s.\n", failures, pluralS(failures))
+	}
+	if fatalMsg != "" {
+		msg.WriteString(fatalMsg)
+		msg.WriteString("\n")
+	}
+	if msg.Len() == 0 {
+		msg.WriteString("Nothing happened.")
+	}
+
+	_, err = s.ChannelMessageEdit(m.ChannelID, status.ID, strings.TrimRight(msg.String(), "\n"))
+	return err
+}
+
+// friendlyPlayError maps Player.Play errors to user-facing messages.
+func friendlyPlayError(err error) string {
+	switch {
+	case errors.Is(err, voice_chat.ErrNotInVoice):
+		return "Join a voice channel first."
+	case errors.Is(err, voice_chat.ErrNoTrackFound):
+		return "Couldn't resolve audio (invalid URL or unavailable video)."
+	case errors.Is(err, voice_chat.ErrQueueFull):
+		return "Queue is full (100 tracks max)."
+	case errors.Is(err, voice_chat.ErrVoiceTimeout):
+		return "Voice connection didn't establish — try again."
+	default:
+		return "Failed to start playback."
+	}
+}
+
+// isUserFacingPlayError reports whether an error has already been shown
+// to the user via friendlyPlayError, so the caller can suppress the
+// error-channel log to avoid double-reporting normal user mistakes.
+func isUserFacingPlayError(err error) bool {
+	return errors.Is(err, voice_chat.ErrNotInVoice) ||
+		errors.Is(err, voice_chat.ErrNoTrackFound) ||
+		errors.Is(err, voice_chat.ErrQueueFull) ||
+		errors.Is(err, voice_chat.ErrVoiceTimeout)
+}
+
+func pluralS(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
+}
+
+func stopAudioPlayback(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) error {
+	if cfg.Player == nil {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Audio is not available right now.")
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := cfg.Player.Stop(ctx, m.GuildID); err != nil {
+		return fmt.Errorf("stop playback: %w", err)
+	}
+	_, err := s.ChannelMessageSend(m.ChannelID, "Stopped.")
+	return err
+}
+
+func sendQueue(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) error {
+	if cfg.Player == nil {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Audio is not available right now.")
+		return err
+	}
+
+	current, upcoming, err := cfg.Player.Queue(m.GuildID)
+	if err != nil {
+		return fmt.Errorf("queue: %w", err)
+	}
+
+	if current == nil && len(upcoming) == 0 {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Nothing playing.")
+		return err
+	}
+
+	var msg strings.Builder
+	if current != nil {
+		msg.WriteString("Now playing: ")
+		msg.WriteString(current.Info.Title)
+		msg.WriteString("\n")
+	}
+	if len(upcoming) > 0 {
+		msg.WriteString("Up next:\n")
+		for i, t := range upcoming {
+			line := fmt.Sprintf("  %d. %s\n", i+1, t.Info.Title)
+			// Discord caps messages at 2000 chars; leave room for a "...and N more" line.
+			if msg.Len()+len(line) > 1900 {
+				msg.WriteString(fmt.Sprintf("  …and %d more\n", len(upcoming)-i))
+				break
+			}
+			msg.WriteString(line)
+		}
+	}
+	_, err = s.ChannelMessageSend(m.ChannelID, msg.String())
+	return err
+}
+
+func skipPlayback(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) error {
+	if cfg.Player == nil {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Audio is not available right now.")
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	skipped, next, err := cfg.Player.Skip(ctx, m.GuildID)
+	if err != nil {
+		if errors.Is(err, voice_chat.ErrNothingPlaying) {
+			_, sErr := s.ChannelMessageSend(m.ChannelID, "Nothing is playing.")
+			return sErr
+		}
+		return fmt.Errorf("skip: %w", err)
+	}
+
+	var msg string
+	if next != nil {
+		msg = fmt.Sprintf("Skipped: %s.\nNow playing: %s", skipped.Info.Title, next.Info.Title)
+	} else {
+		msg = fmt.Sprintf("Skipped: %s. Queue is empty — leaving voice.", skipped.Info.Title)
+	}
+	_, err = s.ChannelMessageSend(m.ChannelID, msg)
+	return err
+}
+
+func clearQueue(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) error {
+	if cfg.Player == nil {
+		_, err := s.ChannelMessageSend(m.ChannelID, "Audio is not available right now.")
+		return err
+	}
+
+	count, err := cfg.Player.ClearQueue(m.GuildID)
+	if err != nil {
+		return fmt.Errorf("clear queue: %w", err)
+	}
+
+	var msg string
+	switch {
+	case count == 0:
+		msg = "Queue is already empty."
+	case count == 1:
+		msg = "Cleared 1 queued track."
+	default:
+		msg = fmt.Sprintf("Cleared %d queued tracks.", count)
+	}
+	_, err = s.ChannelMessageSend(m.ChannelID, msg)
+	return err
 }
 
 // endregion audio commands

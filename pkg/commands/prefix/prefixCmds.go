@@ -1,12 +1,10 @@
 package prefix
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
-	"github.com/Beamer64/BuddieBot/pkg/web"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -34,7 +32,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 		// ------------Dev-------------
 
 		case "test":
-			err := testMethod(s, m, param)
+			err := testMethod(s, m, cfg, param)
 			if err != nil {
 				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 			}
@@ -85,7 +83,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 
 		case "play":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := playAudioLink(s, m, param)
+				err := playAudioLink(s, m, cfg, param)
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 				}
@@ -93,7 +91,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 
 		case "stop":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := stopAudioPlayback()
+				err := stopAudioPlayback(s, m, cfg)
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 				}
@@ -101,7 +99,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 
 		case "queue":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := sendQueue(s, m)
+				err := sendQueue(s, m, cfg)
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 				}
@@ -109,7 +107,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 
 		case "skip":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := sendSkipMessage(s, m)
+				err := skipPlayback(s, m, cfg)
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 				}
@@ -117,12 +115,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 
 		case "clear":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := web.MpFileCleanUp(fmt.Sprintf("%s/Audio", m.GuildID))
-				if err != nil {
-					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-				}
-
-				_, err = s.ChannelMessageSend(m.ChannelID, "\"This house is clean.\"")
+				err := clearQueue(s, m, cfg)
 				if err != nil {
 					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 				}
