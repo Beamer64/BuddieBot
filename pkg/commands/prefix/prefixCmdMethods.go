@@ -163,8 +163,9 @@ func playBatch(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Con
 			break
 		}
 
-		// Per-URL failure (most commonly ErrNoTrackFound) — skip it,
-		// keep processing the rest.
+		// Per-URL failure (ErrNoTrackFound, ErrTrackFailed) — skip it,
+		// keep processing the rest. ErrTrackFailed already announced
+		// detail to the channel via Player.OnTrackException.
 		failures++
 	}
 
@@ -204,6 +205,9 @@ func playBatch(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Con
 }
 
 // friendlyPlayError maps Player.Play errors to user-facing messages.
+// ErrTrackFailed cases get a deliberately brief status here because the
+// detail message has already been posted to the channel by Player's
+// OnTrackException listener — no point repeating it.
 func friendlyPlayError(err error) string {
 	switch {
 	case errors.Is(err, voice_chat.ErrNotInVoice):
@@ -214,6 +218,8 @@ func friendlyPlayError(err error) string {
 		return "Queue is full (100 tracks max)."
 	case errors.Is(err, voice_chat.ErrVoiceTimeout):
 		return "Voice connection didn't establish — try again."
+	case errors.Is(err, voice_chat.ErrTrackFailed):
+		return "Couldn't play that track."
 	default:
 		return "Failed to start playback."
 	}
@@ -226,7 +232,8 @@ func isUserFacingPlayError(err error) bool {
 	return errors.Is(err, voice_chat.ErrNotInVoice) ||
 		errors.Is(err, voice_chat.ErrNoTrackFound) ||
 		errors.Is(err, voice_chat.ErrQueueFull) ||
-		errors.Is(err, voice_chat.ErrVoiceTimeout)
+		errors.Is(err, voice_chat.ErrVoiceTimeout) ||
+		errors.Is(err, voice_chat.ErrTrackFailed)
 }
 
 func pluralS(n int) string {

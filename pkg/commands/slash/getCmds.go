@@ -12,14 +12,17 @@ import (
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/Beamer64/bb_data/eightball"
+	"github.com/Beamer64/bb_data/jokes"
+	"github.com/Beamer64/bb_data/pickuplines"
+	"github.com/Beamer64/bb_data/roasts"
+	"github.com/Beamer64/bb_data/yomomma"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/bwmarrin/discordgo"
 	"github.com/chromedp/chromedp"
-	"github.com/mitchellh/mapstructure"
 )
 
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	client := cfg.Clients.Dagpi
 	options := i.ApplicationCommandData().Options[0]
 
 	var embed *discordgo.MessageEmbed
@@ -41,20 +44,17 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 	switch options.Name {
 	case "rekd":
-		clientData, err := client.Roast()
-		if err != nil {
-			return helper.ReturnUserError(s, i, errRespMsg, err)
-		}
+		roast := roasts.Random()
 
 		content := ""
 		switch len(options.Options) {
 		case 0:
-			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, clientData)
+			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, roast)
 
 		case 1:
 			user := options.Options[0].UserValue(s)
 
-			content = fmt.Sprintf("<@!%s>\n%s", user.ID, clientData)
+			content = fmt.Sprintf("<@!%s>\n%s", user.ID, roast)
 		}
 
 		data = &discordgo.MessageSend{
@@ -72,45 +72,26 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 	case "joke":
-		clientData, err := client.Joke()
-		if err != nil {
-			return helper.ReturnUserError(s, i, errRespMsg, err)
-		}
-
-		var jokeObj joke
-		err = mapstructure.Decode(clientData, &jokeObj)
-		if err != nil {
-			return err
-		}
-
 		data = &discordgo.MessageSend{
-			Content: fmt.Sprintf("%s", jokeObj.Joke),
+			Content: jokes.Random(),
 		}
 
 	case "8ball":
-		clientData, err := client.Eightball()
-		if err != nil {
-			return helper.ReturnUserError(s, i, errRespMsg, err)
-		}
-
 		data = &discordgo.MessageSend{
-			Content: fmt.Sprintf("%s", clientData),
+			Content: eightball.Random(),
 		}
 
 	case "yomomma":
-		clientData, err := client.Yomama()
-		if err != nil {
-			return helper.ReturnUserError(s, i, errRespMsg, err)
-		}
+		joke := yomomma.Random()
 
 		content := ""
 		switch len(options.Options) {
 		case 0:
-			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, clientData)
+			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, joke)
 
 		case 1:
 			user := options.Options[0].UserValue(s)
-			content = fmt.Sprintf("<@!%s>\n%s", user.ID, clientData)
+			content = fmt.Sprintf("<@!%s>\n%s", user.ID, joke)
 		}
 
 		data = &discordgo.MessageSend{
@@ -118,19 +99,8 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 	case "pickup-line":
-		clientData, err := client.PickupLine()
-		if err != nil {
-			return helper.ReturnUserError(s, i, errRespMsg, err)
-		}
-
-		var pickupObj pickupLine
-		err = mapstructure.Decode(clientData, &pickupObj)
-		if err != nil {
-			return err
-		}
-
 		data = &discordgo.MessageSend{
-			Content: fmt.Sprintf("%s", pickupObj.Joke),
+			Content: pickuplines.Random(),
 		}
 
 	case "fake-person":

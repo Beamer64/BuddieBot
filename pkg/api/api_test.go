@@ -61,6 +61,32 @@ func TestGetGifURL(t *testing.T) {
 	fmt.Println(gifURL)
 }
 
+// TestRequestGifURL exercises the RequestGifURL helper directly against
+// Tenor (g.tenor.com). Requires TenorAPIkey in config.yaml. Asserts on
+// the function's contract (non-empty URL on success) rather than re-doing
+// the HTTP / decode work in the test.
+func TestRequestGifURL(t *testing.T) {
+	if os.Getenv("INTEGRATION") != "true" {
+		t.Skip("set INTEGRATION=true to run live API health checks")
+	}
+
+	cfg, err := config.ReadConfig()
+	if err != nil {
+		t.Fatalf("read config: %v", err)
+	}
+	if cfg.Configs.Keys.TenorAPIkey == "" {
+		t.Skip("TenorAPIkey not set in config.yaml — skipping health check")
+	}
+
+	gifURL, err := RequestGifURL("cat", cfg.Configs.Keys.TenorAPIkey)
+	if err != nil {
+		t.Fatalf("RequestGifURL: %v", err)
+	}
+	if gifURL == "" {
+		t.Fatal("empty gif URL — Tenor API likely changed shape")
+	}
+}
+
 func TestPostInsult(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {
 		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")

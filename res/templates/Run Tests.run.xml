@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Tests" type="GoTestRunConfiguration" factoryName="Go Test">
+    <module name="BuddieBot" />
+    <working_directory value="$PROJECT_DIR$" />
+    <go_parameters value="-v" />
+    <envs>
+      <env name="INTEGRATION" value="true" />
+    </envs>
+    <kind value="DIRECTORY" />
+    <package value="github.com/Beamer64/BuddieBot" />
+    <directory value="$PROJECT_DIR$/pkg" />
+    <filePath value="$PROJECT_DIR$" />
+    <framework value="gotest" />
+    <method v="2" />
+  </configuration>
+</component>

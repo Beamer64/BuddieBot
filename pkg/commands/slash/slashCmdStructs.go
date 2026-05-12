@@ -32,10 +32,6 @@ type affirmation struct {
 	Affirmation string `json:"affirmation"`
 }
 
-type kanye struct {
-	Quote string `json:"quote"`
-}
-
 type advice struct {
 	Slip adviceSlip `json:"slip"`
 }

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -37,6 +38,11 @@ var (
 	ErrQueueFull = errors.New("queue is full")
 	// ErrNothingPlaying is returned by Skip / Queue when nothing is playing.
 	ErrNothingPlaying = errors.New("nothing is playing")
+	// ErrTrackFailed is returned by Play when Lavalink reports a
+	// TrackExceptionEvent during the connect window. Distinct from
+	// ErrVoiceTimeout because retrying is pointless — the track itself
+	// is the problem, not Discord's voice event delivery.
+	ErrTrackFailed = errors.New("track failed to play")
 )
 
 // voiceConnectTimeout is how long each individual voice-connect attempt
@@ -65,7 +71,8 @@ type Player struct {
 
 	mu               sync.Mutex
 	queues           map[snowflake.ID][]lavalink.Track
-	announceChannels map[snowflake.ID]string // guildID -> text channel ID of the most recent $play
+	announceChannels map[snowflake.ID]string     // guildID -> text channel ID of the most recent $play
+	playSignals      map[snowflake.ID]chan error // guildID -> in-flight Play's failure-signal channel
 }
 
 // New constructs a Player. Call OnTrackEnd as a disgolink listener so the
@@ -76,6 +83,7 @@ func New(link disgolink.Client, session *discordgo.Session) *Player {
 		session:          session,
 		queues:           map[snowflake.ID][]lavalink.Track{},
 		announceChannels: map[snowflake.ID]string{},
+		playSignals:      map[snowflake.ID]chan error{},
 	}
 }
 
@@ -130,6 +138,14 @@ func (p *Player) Play(ctx context.Context, guildID, channelID, userID, url strin
 		return PlayResult{}, ErrNotInVoice
 	}
 
+	// Record the announce channel up-front so OnTrackException can find it
+	// even when the track fails before voice has connected.
+	if channelID != "" {
+		p.mu.Lock()
+		p.announceChannels[gID] = channelID
+		p.mu.Unlock()
+	}
+
 	var lastErr error
 	for attempt := 1; attempt <= maxPlayAttempts; attempt++ {
 		if attempt > 1 {
@@ -146,19 +162,30 @@ func (p *Player) Play(ctx context.Context, guildID, channelID, userID, url strin
 			continue
 		}
 
+		// Register a failure-signal channel so OnTrackException can short-
+		// circuit the connect wait if Lavalink rejects the track outright.
+		signal := make(chan error, 1)
+		p.mu.Lock()
+		p.playSignals[gID] = signal
+		p.mu.Unlock()
+
 		if err := dgPlayer.Update(ctx, lavalink.WithTrack(*track)); err != nil {
+			p.clearPlaySignal(gID)
 			_ = p.session.ChannelVoiceJoinManual(guildID, "", false, true)
 			return PlayResult{}, fmt.Errorf("start playback: %w", err)
 		}
 
-		if err := waitForVoiceConnected(ctx, dgPlayer, voiceConnectTimeout); err == nil {
-			if channelID != "" {
-				p.mu.Lock()
-				p.announceChannels[gID] = channelID
-				p.mu.Unlock()
-			}
+		err := waitForPlayback(ctx, dgPlayer, signal, voiceConnectTimeout)
+		p.clearPlaySignal(gID)
+		switch {
+		case err == nil:
 			return PlayResult{Title: track.Info.Title}, nil
-		} else if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		case errors.Is(err, ErrTrackFailed):
+			// Track itself is broken — retrying voice won't help. The
+			// failure has already been announced via OnTrackException.
+			_ = p.session.ChannelVoiceJoinManual(guildID, "", false, true)
+			return PlayResult{}, err
+		case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 			return PlayResult{}, err
 		}
 		lastErr = ErrVoiceTimeout
@@ -214,14 +241,18 @@ func (p *Player) cycleVoice(ctx context.Context, gID snowflake.ID, guildID strin
 	return nil
 }
 
-// waitForVoiceConnected polls the player's state until Lavalink reports a
-// connected voice WebSocket, or the timeout elapses. Connected becoming
-// true means: Discord sent VOICE_STATE_UPDATE + VOICE_SERVER_UPDATE → our
-// forwarders relayed them → disgolink PATCHed Lavalink with voice info →
-// Lavalink connected to Discord's voice gateway → it told us about it.
-// Any link in that chain dropping (most commonly Discord skipping an
-// event) leaves Connected stuck at false.
-func waitForVoiceConnected(ctx context.Context, player disgolink.Player, timeout time.Duration) error {
+// waitForPlayback waits for one of three outcomes after we've sent a
+// track to Lavalink:
+//
+//   - state.Connected becomes true: voice connected, track is playing.
+//     Returns nil.
+//   - signal receives an error: Lavalink emitted TrackExceptionEvent
+//     while we were waiting (track is broken). Returns that error
+//     (ErrTrackFailed) so the caller can skip the cycleVoice retry.
+//   - timeout elapses: neither event fired. Returns ErrVoiceTimeout so
+//     the caller can attempt the leave/rejoin retry — this is the
+//     "Discord dropped a voice event" case the retry was built for.
+func waitForPlayback(ctx context.Context, player disgolink.Player, signal <-chan error, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -229,15 +260,25 @@ func waitForVoiceConnected(ctx context.Context, player disgolink.Player, timeout
 		if player.State().Connected {
 			return nil
 		}
-		if time.Now().After(deadline) {
-			return ErrVoiceTimeout
-		}
 		select {
+		case err := <-signal:
+			return err
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
+			if time.Now().After(deadline) {
+				return ErrVoiceTimeout
+			}
 		}
 	}
+}
+
+// clearPlaySignal removes the per-guild failure-signal channel after Play
+// has finished waiting. Safe to call when no signal is registered.
+func (p *Player) clearPlaySignal(gID snowflake.ID) {
+	p.mu.Lock()
+	delete(p.playSignals, gID)
+	p.mu.Unlock()
 }
 
 // Queue returns a snapshot of the current track and upcoming queue for
@@ -352,6 +393,70 @@ func (p *Player) Stop(ctx context.Context, guildID string) error {
 	}
 
 	return p.session.ChannelVoiceJoinManual(guildID, "", false, true)
+}
+
+// OnTrackException is registered with disgolink. When a track fails to
+// play (cipher errors, removed videos, region locks, etc.) it does two
+// things: signals any in-flight Play() so it can bail out instead of
+// burning the voice-connect timeout, and posts a failure message to the
+// announce channel so the user understands why the next track skipped
+// or why the bot left voice.
+func (p *Player) OnTrackException(player disgolink.Player, e lavalink.TrackExceptionEvent) {
+	gID := player.GuildID()
+
+	p.mu.Lock()
+	announceCh := p.announceChannels[gID]
+	signal := p.playSignals[gID]
+	p.mu.Unlock()
+
+	if signal != nil {
+		select {
+		case signal <- ErrTrackFailed:
+		default:
+		}
+	}
+
+	if announceCh == "" {
+		return
+	}
+
+	title := e.Track.Info.Title
+	if title == "" {
+		title = "track"
+	}
+	msg := fmt.Sprintf("⚠️ Couldn't play %s", title)
+	if reason := briefExceptionReason(e.Exception.Message); reason != "" {
+		msg += ": " + reason
+	}
+	// Discord rejects messages > 2000 characters with HTTP 400. Lavalink's
+	// AllClientsFailedException can dump several KB of stack-trace-like
+	// detail into Exception.Message — keep our final string well under
+	// the cap.
+	if len(msg) > 1900 {
+		msg = msg[:1900] + "…"
+	}
+	if _, err := p.session.ChannelMessageSend(announceCh, msg); err != nil {
+		log.Printf("voice_chat: announce track exception in guild %s: %v", gID, err)
+	}
+}
+
+// briefExceptionReason returns the first non-empty line of an exception
+// message, capped at 200 characters. Lavalink exceptions can be
+// multi-line concatenations of every-client-tried details — we just want
+// the headline.
+func briefExceptionReason(msg string) string {
+	msg = strings.TrimSpace(msg)
+	if msg == "" {
+		return ""
+	}
+	if newline := strings.IndexAny(msg, "\r\n"); newline > 0 {
+		msg = msg[:newline]
+	}
+	const maxLen = 200
+	if len(msg) > maxLen {
+		msg = msg[:maxLen] + "…"
+	}
+	return msg
 }
 
 // OnTrackEnd is registered with disgolink. It advances the per-guild

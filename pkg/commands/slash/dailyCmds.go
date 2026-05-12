@@ -3,12 +3,16 @@ package slash
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/Beamer64/bb_data/affirmations"
+	"github.com/Beamer64/bb_data/facts"
+	"github.com/Beamer64/bb_data/kanye"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
 )
@@ -136,22 +140,12 @@ func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 	return nil
 }
 
-func getDailyFactEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	client := cfg.Clients.Dagpi
-	var clientData interface{}
-
-	clientData, err := client.Fact()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch daily fact: %w", err)
-	}
-
-	embed := &discordgo.MessageEmbed{
+func getDailyFactEmbed(_ *config.Configs) (*discordgo.MessageEmbed, error) {
+	return &discordgo.MessageEmbed{
 		Title:       "Fun Fact",
 		Color:       helper.RandomDiscordColor(),
-		Description: fmt.Sprintf("%v", clientData),
-	}
-
-	return embed, nil
+		Description: facts.Random(),
+	}, nil
 }
 
 func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
@@ -182,56 +176,56 @@ func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	}, nil
 }
 
-func getDailyKanyeEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	resp, err := http.Get(cfg.Configs.ApiURLs.KanyeAPI)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch Kanye quote: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("kanye API returned status code %d", resp.StatusCode)
-	}
-
-	var kanyeObj kanye
-	if err = json.NewDecoder(resp.Body).Decode(&kanyeObj); err != nil {
-		return nil, fmt.Errorf("failed to decode Kanye API response: %w", err)
-	}
-
-	embed := &discordgo.MessageEmbed{
+func getDailyKanyeEmbed(_ *config.Configs) (*discordgo.MessageEmbed, error) {
+	return &discordgo.MessageEmbed{
 		Title: "(▀̿Ĺ̯▀̿ ̿)",
 		Color: helper.RandomDiscordColor(),
 		Fields: []*discordgo.MessageEmbedField{
-			{Name: fmt.Sprintf("\"%s\"", kanyeObj.Quote), Value: "\\- Kanye"},
+			{Name: fmt.Sprintf("\"%s\"", kanye.Random()), Value: "\\- Kanye"},
 		},
-	}
-
-	return embed, nil
+	}, nil
 }
 
 func getDailyAffirmationEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	resp, err := http.Get(cfg.Configs.ApiURLs.AffirmationAPI)
+	text, err := fetchAffirmationFromAPI(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch affirmation: %w", err)
+		log.Printf("affirmation API unavailable, using local fallback: %v", err)
+		text = affirmations.Random()
+		if text == "" {
+			return nil, fmt.Errorf("affirmation API failed and local fallback pool is empty: %w", err)
+		}
+	}
+
+	return &discordgo.MessageEmbed{
+		Title:       time.Now().Format("Jan 2, 2006"),
+		Color:       helper.RandomDiscordColor(),
+		Description: text,
+	}, nil
+}
+
+// fetchAffirmationFromAPI tries the configured affirmation API with a
+// short timeout. Returns the affirmation text or an error describing
+// the specific failure (network, non-200, decode, empty body).
+func fetchAffirmationFromAPI(cfg *config.Configs) (string, error) {
+	client := &http.Client{Timeout: 4 * time.Second}
+	resp, err := client.Get(cfg.Configs.ApiURLs.AffirmationAPI)
+	if err != nil {
+		return "", fmt.Errorf("get: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("affirmation API returned status code %d", resp.StatusCode)
+		return "", fmt.Errorf("status %d", resp.StatusCode)
 	}
 
 	var affirmObj affirmation
-	if err = json.NewDecoder(resp.Body).Decode(&affirmObj); err != nil {
-		return nil, fmt.Errorf("failed to decode affirmation response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&affirmObj); err != nil {
+		return "", fmt.Errorf("decode: %w", err)
 	}
-
-	embed := &discordgo.MessageEmbed{
-		Title:       time.Now().Format("Jan 2, 2006"),
-		Color:       helper.RandomDiscordColor(),
-		Description: affirmObj.Affirmation,
+	if strings.TrimSpace(affirmObj.Affirmation) == "" {
+		return "", fmt.Errorf("empty affirmation field")
 	}
-
-	return embed, nil
+	return affirmObj.Affirmation, nil
 }
 
 func getHoroscopeEmbed(sign string) (*discordgo.MessageEmbed, error) {

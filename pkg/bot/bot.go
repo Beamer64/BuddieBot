@@ -17,6 +17,7 @@ import (
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/Beamer64/BuddieBot/pkg/lavalink_runner"
 	"github.com/Beamer64/BuddieBot/pkg/voice_chat"
+	"github.com/Beamer64/bb_data"
 	"github.com/bwmarrin/discordgo"
 	"github.com/disgoorg/disgolink/v3/disgolink"
 	"github.com/disgoorg/snowflake/v2"
@@ -66,6 +67,11 @@ func Init(cfg *config.Configs) error {
 		return fmt.Errorf("failed to load static data: %w", err)
 	}
 
+	if err := bb_data.Load(); err != nil {
+		stopDevRunner()
+		return fmt.Errorf("failed to load bb_data datasets: %w", err)
+	}
+
 	user, err := fetchSelfUserWithRetry(session)
 	if err != nil {
 		stopDevRunner()
@@ -92,7 +98,10 @@ func Init(cfg *config.Configs) error {
 
 	player := voice_chat.New(linkClient, session)
 	cfg.Player = player
-	linkClient.AddListeners(disgolink.NewListenerFunc(player.OnTrackEnd))
+	linkClient.AddListeners(
+		disgolink.NewListenerFunc(player.OnTrackEnd),
+		disgolink.NewListenerFunc(player.OnTrackException),
+	)
 
 	registerEvents(session, cfg, user)
 	registerVoiceForwarders(session, linkClient)

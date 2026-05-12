@@ -3,6 +3,7 @@ module github.com/Beamer64/BuddieBot
 go 1.26.1
 
 require (
+	github.com/Beamer64/bb_data v0.0.0
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923
 	github.com/beamer64/godagpi v0.0.0-20220209065335-4a6defdff5de
@@ -54,3 +55,5 @@ require (
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 //layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32 // indirect
 )
+
+replace github.com/Beamer64/bb_data => ../bb_data
