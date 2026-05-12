@@ -40,7 +40,6 @@ type configuration struct {
 	ApiURLs struct {
 		SteamAPI       string `yaml:"steamAPI"`
 		AffirmationAPI string `yaml:"affirmationAPI"`
-		KanyeAPI       string `yaml:"kanyeAPI"`
 		AdviceAPI      string `yaml:"adviceAPI"`
 		DoggoAPI       string `yaml:"doggoAPI"`
 		NinjaKatzAPI   string `yaml:"ninjaKatzAPI"`

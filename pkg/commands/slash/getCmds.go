@@ -23,84 +23,81 @@ import (
 )
 
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	options := i.ApplicationCommandData().Options[0]
+	commandName := i.ApplicationCommandData().Options[0].Name
+	errRespMsg := "Unable to make call at this moment, please try later :("
 
-	var embed *discordgo.MessageEmbed
-	var data *discordgo.MessageSend
-	var err error
-
-	errRespMsg := "Unable to fetch data atm, Try again later."
-
-	// defer the interaction response to avoid timeout
-	// sends a "Bot is thinking..." message
-	err = s.InteractionRespond(
+	// Defer the interaction response to avoid timeout
+	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		},
-	)
-	if err != nil {
-		return fmt.Errorf("error sending deferred Interaction for /get command %s: %w", options.Name, err)
+	); err != nil {
+		return fmt.Errorf("failed to defer interaction for /get command %s: %w", commandName, err)
 	}
 
-	switch options.Name {
+	var webhookEdit *discordgo.WebhookEdit
+	var err error
+	var embed *discordgo.MessageEmbed
+	var pingedUser string
+
+	options := i.ApplicationCommandData().Options[0]
+	if len(options.Options) > 0 {
+		user := options.Options[0].UserValue(s)
+		pingedUser = fmt.Sprintf("<@!%s>", user.ID)
+	} else {
+		pingedUser = fmt.Sprintf("<@!%s>", i.Member.User.ID)
+	}
+
+	switch commandName {
 	case "rekd":
-		roast := roasts.Random()
 
-		content := ""
-		switch len(options.Options) {
-		case 0:
-			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, roast)
-
-		case 1:
-			user := options.Options[0].UserValue(s)
-
-			content = fmt.Sprintf("<@!%s>\n%s", user.ID, roast)
-		}
-
-		data = &discordgo.MessageSend{
-			Content: fmt.Sprintf("%s\n(ง ͠° ͟ل͜ ͡°)ง", content),
+		embed = &discordgo.MessageEmbed{
+			Title: "(ง ͠° ͟ل͜ ͡°)ง",
+			Color: helper.RandomDiscordColor(),
+			Fields: []*discordgo.MessageEmbedField{
+				{Name: roasts.Random(), Value: ""},
+			},
 		}
 
 	case "landsat":
 		text := options.Options[0].StringValue()
 		embed, err = getLandSatImageEmbed(cfg, text)
 
-		data = &discordgo.MessageSend{
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
+	case "joke":
+		embed = &discordgo.MessageEmbed{
+			Title: "☜(˚▽˚)☞",
+			Color: helper.RandomDiscordColor(),
+			Fields: []*discordgo.MessageEmbedField{
+				{Name: jokes.Random(), Value: ""},
 			},
 		}
 
-	case "joke":
-		data = &discordgo.MessageSend{
-			Content: jokes.Random(),
-		}
-
 	case "8ball":
-		data = &discordgo.MessageSend{
-			Content: eightball.Random(),
+		embed = &discordgo.MessageEmbed{
+			Title: "༼ ºل͟º ༼ ºل͟º ༼ ºل͟º ༽ ºل͟º ༽ ºل͟º ༽",
+			Color: helper.RandomDiscordColor(),
+			Fields: []*discordgo.MessageEmbedField{
+				{Name: eightball.Random(), Value: ""},
+			},
 		}
 
 	case "yomomma":
-		joke := yomomma.Random()
 
-		content := ""
-		switch len(options.Options) {
-		case 0:
-			content = fmt.Sprintf("<@!%s>\n%s", i.Member.User.ID, joke)
-
-		case 1:
-			user := options.Options[0].UserValue(s)
-			content = fmt.Sprintf("<@!%s>\n%s", user.ID, joke)
-		}
-
-		data = &discordgo.MessageSend{
-			Content: content,
+		embed = &discordgo.MessageEmbed{
+			Title: "(•_•) ( •_•)>⌐■-■ (⌐■_■)",
+			Color: helper.RandomDiscordColor(),
+			Fields: []*discordgo.MessageEmbedField{
+				{Name: yomomma.Random(), Value: ""},
+			},
 		}
 
 	case "pickup-line":
-		data = &discordgo.MessageSend{
-			Content: pickuplines.Random(),
+		embed = &discordgo.MessageEmbed{
+			Title: "ಠ‿↼",
+			Color: helper.RandomDiscordColor(),
+			Fields: []*discordgo.MessageEmbedField{
+				{Name: pickuplines.Random(), Value: ""},
+			},
 		}
 
 	case "fake-person":
@@ -111,20 +108,8 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		embed = getFakePersonEmbed(personData)
 
-		data = &discordgo.MessageSend{
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
-			},
-		}
-
 	case "xkcd":
 		embed, err = getXkcdEmbed(cfg)
-
-		data = &discordgo.MessageSend{
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
-			},
-		}
 
 		/*case "captcha":
 		data, err := client.WTP()
@@ -132,19 +117,26 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return err
 		}*/
 
+	default:
+		return fmt.Errorf("unknown option: %s", commandName)
+	}
+	if err != nil {
+		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
+		return fmt.Errorf("error in dailyCmds.sendDailyResponse() : %w", err)
 	}
 
-	// delete the interaction response
-	err = s.InteractionResponseDelete(i.Interaction)
-	if err != nil {
-		return err
+	if pingedUser != "" {
+		webhookEdit = &discordgo.WebhookEdit{Content: &pingedUser, Embeds: &[]*discordgo.MessageEmbed{embed}}
+	} else {
+		webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
 	}
 
-	// send the new response
-	// data must be of type *discordgo.MessageSend
-	_, err = s.ChannelMessageSendComplex(i.ChannelID, data)
-	if err != nil {
-		return fmt.Errorf("error sending Interaction for command %s: %w", options.Name, err)
+	// Edit the interaction response with the generated data
+	if _, err = s.InteractionResponseEdit(
+		i.Interaction, webhookEdit,
+	); err != nil {
+		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
+		return fmt.Errorf("failed to send message for command %s: %w", commandName, err)
 	}
 
 	return nil
