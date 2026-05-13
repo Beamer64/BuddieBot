@@ -300,16 +300,46 @@ func registerCommands(s *discordgo.Session) error {
 		return err
 	}
 
+	topLevel := len(commandsRegistered)
 	subCmds := 0
+	cmdChoices := 0
 	for _, cmd := range commandsRegistered {
-		for _, opt := range cmd.Options {
-			if opt.Type == discordgo.ApplicationCommandOptionSubCommand {
-				subCmds++
-			}
-		}
+		subCmds += countSubCommands(cmd.Options)
+		cmdChoices += countCommandChoices(cmd.Options)
 	}
 
-	log.Printf("%d Commands Registered\n", len(commandsRegistered))
-	log.Printf("%d Sub-Commands Registered\n", subCmds)
+	log.Printf("%d Top-level commands\n", topLevel)
+	log.Printf("%d Command-option choices (e.g. /get type:joke)\n", cmdChoices)
+	log.Printf("%d Sub-commands\n", subCmds)
+	log.Printf("%d Total features\n", topLevel+cmdChoices+subCmds)
 	return nil
+}
+
+// countSubCommands recursively counts SubCommand leaves, descending into
+// SubCommandGroups so nested entries (e.g. effects under /image filter)
+// are included.
+func countSubCommands(opts []*discordgo.ApplicationCommandOption) int {
+	count := 0
+	for _, opt := range opts {
+		switch opt.Type {
+		case discordgo.ApplicationCommandOptionSubCommand:
+			count++
+		case discordgo.ApplicationCommandOptionSubCommandGroup:
+			count += countSubCommands(opt.Options)
+		}
+	}
+	return count
+}
+
+// countCommandChoices counts choices on `type`-named string options.
+// These act as command dispatchers (/get type:joke, /daily type:horoscope)
+// and are distinct from parameter-only choices (/image meme pride flag:gay).
+func countCommandChoices(opts []*discordgo.ApplicationCommandOption) int {
+	count := 0
+	for _, opt := range opts {
+		if opt.Name == "type" && len(opt.Choices) > 0 {
+			count += len(opt.Choices)
+		}
+	}
+	return count
 }

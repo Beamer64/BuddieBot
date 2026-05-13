@@ -23,8 +23,23 @@ import (
 )
 
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	commandName := i.ApplicationCommandData().Options[0].Name
+	// Flat options: `type` (required choice), `user` (optional), `text` (optional).
+	// Index by name because the array order reflects how the user filled them in.
+	optMap := map[string]*discordgo.ApplicationCommandInteractionDataOption{}
+	for _, opt := range i.ApplicationCommandData().Options {
+		optMap[opt.Name] = opt
+	}
+	cmdType := optMap["type"].StringValue()
 	errRespMsg := "Unable to make call at this moment, please try later :("
+
+	// Per-type required args that Discord can't enforce because they're
+	// optional at the top level. Validate before deferring so we can use
+	// the immediate (non-deferred) error response.
+	if cmdType == "landsat" {
+		if optMap["text"] == nil || optMap["text"].StringValue() == "" {
+			return helper.ReturnUserError(s, i, "`text` is required for /get type:landsat", nil)
+		}
+	}
 
 	// Defer the interaction response to avoid timeout
 	if err := s.InteractionRespond(
@@ -32,23 +47,24 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		},
 	); err != nil {
-		return fmt.Errorf("failed to defer interaction for /get command %s: %w", commandName, err)
+		return fmt.Errorf("failed to defer interaction for /get type %s: %w", cmdType, err)
 	}
 
 	var webhookEdit *discordgo.WebhookEdit
 	var err error
 	var embed *discordgo.MessageEmbed
-	var pingedUser string
 
-	options := i.ApplicationCommandData().Options[0]
-	if len(options.Options) > 0 {
-		user := options.Options[0].UserValue(s)
-		pingedUser = fmt.Sprintf("<@!%s>", user.ID)
-	} else {
+	var pingedUser string
+	if userOpt, ok := optMap["user"]; ok {
+		if u := userOpt.UserValue(s); u != nil {
+			pingedUser = fmt.Sprintf("<@!%s>", u.ID)
+		}
+	}
+	if pingedUser == "" {
 		pingedUser = fmt.Sprintf("<@!%s>", i.Member.User.ID)
 	}
 
-	switch commandName {
+	switch cmdType {
 	case "rekd":
 
 		embed = &discordgo.MessageEmbed{
@@ -60,7 +76,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 	case "landsat":
-		text := options.Options[0].StringValue()
+		text := optMap["text"].StringValue()
 		embed, err = getLandSatImageEmbed(cfg, text)
 
 	case "joke":
@@ -118,7 +134,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}*/
 
 	default:
-		return fmt.Errorf("unknown option: %s", commandName)
+		return fmt.Errorf("unknown option: %s", cmdType)
 	}
 	if err != nil {
 		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
@@ -136,7 +152,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		i.Interaction, webhookEdit,
 	); err != nil {
 		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("failed to send message for command %s: %w", commandName, err)
+		return fmt.Errorf("failed to send message for /get type %s: %w", cmdType, err)
 	}
 
 	return nil
@@ -357,83 +373,33 @@ func getSpec() *discordgo.ApplicationCommand {
 		Description: "Get a text based response like a joke or pickup line",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "8ball",
-				Description: "Think of a question",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "fake-person",
-				Description: "The miracle of life",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "joke",
-				Description: "Tell a joke",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "pickup-line",
-				Description: "Woah Momma",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "rekd",
-				Description: "Insult someone",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionUser,
-						Name:        "nerd",
-						Description: "Someone to insult",
-						Required:    false,
-					},
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "type",
+				Description: "What can I get you?",
+				Required:    true,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{Name: "8ball", Value: "8ball"},
+					{Name: "fake-person", Value: "fake-person"},
+					{Name: "joke", Value: "joke"},
+					{Name: "landsat", Value: "landsat"},
+					{Name: "pickup-line", Value: "pickup-line"},
+					{Name: "rekd", Value: "rekd"},
+					{Name: "xkcd", Value: "xkcd"},
+					{Name: "yomomma", Value: "yomomma"},
 				},
 			},
 			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "landsat",
-				Description: "it's really cool",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "text",
-						Description: "text to landsat",
-						Required:    true,
-					},
-				},
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "xkcd",
-				Description: "Better than Newspaper Comics",
+				Type:        discordgo.ApplicationCommandOptionUser,
+				Name:        "user",
+				Description: "Target user (used by rekd, yomomma)",
 				Required:    false,
 			},
 			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "yomomma",
-				Description: "is sooooooo fat..",
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "text",
+				Description: "Text input (required for landsat)",
 				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionUser,
-						Name:        "user",
-						Description: "Somones momma",
-						Required:    false,
-					},
-				},
 			},
-			/*{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "captcha",
-				Description: "Are you a robot?",
-				Required:    false,
-			},*/
 		},
 	}
 }

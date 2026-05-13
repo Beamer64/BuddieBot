@@ -103,6 +103,27 @@ func ReturnUserError(s *discordgo.Session, i *discordgo.InteractionCreate, userM
 	return err
 }
 
+// EditWithErrorMessage replaces a previously-deferred interaction response
+// with a user-facing error message. Use this in handlers that defer the
+// interaction up-front — SendResponseErrorToUser would 404 in that flow
+// because the initial response was already consumed by the defer.
+func EditWithErrorMessage(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
+	_, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &message,
+	})
+	return err
+}
+
+// ReturnUserErrorDeferred is the deferred-interaction counterpart of
+// ReturnUserError: surfaces the user-facing message via InteractionResponseEdit
+// and returns the original handler error so callers see the underlying cause.
+func ReturnUserErrorDeferred(s *discordgo.Session, i *discordgo.InteractionCreate, userMsg string, err error) error {
+	if sendErr := EditWithErrorMessage(s, i, userMsg); sendErr != nil {
+		log.Printf("failed to edit deferred response with error: %v (original: %v)", sendErr, err)
+	}
+	return err
+}
+
 // LogErrorsToErrorChannel logs full stack to the console and sends a summary
 // embed plus an in-memory text-file attachment with the full stack to the
 // configured Discord error channel. The .txt is streamed directly to Discord

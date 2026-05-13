@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	github.com/Beamer64/bb_data v0.0.0
+	github.com/Beamer64/bb_images v0.0.0
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923
 	github.com/beamer64/godagpi v0.0.0-20220209065335-4a6defdff5de
@@ -12,7 +13,6 @@ require (
 	github.com/disgoorg/disgolink/v3 v3.1.0
 	github.com/disgoorg/snowflake/v2 v2.0.3
 	github.com/gocolly/colly/v2 v2.2.0
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/subosito/shorturl v1.0.0
 	golang.org/x/sys v0.42.0
@@ -30,6 +30,7 @@ require (
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/disgoorg/json v1.2.0 // indirect
+	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
@@ -47,8 +48,9 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
+	golang.org/x/image v0.40.0 // indirect
 	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
@@ -57,3 +59,5 @@ require (
 )
 
 replace github.com/Beamer64/bb_data => ../bb_data
+
+replace github.com/Beamer64/bb_images => ../bb_images

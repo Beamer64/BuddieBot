@@ -13,12 +13,13 @@ import (
 	"github.com/Beamer64/bb_data/affirmations"
 	"github.com/Beamer64/bb_data/facts"
 	"github.com/Beamer64/bb_data/kanye"
+	"github.com/Beamer64/bb_data/tonguetwister"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly/v2"
 )
 
 func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	commandName := i.ApplicationCommandData().Options[0].Name
+	cmdType := i.ApplicationCommandData().Options[0].StringValue()
 	errRespMsg := "Unable to make call at this moment, please try later :("
 
 	// Defer the interaction response to avoid timeout
@@ -27,27 +28,29 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		},
 	); err != nil {
-		return fmt.Errorf("failed to defer interaction for /get command %s: %w", commandName, err)
+		return fmt.Errorf("failed to defer interaction for /daily type %s: %w", cmdType, err)
 	}
 
 	var webhookEdit *discordgo.WebhookEdit
 	var err error
 
 	embeds := map[string]func(*config.Configs) (*discordgo.MessageEmbed, error){
-		"advice":      getDailyAdviceEmbed,
-		"kanye":       getDailyKanyeEmbed,
-		"affirmation": getDailyAffirmationEmbed,
-		"fact":        getDailyFactEmbed,
+		"advice":         getDailyAdviceEmbed,
+		"kanye":          getDailyKanyeEmbed,
+		"affirmation":    getDailyAffirmationEmbed,
+		"fact":           getDailyFactEmbed,
+		"tongue-twister": getDailyTongueTwister,
 	}
 
-	switch commandName {
+	switch cmdType {
 	case "advice",
 		"kanye",
 		"affirmation",
-		"fact":
+		"fact",
+		"tongue-twister":
 		var embed *discordgo.MessageEmbed
 
-		embed, err = embeds[commandName](cfg)
+		embed, err = embeds[cmdType](cfg)
 		if err == nil {
 			webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
 		}
@@ -56,7 +59,7 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 		webhookEdit = getHoroscopeWebHookEdit()
 
 	default:
-		return fmt.Errorf("unknown option: %s", commandName)
+		return fmt.Errorf("unknown option: %s", cmdType)
 	}
 	if err != nil {
 		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
@@ -68,7 +71,7 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 		i.Interaction, webhookEdit,
 	); err != nil {
 		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("failed to send message for command %s: %w", commandName, err)
+		return fmt.Errorf("failed to send message for /daily type %s: %w", cmdType, err)
 	}
 
 	return nil
@@ -145,6 +148,14 @@ func getDailyFactEmbed(_ *config.Configs) (*discordgo.MessageEmbed, error) {
 		Title:       "Fun Fact",
 		Color:       helper.RandomDiscordColor(),
 		Description: facts.Random(),
+	}, nil
+}
+
+func getDailyTongueTwister(_ *config.Configs) (*discordgo.MessageEmbed, error) {
+	return &discordgo.MessageEmbed{
+		Title:       "Try This Tongue Twister",
+		Color:       helper.RandomDiscordColor(),
+		Description: tonguetwister.Random(),
 	}, nil
 }
 
@@ -309,34 +320,18 @@ func dailySpec() *discordgo.ApplicationCommand {
 		Description: "Receive daily quotes, horoscopes, affirmations, etc.",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "affirmation",
-				Description: "Gives daily affirmation",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "advice",
-				Description: "Words of wisdom",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "fact",
-				Description: "Read a fun fact",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "horoscope",
-				Description: "Gives daily horoscope",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "kanye",
-				Description: "Gifts us with a quote from the man himself",
-				Required:    false,
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "type",
+				Description: "Which daily response to get",
+				Required:    true,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{Name: "advice", Value: "advice"},
+					{Name: "affirmation", Value: "affirmation"},
+					{Name: "fact", Value: "fact"},
+					{Name: "horoscope", Value: "horoscope"},
+					{Name: "kanye", Value: "kanye"},
+					{Name: "tongue-twister", Value: "tongue-twister"},
+				},
 			},
 		},
 	}
