@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Beamer64/BuddieBot/pkg/commands/prefix"
 	"github.com/Beamer64/BuddieBot/pkg/commands/slash"
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/events"
@@ -307,11 +308,13 @@ func registerCommands(s *discordgo.Session) error {
 		subCmds += countSubCommands(cmd.Options)
 		cmdChoices += countCommandChoices(cmd.Options)
 	}
+	prefixCmds := len(prefix.Names)
 
 	log.Printf("%d Top-level commands\n", topLevel)
 	log.Printf("%d Command-option choices (e.g. /get type:joke)\n", cmdChoices)
 	log.Printf("%d Sub-commands\n", subCmds)
-	log.Printf("%d Total features\n", topLevel+cmdChoices+subCmds)
+	log.Printf("%d $-prefix commands\n", prefixCmds)
+	log.Printf("%d Total features\n", topLevel+cmdChoices+subCmds+prefixCmds)
 	return nil
 }
 

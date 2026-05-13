@@ -8,6 +8,23 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// Names lists every prefix command the bot dispatches. Used by the startup
+// counter in bot.registerCommands. Keep this in sync with the switch in
+// ParsePrefixCmds below — drift is caught by TestPrefixNamesMatchSwitch.
+var Names = []string{
+	"test",
+	"release",
+	"cistercian",
+	"weast",
+	"palindrome",
+	"romans",
+	"play",
+	"stop",
+	"queue",
+	"skip",
+	"clear",
+}
+
 // isAudioGuild checks if the message is from a guild that has audio commands enabled
 func isAudioGuild(guildID string, cfg *config.Configs) bool {
 	return guildID == cfg.Configs.DiscordIDs.MasterGuildID || guildID == cfg.Configs.DiscordIDs.TestGuildID
