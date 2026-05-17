@@ -11,7 +11,13 @@ import (
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
-	"github.com/Beamer64/bb_images"
+	"github.com/Beamer64/bb_images/animated"
+	"github.com/Beamer64/bb_images/color"
+	"github.com/Beamer64/bb_images/edges"
+	"github.com/Beamer64/bb_images/overlays"
+	"github.com/Beamer64/bb_images/signs"
+	"github.com/Beamer64/bb_images/spatial"
+	"github.com/Beamer64/bb_images/special"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -74,7 +80,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Pixelate(img, 8)
+		bufferImage, err = spatial.Pixelate(img, 8)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -86,7 +92,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Mirror(img)
+		bufferImage, err = spatial.Mirror(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -98,7 +104,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Flip(img)
+		bufferImage, err = spatial.Flip(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -110,7 +116,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Colors(img, 5)
+		bufferImage, err = spatial.Colors(img, 5)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -122,7 +128,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.America(img)
+		bufferImage, err = overlays.America(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -134,7 +140,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Communism(img)
+		bufferImage, err = overlays.Communism(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -146,7 +152,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Triggered(img)
+		bufferImage, err = animated.Triggered(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -158,7 +164,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Expand(img)
+		bufferImage, err = animated.Expand(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -170,7 +176,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Wasted(img)
+		bufferImage, err = overlays.Wasted(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -182,7 +188,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Sketch(img)
+		bufferImage, err = edges.Sketch(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -194,7 +200,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Spin(img)
+		bufferImage, err = animated.Spin(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -230,7 +236,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Shake(img)
+		bufferImage, err = animated.Shake(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -242,7 +248,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Invert(img)
+		bufferImage, err = color.Invert(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -254,7 +260,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Sobel(img)
+		bufferImage, err = edges.Sobel(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -266,7 +272,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Hog(img)
+		bufferImage, err = edges.Hog(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -278,7 +284,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Triangle(img)
+		bufferImage, err = spatial.Triangle(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -290,7 +296,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Blur(img)
+		bufferImage, err = color.Blur(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -302,7 +308,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.RGB(img)
+		bufferImage, err = special.RGB(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -370,7 +376,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Stringify(img)
+		bufferImage, err = spatial.Stringify(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -382,7 +388,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Burn(img)
+		bufferImage, err = special.Burn(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -394,7 +400,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Earth(img)
+		bufferImage, err = color.Earth(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -406,7 +412,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Freeze(img)
+		bufferImage, err = color.Freeze(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -418,7 +424,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Ground(img)
+		bufferImage, err = color.Ground(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -430,7 +436,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Mosaic(img)
+		bufferImage, err = spatial.Mosaic(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -450,7 +456,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Jail(img)
+		bufferImage, err = overlays.Jail(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -499,7 +505,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Deepfry(img)
+		bufferImage, err = color.Deepfry(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -511,7 +517,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Ascii(img)
+		bufferImage, err = special.Ascii(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -523,7 +529,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Charcoal(img)
+		bufferImage, err = edges.Charcoal(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -535,7 +541,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Posterize(img)
+		bufferImage, err = color.Posterize(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -547,7 +553,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Sepia(img)
+		bufferImage, err = color.Sepia(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -559,7 +565,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Swirl(img)
+		bufferImage, err = spatial.Swirl(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -571,7 +577,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Paint(img)
+		bufferImage, err = special.Paint(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -583,7 +589,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Night(img)
+		bufferImage, err = color.Night(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -595,7 +601,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Rainbow(img)
+		bufferImage, err = animated.Rainbow(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -607,7 +613,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Magik(img)
+		bufferImage, err = spatial.Magik(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -658,7 +664,15 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			user = options.Options[1].UserValue(s)
 		}
 
-		bufferImage, err = client.Tweet(user.AvatarURL("300"), user.Username, tweet)
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+		displayName := user.GlobalName
+		if displayName == "" {
+			displayName = user.Username
+		}
+		bufferImage, err = signs.Tweet(avatar, displayName, user.Username, tweet)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -678,7 +692,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			user = options.Options[1].UserValue(s)
 		}
 
-		bufferImage, err = client.YouTubeComment(user.AvatarURL("300"), user.Username, comment, false)
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+		bufferImage, err = signs.YouTube(avatar, user.Username, comment)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -698,7 +716,15 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			user = options.Options[1].UserValue(s)
 		}
 
-		bufferImage, err = client.Discord(user.AvatarURL("300"), user.Username, msg, true)
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+		displayName := user.GlobalName
+		if displayName == "" {
+			displayName = user.Username
+		}
+		bufferImage, err = signs.Discord(avatar, displayName, msg)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -706,69 +732,28 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "discord.png"
 
 	case "retro-meme":
-		topText := options.Options[0].StringValue()
-		bottomText := options.Options[1].StringValue()
-
-		switch len(options.Options) {
-		case 2:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
+		// Both text args are optional now, so iterate by option name
+		// instead of by position.
+		var topText, bottomText string
+		for _, opt := range options.Options {
+			switch opt.Name {
+			case "top-text":
+				topText = opt.StringValue()
+			case "bottom-text":
+				bottomText = opt.StringValue()
 			}
-
-		case 3:
-			user = options.Options[2].UserValue(s)
 		}
 
-		bufferImage, err = client.Retromeme(user.AvatarURL("300"), topText, bottomText)
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+		bufferImage, err = signs.RetroMeme(avatar, topText, bottomText)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "retro-meme.png"
-
-	case "motivational":
-		topText := options.Options[0].StringValue()
-		bottomText := options.Options[1].StringValue()
-
-		switch len(options.Options) {
-		case 2:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 3:
-			user = options.Options[2].UserValue(s)
-		}
-
-		bufferImage, err = client.Motivational(user.AvatarURL("300"), topText, bottomText)
-		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
-		}
-
-		imgName = "motivational.png"
-
-	case "modern-meme":
-		text := options.Options[0].StringValue()
-
-		switch len(options.Options) {
-		case 1:
-			user, err = s.User(i.Member.User.ID)
-			if err != nil {
-				return err
-			}
-
-		case 2:
-			user = options.Options[1].UserValue(s)
-		}
-
-		bufferImage, err = client.Modernmeme(user.AvatarURL("300"), text)
-		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
-		}
-
-		imgName = "modern-meme.png"
 
 	case "why_are_you_gay":
 		user1 := options.Options[0].UserValue(s)
@@ -794,7 +779,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.TvStatic(img)
+		bufferImage, err = animated.TvStatic(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -806,7 +791,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Rain(img)
+		bufferImage, err = animated.Rain(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -818,7 +803,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.Glitch(img)
+		bufferImage, err = animated.Glitch(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -830,7 +815,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = bb_images.GlitchStatic(img)
+		bufferImage, err = animated.GlitchStatic(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -840,7 +825,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "change-my-mind":
 		text := options.Options[0].StringValue()
 
-		bufferImage, err = bb_images.ChangeMyMind(text)
+		bufferImage, err = signs.ChangeMyMind(text)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -1070,6 +1055,20 @@ func imageSpec() *discordgo.ApplicationCommand {
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "sepia",
 						Description: "Sepia Tone an image",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "earth",
+						Description: "The green and blue of the earth",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
@@ -1348,6 +1347,32 @@ func imageSpec() *discordgo.ApplicationCommand {
 					},
 					{
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "retro-meme",
+						Description: "The good old memes. Generated.",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionString,
+								Name:        "top-text",
+								Description: "top msg (optional)",
+								Required:    false,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionString,
+								Name:        "bottom-text",
+								Description: "bottom msg (optional)",
+								Required:    false,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "bomb",
 						Description: "Cool guys don't look at explosions",
 						Required:    false,
@@ -1376,20 +1401,6 @@ func imageSpec() *discordgo.ApplicationCommand {
 					},
 					{
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "communism",
-						Description: "Support the soviet union comrade. Let the red flag fly!",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Convert someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "delete",
 						Description: "Generates a windows error meme based on a given image",
 						Required:    false,
@@ -1398,40 +1409,6 @@ func imageSpec() *discordgo.ApplicationCommand {
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
 								Description: "Delete someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "discord",
-						Description: "Generate realistic discord messages",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "message",
-								Description: "Message to be displayed",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Name and image to be displayed",
-								Required:    false,
-							},
-						},
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "earth",
-						Description: "The green and blue of the earth",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
 								Required:    false,
 							},
 						},
@@ -1536,20 +1513,6 @@ func imageSpec() *discordgo.ApplicationCommand {
 					},
 					{
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "murica",
-						Description: "Let the star spangled banner of the free and the brave soar",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Murica someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "obama",
 						Description: "What's his last name?!",
 						Required:    false,
@@ -1572,72 +1535,6 @@ func imageSpec() *discordgo.ApplicationCommand {
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
 								Description: "Pet someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "pride",
-						Description: "Flag of your choice over an Image!",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "flag",
-								Description: "Choose a flag",
-								Required:    true,
-								Choices: []*discordgo.ApplicationCommandOptionChoice{
-									{
-										Name:  "asexual",
-										Value: "asexual",
-									},
-									{
-										Name:  "bisexual",
-										Value: "bisexual",
-									},
-									{
-										Name:  "gay",
-										Value: "gay",
-									},
-									{
-										Name:  "genderfluid",
-										Value: "genderfluid",
-									},
-									{
-										Name:  "genderqueer",
-										Value: "genderqueer",
-									},
-									{
-										Name:  "intersex",
-										Value: "intersex",
-									},
-									{
-										Name:  "lesbian",
-										Value: "lesbian",
-									},
-									{
-										Name:  "nonbinary",
-										Value: "nonbinary",
-									},
-									{
-										Name:  "progress",
-										Value: "progress",
-									},
-									{
-										Name:  "pan",
-										Value: "pan",
-									},
-									{
-										Name:  "trans",
-										Value: "trans",
-									},
-								},
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Flag someone else",
 								Required:    false,
 							},
 						},
@@ -1756,7 +1653,108 @@ func imageSpec() *discordgo.ApplicationCommand {
 			},
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
-				Name:        "template",
+				Name:        "flag",
+				Description: "represent",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "pride",
+						Description: "Flag of your choice over an Image!",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionString,
+								Name:        "flag",
+								Description: "Choose a flag",
+								Required:    true,
+								Choices: []*discordgo.ApplicationCommandOptionChoice{
+									{
+										Name:  "asexual",
+										Value: "asexual",
+									},
+									{
+										Name:  "bisexual",
+										Value: "bisexual",
+									},
+									{
+										Name:  "gay",
+										Value: "gay",
+									},
+									{
+										Name:  "genderfluid",
+										Value: "genderfluid",
+									},
+									{
+										Name:  "genderqueer",
+										Value: "genderqueer",
+									},
+									{
+										Name:  "intersex",
+										Value: "intersex",
+									},
+									{
+										Name:  "lesbian",
+										Value: "lesbian",
+									},
+									{
+										Name:  "nonbinary",
+										Value: "nonbinary",
+									},
+									{
+										Name:  "progress",
+										Value: "progress",
+									},
+									{
+										Name:  "pan",
+										Value: "pan",
+									},
+									{
+										Name:  "trans",
+										Value: "trans",
+									},
+								},
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Flag someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "murica",
+						Description: "Let the star spangled banner of the free and the brave soar",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Murica someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "communism",
+						Description: "Support the soviet union comrade. Let the red flag fly!",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Convert someone else",
+								Required:    false,
+							},
+						},
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+				Name:        "sign",
 				Description: "Embed the image inside a framed meme",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
@@ -1809,72 +1807,20 @@ func imageSpec() *discordgo.ApplicationCommand {
 					},
 					{
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "modern-meme",
-						Description: "A modern meme generation system that allows reddit ready memes with just one endpoint",
+						Name:        "discord",
+						Description: "Generate realistic discord messages",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
 								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "text",
-								Description: "it's top the text",
+								Name:        "message",
+								Description: "Message to be displayed",
 								Required:    true,
 							},
 							{
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "motivational",
-						Description: "The black background with top and bottom motivational text.",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "top-text",
-								Description: "top msg",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "bottom-text",
-								Description: "bottom msg",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "retro-meme",
-						Description: "The good old memes. Generated.",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "top-text",
-								Description: "top msg",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "bottom-text",
-								Description: "bottom msg",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
+								Description: "Name and image to be displayed",
 								Required:    false,
 							},
 						},
