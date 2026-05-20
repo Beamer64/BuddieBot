@@ -18,12 +18,32 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout
+      # BuddieBot's go.mod has `replace` directives pointing at ../bb_data and
+      # ../bb_images. The runner only checks out BuddieBot by default, so we
+      # have to clone the two siblings into the same workspace at the matching
+      # relative paths before `go build` will resolve them.
+      - name: Checkout BuddieBot
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          path: BuddieBot
+
+      - name: Checkout bb_data
+        uses: actions/checkout@v4
+        with:
+          repository: Beamer64/bb_data
+          fetch-depth: 1
+          path: bb_data
+
+      - name: Checkout bb_images
+        uses: actions/checkout@v4
+        with:
+          repository: Beamer64/bb_images
+          fetch-depth: 1
+          path: bb_images
 
       - name: Run deploy script
+        working-directory: BuddieBot
         run: ./scripts/deploy.sh
         env:
           BUILD_ROOT: /opt/buddiebot
