@@ -1,0 +1,31 @@
+name: Deploy to Mint server
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:   # allow manual triggering from the Actions tab
+
+# One deploy at a time. Queue follow-ups instead of cancelling — a half-applied
+# deploy is worse than a slightly-delayed one.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: [self-hosted, buddiebot-prod]
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run deploy script
+        run: ./scripts/deploy.sh
+        env:
+          BUILD_ROOT: /opt/buddiebot
+          KEEP: 3
+          GO_BIN: /usr/local/go/bin/go

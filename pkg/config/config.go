@@ -83,9 +83,18 @@ type configuration struct {
 	} `yaml:"reqFileDirs"`
 
 	Lavalink struct {
-		Host     string `yaml:"host"`
-		Port     string `yaml:"port"`
-		Password string `yaml:"password"`
+		ProdHost     string `yaml:"prodHost"`
+		ProdPort     string `yaml:"prodPort"`
+		ProdPassword string `yaml:"prodPassword"`
+		TestHost     string `yaml:"testHost"`
+		TestPort     string `yaml:"testPort"`
+		TestPassword string `yaml:"testPassword"`
+
+		// Resolved at load time based on isLaunchedByDebugger(). The rest of
+		// the code reads these — never the Prod/Test fields directly.
+		Host     string `yaml:"-"`
+		Port     string `yaml:"-"`
+		Password string `yaml:"-"`
 	} `yaml:"lavalink"`
 }
 
@@ -283,8 +292,14 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 
 	if isLaunchedByDebugger() {
 		cfg.DiscordIDs.CurrentBotAppID = cfg.DiscordIDs.TestBotAppID
+		cfg.Lavalink.Host = cfg.Lavalink.TestHost
+		cfg.Lavalink.Port = cfg.Lavalink.TestPort
+		cfg.Lavalink.Password = cfg.Lavalink.TestPassword
 	} else {
 		cfg.DiscordIDs.CurrentBotAppID = cfg.DiscordIDs.ProdBotAppID
+		cfg.Lavalink.Host = cfg.Lavalink.ProdHost
+		cfg.Lavalink.Port = cfg.Lavalink.ProdPort
+		cfg.Lavalink.Password = cfg.Lavalink.ProdPassword
 	}
 
 	err = yaml.Unmarshal(commandFile, cmd)

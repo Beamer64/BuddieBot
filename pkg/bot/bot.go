@@ -88,11 +88,14 @@ func Init(cfg *config.Configs) error {
 	linkClient = disgolink.New(botUserID)
 	nodeCtx, nodeCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer nodeCancel()
-	if _, err := linkClient.AddNode(nodeCtx, disgolink.NodeConfig{
-		Name:     "main",
-		Address:  cfg.Configs.Lavalink.Host + ":" + cfg.Configs.Lavalink.Port,
-		Password: cfg.Configs.Lavalink.Password,
-	}); err != nil {
+	log.Printf("connecting to Lavalink at %s:%s", cfg.Configs.Lavalink.Host, cfg.Configs.Lavalink.Port)
+	if _, err := linkClient.AddNode(
+		nodeCtx, disgolink.NodeConfig{
+			Name:     "main",
+			Address:  cfg.Configs.Lavalink.Host + ":" + cfg.Configs.Lavalink.Port,
+			Password: cfg.Configs.Lavalink.Password,
+		},
+	); err != nil {
 		stopDevRunner()
 		return fmt.Errorf("connect to lavalink node: %w", err)
 	}
@@ -251,43 +254,47 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 // disgolink client. Lavalink uses these to open and maintain its own
 // voice WebSocket (DAVE-capable) — the bot itself never opens one.
 func registerVoiceForwarders(s *discordgo.Session, link disgolink.Client) {
-	s.AddHandler(func(_ *discordgo.Session, e *discordgo.VoiceServerUpdate) {
-		guildID, err := snowflake.Parse(e.GuildID)
-		if err != nil {
-			log.Printf("voice forwarder: parse guild id %q: %v", e.GuildID, err)
-			return
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		link.OnVoiceServerUpdate(ctx, guildID, e.Token, e.Endpoint)
-	})
-
-	s.AddHandler(func(s *discordgo.Session, e *discordgo.VoiceStateUpdate) {
-		if e.VoiceState == nil || s.State == nil || s.State.User == nil {
-			return
-		}
-		// Only forward updates for the bot's own voice state.
-		if e.UserID != s.State.User.ID {
-			return
-		}
-		guildID, err := snowflake.Parse(e.GuildID)
-		if err != nil {
-			log.Printf("voice forwarder: parse guild id %q: %v", e.GuildID, err)
-			return
-		}
-		var chID *snowflake.ID
-		if e.ChannelID != "" {
-			cID, err := snowflake.Parse(e.ChannelID)
+	s.AddHandler(
+		func(_ *discordgo.Session, e *discordgo.VoiceServerUpdate) {
+			guildID, err := snowflake.Parse(e.GuildID)
 			if err != nil {
-				log.Printf("voice forwarder: parse channel id %q: %v", e.ChannelID, err)
+				log.Printf("voice forwarder: parse guild id %q: %v", e.GuildID, err)
 				return
 			}
-			chID = &cID
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		link.OnVoiceStateUpdate(ctx, guildID, chID, e.SessionID)
-	})
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			link.OnVoiceServerUpdate(ctx, guildID, e.Token, e.Endpoint)
+		},
+	)
+
+	s.AddHandler(
+		func(s *discordgo.Session, e *discordgo.VoiceStateUpdate) {
+			if e.VoiceState == nil || s.State == nil || s.State.User == nil {
+				return
+			}
+			// Only forward updates for the bot's own voice state.
+			if e.UserID != s.State.User.ID {
+				return
+			}
+			guildID, err := snowflake.Parse(e.GuildID)
+			if err != nil {
+				log.Printf("voice forwarder: parse guild id %q: %v", e.GuildID, err)
+				return
+			}
+			var chID *snowflake.ID
+			if e.ChannelID != "" {
+				cID, err := snowflake.Parse(e.ChannelID)
+				if err != nil {
+					log.Printf("voice forwarder: parse channel id %q: %v", e.ChannelID, err)
+					return
+				}
+				chID = &cID
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			link.OnVoiceStateUpdate(ctx, guildID, chID, e.SessionID)
+		},
+	)
 }
 
 func registerCommands(s *discordgo.Session) error {
