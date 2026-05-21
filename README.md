@@ -109,7 +109,6 @@ keys:
   testBotToken:   ""
   webHookToken:   ""
   botPublicKey:   ""
-  dagpiAPIkey:    ""
   tenorAPIkey:    ""
   steamAPI:       "http://api.steampowered.com/ISteamApps/GetAppList/v0002/?key=STEAMKEY&format=json"
   affirmationAPI: "https://www.affirmations.dev/"
@@ -152,7 +151,6 @@ for supported APIs,
 visit:
 
 * [Tenor API](https://tenor.com/gifapi/documentation)
-* [Dagpi API](https://dagpi.xyz)
 
 After your `config.yaml` file is built, you have to enable `Privileged Intents` on your Discord [developer portal](https://discordapp.com/developers/applications/). You can find
 these intents under
@@ -331,11 +329,5 @@ found [here](https://tenor.com/gifapi/documentation#quickstart).
 
 The horoscope.com daily horoscopes are used to allow our BuddieBot to deliver a daily horoscope to our users. The website can be
 found [here](https://www.horoscope.com/us/index.aspx).
-
----
-
-# Dagpi API
-
-Thanks to Dagpi, BuddieBot has a new wide variety of tools and features. A [Dagpi API](https://dagpi.xyz/) key can be applied for from the Dagpi website.
 
 ---

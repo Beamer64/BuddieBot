@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Beamer64/BuddieBot/pkg/voice_chat"
-	"github.com/beamer64/godagpi/dagpi"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -19,7 +18,6 @@ type Configs struct {
 	Cmd             *command
 	LoadingMessages []string
 	Emojis          []string
-	Clients         *dagpiClients
 	Player          *voice_chat.Player
 }
 
@@ -30,7 +28,6 @@ type configuration struct {
 		WebHookToken     string `yaml:"webHookToken"`
 		BotPublicKey     string `yaml:"botPublicKey"`
 		TenorAPIkey      string `yaml:"tenorAPIkey"`
-		DagpiAPIkey      string `yaml:"dagpiAPIkey"`
 		NinjaAPIKey      string `yaml:"ninjaAPIKey"`
 		DoggoAPIkey      string `yaml:"doggoAPIkey"`
 		ModerationPATKey string `yaml:"moderationPATKey"`
@@ -142,10 +139,6 @@ type command struct {
 		TenorAPIError   string `yaml:"tenorAPIError"`
 		YoutubeAPIError string `yaml:"youtubeAPIError"`
 	} `yaml:"message"`
-}
-
-type dagpiClients struct {
-	Dagpi *dagpi.Client
 }
 
 func ReadConfig() (*Configs, error) {
@@ -307,19 +300,10 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 		return nil, err
 	}
 
-	clients := registerClients(cfg)
-
 	return &Configs{
 		Configs: cfg,
 		Cmd:     cmd,
-		Clients: clients,
 	}, nil
-}
-
-func registerClients(cfg *configuration) *dagpiClients {
-	return &dagpiClients{
-		Dagpi: &dagpi.Client{Auth: cfg.Keys.DagpiAPIkey},
-	}
 }
 
 // finds and returns []string from txt file

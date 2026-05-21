@@ -107,7 +107,7 @@ func requireKey(t *testing.T, key, name string) {
 // each other), and on release sleeps for rateLimitDelay() to give the
 // upstream API breathing room before the next call.
 //
-//	release := rateLimit("dagpi")
+//	release := rateLimit("tenor")
 //	defer release()
 var (
 	rateLimitsMu sync.Mutex
@@ -137,12 +137,3 @@ func rateLimitDelay() time.Duration {
 	}
 	return 2 * time.Second
 }
-
-// testImageURL is a stable, publicly-fetchable URL for the bot's own logo.
-// Image-processing tests pass it to Dagpi (and similar services) — those
-// servers reach out from their network, so the URL must be reachable from
-// the internet (a localhost httptest.Server would not be).
-//
-// Uses raw.githubusercontent.com because the github.com/.../blob/... URL
-// serves an HTML page, not the raw image bytes.
-const testImageURL = "https://raw.githubusercontent.com/Beamer64/BuddieBot/master/res/repo_imgs/BuddieBot.png"

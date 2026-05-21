@@ -7,7 +7,6 @@ require (
 	github.com/Beamer64/bb_images v0.0.0
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/StephaneBunel/bresenham v0.0.0-20211027152503-ec76d7b8e923
-	github.com/beamer64/godagpi v0.0.0-20220209065335-4a6defdff5de
 	github.com/bwmarrin/discordgo v0.29.0
 	github.com/chromedp/chromedp v0.14.2
 	github.com/disgoorg/disgolink/v3 v3.1.0

@@ -11,8 +11,6 @@ github.com/antchfx/xmlquery v1.5.0/go.mod h1:lJfWRXzYMK1ss32zm1GQV3gMIW/HFey3xDZ
 github.com/antchfx/xpath v1.3.3/go.mod h1:i54GszH55fYfBmoZXapTHN8T8tkcHfRgLyVwwqzXNcs=
 github.com/antchfx/xpath v1.3.5 h1:PqbXLC3TkfeZyakF5eeh3NTWEbYl4VHNVeufANzDbKQ=
 github.com/antchfx/xpath v1.3.5/go.mod h1:i54GszH55fYfBmoZXapTHN8T8tkcHfRgLyVwwqzXNcs=
-github.com/beamer64/godagpi v0.0.0-20220209065335-4a6defdff5de h1:aekSeA2L3Fsi1Joij+OxMYnkLKfXEsPK98pcMk0o+hY=
-github.com/beamer64/godagpi v0.0.0-20220209065335-4a6defdff5de/go.mod h1:SAmzoX1gPMnPB56ARHUvUWUIAUkyZ/+wYss3KYqu60E=
 github.com/bits-and-blooms/bitset v1.20.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/bits-and-blooms/bitset v1.24.3 h1:Bte86SlO3lwPQqww+7BE9ZuUCKIjfqnG5jtEyqA9y9Y=
 github.com/bits-and-blooms/bitset v1.24.3/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=

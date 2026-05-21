@@ -46,7 +46,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		return fmt.Errorf("failed to defer interaction: %w", err)
 	}
 
-	client := cfg.Clients.Dagpi
 	// Options[0] is the SubCommandGroup ("filter" | "distort" | "meme" | "template");
 	// the actual effect subcommand and its args live one level deeper.
 	options := i.ApplicationCommandData().Options[0].Options[0]
@@ -62,7 +61,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 	// Resolve target user: prefer the first user-typed option among args,
 	// otherwise default to the invoker. Handles text-only and text-first
-	// commands (change-my-mind, tweet, youtube, ...) without overwriting
+	// commands (change-my-mind, tweet, YouTube, ...) without overwriting
 	// user to nil when Options[0] is a string.
 	for _, opt := range options.Options {
 		if opt.Type == discordgo.ApplicationCommandOptionUser {
@@ -133,7 +132,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "America.png"
+		imgName = "america.gif"
 
 	case "communism":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -145,7 +144,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Communism.png"
+		imgName = "communism.gif"
 
 	case "triggered":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -207,29 +206,18 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		imgName = "SpinImage.gif"
 
-	case "petpet":
-		bufferImage, err = client.PetPet(user.AvatarURL("300"))
-		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
-		}
-
-		imgName = "PetPet.png"
-
-	case "bonk":
-		bufferImage, err = client.Bonk(user.AvatarURL("300"))
-		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
-		}
-
-		imgName = "Bonk.png"
-
 	case "bomb":
-		bufferImage, err = client.Bomb(user.AvatarURL("300"))
+		img, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = overlays.Bomb(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Bomb.png"
+		imgName = "bomb.gif"
 
 	case "shake":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -315,61 +303,98 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		imgName = "RGB.png"
 
-	case "angel":
-		bufferImage, err = client.Angel(user.AvatarURL("300"))
+	case "delete-meme":
+		memeURL := options.Options[0].StringValue()
+
+		memeImg, fetchErr := fetchImage(memeURL)
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = signs.DeleteMeme(memeImg)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Angel.png"
-
-	case "satan":
-		bufferImage, err = client.Satan(user.AvatarURL("300"))
-		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
-		}
-
-		imgName = "Satan.png"
-
-	case "delete":
-		bufferImage, err = client.Delete(user.AvatarURL("300"))
-		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
-		}
-
-		imgName = "Delete.png"
+		imgName = "delete-meme.png"
 
 	case "fedora":
-		bufferImage, err = client.Fedora(user.AvatarURL("300"))
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = signs.Fedora(avatar)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Fedora.png"
+		imgName = "fedora.png"
 
-	case "hitler":
-		bufferImage, err = client.Hitler(user.AvatarURL("300"))
+	case "worse-than-hitler":
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = signs.WorseThanHitler(avatar)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Hitler.png"
+		imgName = "worse-than-hitler.png"
+
+	case "bad":
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = signs.Bad(avatar)
+		if err != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+		}
+
+		imgName = "bad.png"
+
+	case "math":
+		img, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = overlays.Math(img)
+		if err != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+		}
+
+		imgName = "math.gif"
 
 	case "lego":
-		bufferImage, err = client.Lego(user.AvatarURL("300"))
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = special.Lego(avatar)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Lego.png"
+		imgName = "lego.png"
 
 	case "wanted":
-		bufferImage, err = client.Wanted(user.AvatarURL("300"))
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = signs.Wanted(avatar)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Wanted.png"
+		imgName = "wanted.png"
 
 	case "stringify":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -443,13 +468,25 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		imgName = "Mosaic.png"
 
-	case "sithlord":
-		bufferImage, err = client.Sithlord(user.AvatarURL("300"))
+	case "sith-kermit":
+		sith := options.Options[0].UserValue(s)
+		kermit := options.Options[1].UserValue(s)
+
+		sithAvatar, fetchErr := fetchImage(sith.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+		kermitAvatar, fetchErr := fetchImage(kermit.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = signs.SithKermit(sithAvatar, kermitAvatar)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Sithlord.png"
+		imgName = "sith-kermit.png"
 
 	case "jail":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -464,12 +501,17 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		imgName = "Jail.png"
 
 	case "shatter":
-		bufferImage, err = client.Shatter(user.AvatarURL("300"))
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = overlays.Shatter(avatar)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Shatter.png"
+		imgName = "shatter.png"
 
 	case "pride":
 		flag := options.Options[0].StringValue()
@@ -485,20 +527,30 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			user = options.Options[1].UserValue(s)
 		}
 
-		bufferImage, err = client.Pride(user.AvatarURL("300"), flag)
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = overlays.Pride(avatar, flag)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "pride.png"
 
-	case "trash":
-		bufferImage, err = client.Trash(user.AvatarURL("300"))
+	case "trash-opinion":
+		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = signs.TrashOpinion(avatar)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "Trash.png"
+		imgName = "trash-opinion.png"
 
 	case "deepfry":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -798,13 +850,18 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		imgName = "why_are_you_gay.png"
 
-	case "elmo":
-		bufferImage, err = client.Elmo(user.AvatarURL("300"))
+	case "elmo-burn":
+		img, fetchErr := fetchImage(user.AvatarURL("300"))
+		if fetchErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+		}
+
+		bufferImage, err = overlays.ElmoBurn(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
 
-		imgName = "elmo.png"
+		imgName = "elmo-burn.gif"
 
 	case "tv-static":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -823,7 +880,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		if fetchErr != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
 		}
-		bufferImage, err = animated.Rain(img)
+		bufferImage, err = overlays.Rain(img)
 		if err != nil {
 			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
 		}
@@ -864,14 +921,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		imgName = "ChangeMyMind.png"
 
-	case "album":
-		bufferImage, err = client.Album(user.AvatarURL("300"))
-		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
-		}
-
-		imgName = "album.png"
-
 	}
 
 	if _, err = s.InteractionResponseEdit(
@@ -896,6 +945,12 @@ func imageSpec() *discordgo.ApplicationCommand {
 		Name:        "image",
 		Description: "Image manipulation commands",
 		Options: []*discordgo.ApplicationCommandOption{
+			//
+			// Groups are ordered: filter → distort → animated → overlay → sign → meme.
+			// Entries within each group are sorted alphabetically and numbered
+			// // <group> - NN. When adding a new entry, slot it alphabetically
+			// and renumber the entries below it.
+			//
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
 				Name:        "filter",
@@ -935,7 +990,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						// filter - 03
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "charcoal",
-						Description: "mage into a charcoal drawing",
+						Description: "Image into a charcoal drawing",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
@@ -949,14 +1004,14 @@ func imageSpec() *discordgo.ApplicationCommand {
 					{
 						// filter - 04
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "colors",
-						Description: "Get an Image with the colors present in the image",
+						Name:        "deepfry",
+						Description: "Deepfry an image",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
-								Description: "Colors someone else",
+								Description: "user",
 								Required:    false,
 							},
 						},
@@ -964,8 +1019,8 @@ func imageSpec() *discordgo.ApplicationCommand {
 					{
 						// filter - 05
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "deepfry",
-						Description: "Deepfry an image",
+						Name:        "earth",
+						Description: "The green and blue of the earth",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
@@ -1009,21 +1064,6 @@ func imageSpec() *discordgo.ApplicationCommand {
 					{
 						// filter - 08
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "hog",
-						Description: "Histogram of Oriented Gradients for an image",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Histogram someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// filter - 09
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "invert",
 						Description: "Get an image with an inverted color effect",
 						Required:    false,
@@ -1037,7 +1077,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// filter - 10
+						// filter - 09
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "night",
 						Description: "Turn an day into night",
@@ -1052,7 +1092,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// filter - 11
+						// filter - 10
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "paint",
 						Description: "Turn an image into art",
@@ -1067,7 +1107,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// filter - 12
+						// filter - 11
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "posterize",
 						Description: "Posterizes an image",
@@ -1082,52 +1122,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// filter - 13
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "rain",
-						Description: "For the rainy days",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// filter - 14
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "rainbow",
-						Description: "Some trippy light effects",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// filter - 15
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "rgb",
-						Description: "Get an RGB graph of an image's colors",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "RGB someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// filter - 16
+						// filter - 12
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "sepia",
 						Description: "Sepia Tone an image",
@@ -1142,22 +1137,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// filter - 17
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "earth",
-						Description: "The green and blue of the earth",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// filter - 18
+						// filter - 13
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "sketch",
 						Description: "Cool effect that shows how an image would have been created by an artist",
@@ -1172,7 +1152,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// filter - 19
+						// filter - 14
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "sobel",
 						Description: "Get an image with the sobel effect",
@@ -1182,21 +1162,6 @@ func imageSpec() *discordgo.ApplicationCommand {
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
 								Description: "Sobel someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// filter - 20
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "tv-static",
-						Description: "Tastes like Monster Energy™️",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
 								Required:    false,
 							},
 						},
@@ -1226,14 +1191,14 @@ func imageSpec() *discordgo.ApplicationCommand {
 					{
 						// distort - 02
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "expand",
-						Description: "Animation that stretches an image",
+						Name:        "colors",
+						Description: "Get an Image with the colors present in the image",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
-								Description: "Expand someone else",
+								Description: "Colors someone else",
 								Required:    false,
 							},
 						},
@@ -1256,8 +1221,23 @@ func imageSpec() *discordgo.ApplicationCommand {
 					{
 						// distort - 04
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "static-ɢʟɨȶƈɦ",
-						Description: "Are you there, Neo?",
+						Name:        "hog",
+						Description: "Histogram of Oriented Gradients for an image",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Histogram someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// distort - 05
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "lego",
+						Description: "Every group of pixels is a lego brick",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
@@ -1269,7 +1249,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// distort - 05
+						// distort - 06
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "magik",
 						Description: "The much loved magik endpoint",
@@ -1284,7 +1264,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// distort - 06
+						// distort - 07
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "mirror",
 						Description: "Mirror an image along the y-axis",
@@ -1299,7 +1279,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// distort - 07
+						// distort - 08
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "mosaic",
 						Description: "Turn an image into a roman mosaic",
@@ -1314,7 +1294,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// distort - 08
+						// distort - 09
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "pixelate",
 						Description: "Pixelate yourself",
@@ -1323,22 +1303,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 							{
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
-								Description: "Mirror someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// distort - 09
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "shake",
-						Description: "not stirred",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "shake them till they sleep",
+								Description: "Pixelate someone else",
 								Required:    false,
 							},
 						},
@@ -1346,35 +1311,20 @@ func imageSpec() *discordgo.ApplicationCommand {
 					{
 						// distort - 10
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "shatter",
-						Description: "Broken glass overlay",
+						Name:        "rgb",
+						Description: "Get an RGB graph of an image's colors",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
-								Description: "user",
+								Description: "RGB someone else",
 								Required:    false,
 							},
 						},
 					},
 					{
 						// distort - 11
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "spin",
-						Description: "You spin me right round baby",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Spin someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// distort - 12
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "stringify",
 						Description: "Turn your image into a ball of yarn",
@@ -1389,7 +1339,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// distort - 13
+						// distort - 12
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "swirl",
 						Description: "Swirl an image",
@@ -1404,7 +1354,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// distort - 14
+						// distort - 13
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "triangle",
 						Description: "shapes?",
@@ -1422,26 +1372,353 @@ func imageSpec() *discordgo.ApplicationCommand {
 			},
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
-				Name:        "meme",
-				Description: "Overlay a cultural element on the image",
+				Name:        "animated",
+				Description: "Procedurally-generated GIF effects",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
-						// meme - 01
+						// animated - 01
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "angel",
-						Description: "Image on the Angels face",
+						Name:        "expand",
+						Description: "Animation that stretches an image",
 						Required:    false,
 						Options: []*discordgo.ApplicationCommandOption{
 							{
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
-								Description: "Make someone else an angel",
+								Description: "Expand someone else",
 								Required:    false,
 							},
 						},
 					},
 					{
-						// meme - 02
+						// animated - 02
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "glitch",
+						Description: "Welcome to the matrix",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// animated - 03
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "rainbow",
+						Description: "Some trippy light effects",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// animated - 04
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "shake",
+						Description: "not stirred",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "shake them till they sleep",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// animated - 05
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "spin",
+						Description: "You spin me right round baby",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Spin someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// animated - 06
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "static-ɢʟɨȶƈɦ",
+						Description: "Are you there, Neo?",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// animated - 07
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "triggered",
+						Description: "Get a triggered gif",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Trigger someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// animated - 08
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "tv-static",
+						Description: "Tastes like Monster Energy™️",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+				Name:        "overlay",
+				Description: "Templates placed over the avatar",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						// overlay - 01
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "bomb",
+						Description: "Cool guys don't look at explosions",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Explode someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 02
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "communism",
+						Description: "Support the soviet union comrade. Let the red flag fly!",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Convert someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 03
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "elmo-burn",
+						Description: "Burning Elmo meme 🔥🔥",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 04
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "jail",
+						Description: "Put an image behind bars",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 05
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "math",
+						Description: "Math",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 06
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "murica",
+						Description: "Let the star spangled banner of the free and the brave soar",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Murica someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 07
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "pride",
+						Description: "Flag of your choice over an Image!",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionString,
+								Name:        "flag",
+								Description: "Choose a flag",
+								Required:    true,
+								Choices: []*discordgo.ApplicationCommandOptionChoice{
+									{Name: "agender", Value: "agender"},
+									{Name: "ally", Value: "ally"},
+									{Name: "asexual", Value: "asexual"},
+									{Name: "bisexual", Value: "bisexual"},
+									{Name: "gay", Value: "gay"},
+									{Name: "genderfluid", Value: "genderfluid"},
+									{Name: "genderqueer", Value: "genderqueer"},
+									{Name: "intersex", Value: "intersex"},
+									{Name: "lesbian", Value: "lesbian"},
+									{Name: "nonbinary", Value: "nonbinary"},
+									{Name: "pan", Value: "pan"},
+									{Name: "polysexual", Value: "polysexual"},
+									{Name: "progress", Value: "progress"},
+									{Name: "trans", Value: "trans"},
+								},
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Flag someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 08
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "rain",
+						Description: "For the rainy days",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 09
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "shatter",
+						Description: "Broken glass overlay",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// overlay - 10
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "wasted",
+						Description: "Get an image with GTA V Wasted screen",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Waste someone else",
+								Required:    false,
+							},
+						},
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+				Name:        "sign",
+				Description: "Text-based templates rendered with the image",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						// sign - 01
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "change-my-mind",
+						Description: "Prolly can't",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionString,
+								Name:        "text",
+								Description: "unpopular opinion",
+								Required:    true,
+							},
+						},
+					},
+					{
+						// sign - 02
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "discord",
+						Description: "Generate realistic discord messages",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionString,
+								Name:        "message",
+								Description: "Message to be displayed",
+								Required:    true,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Name and image to be displayed",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// sign - 03
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "retro-meme",
 						Description: "The good old memes. Generated.",
@@ -1468,457 +1745,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// meme - 03
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "bomb",
-						Description: "Cool guys don't look at explosions",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Explode someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 04
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "bonk",
-						Description: "Get bonked on my cheems",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Bonk someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 05
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "delete",
-						Description: "Generates a windows error meme based on a given image",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Delete someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 06
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "elmo",
-						Description: "Burning Elmo meme 🔥🔥",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 07
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "fedora",
-						Description: "Tips fedora in appreciation. *Platypus noise*.",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Fedora someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 08
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "hitler",
-						Description: "?????",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 09
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "jail",
-						Description: "Put an image behind bars",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 10
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "lego",
-						Description: "Every group of pixels is a lego brick",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 11
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "thanks-obama",
-						Description: "What's his last name?!",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    true,
-							},
-						},
-					},
-					{
-						// meme - 12
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "petpet",
-						Description: "Pet pet",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Pet someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 13
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "satan",
-						Description: "Put an image on the devil 😈",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Make someone else the devil",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 14
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "sithlord",
-						Description: "Put an image on the Laughs in Sithlord meme",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 15
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "batman-slap",
-						Description: "My parents are dead!",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "batman",
-								Description: "The Batman",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "robin",
-								Description: "The Robin",
-								Required:    true,
-							},
-						},
-					},
-					{
-						// meme - 16
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "trash",
-						Description: "Image is trash",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 17
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "triggered",
-						Description: "Get a triggered gif",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Trigger someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 18
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "wasted",
-						Description: "Get an image with GTA V Wasted screen",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Waste someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// meme - 19
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "why_are_you_gay",
-						Description: "The meme",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "interviewee",
-								Description: "The interviewee",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "interviewer",
-								Description: "The interviewer",
-								Required:    true,
-							},
-						},
-					},
-				},
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
-				Name:        "flag",
-				Description: "represent",
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						// flag - 01
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "pride",
-						Description: "Flag of your choice over an Image!",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "flag",
-								Description: "Choose a flag",
-								Required:    true,
-								Choices: []*discordgo.ApplicationCommandOptionChoice{
-									{
-										Name:  "asexual",
-										Value: "asexual",
-									},
-									{
-										Name:  "bisexual",
-										Value: "bisexual",
-									},
-									{
-										Name:  "gay",
-										Value: "gay",
-									},
-									{
-										Name:  "genderfluid",
-										Value: "genderfluid",
-									},
-									{
-										Name:  "genderqueer",
-										Value: "genderqueer",
-									},
-									{
-										Name:  "intersex",
-										Value: "intersex",
-									},
-									{
-										Name:  "lesbian",
-										Value: "lesbian",
-									},
-									{
-										Name:  "nonbinary",
-										Value: "nonbinary",
-									},
-									{
-										Name:  "progress",
-										Value: "progress",
-									},
-									{
-										Name:  "pan",
-										Value: "pan",
-									},
-									{
-										Name:  "trans",
-										Value: "trans",
-									},
-								},
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Flag someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// flag - 02
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "murica",
-						Description: "Let the star spangled banner of the free and the brave soar",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Murica someone else",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// flag - 03
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "communism",
-						Description: "Support the soviet union comrade. Let the red flag fly!",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Convert someone else",
-								Required:    false,
-							},
-						},
-					},
-				},
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
-				Name:        "sign",
-				Description: "Embed the image inside a framed meme",
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						// sign - 01
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "5guys1girl",
-						Description: "The meme",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "guys",
-								Description: "user",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "girl",
-								Description: "user",
-								Required:    true,
-							},
-						},
-					},
-					{
-						// sign - 02
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "album",
-						Description: "Make an album cover!",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// sign - 03
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "change-my-mind",
-						Description: "Prolly can't",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "text",
-								Description: "unpopular opinion",
-								Required:    true,
-							},
-						},
-					},
-					{
 						// sign - 04
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "discord",
-						Description: "Generate realistic discord messages",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionString,
-								Name:        "message",
-								Description: "Message to be displayed",
-								Required:    true,
-							},
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "Name and image to be displayed",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// sign - 05
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "tweet",
 						Description: "Cast out to the void!",
@@ -1939,22 +1766,7 @@ func imageSpec() *discordgo.ApplicationCommand {
 						},
 					},
 					{
-						// sign - 06
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Name:        "wanted",
-						Description: "Wanted poster of an image",
-						Required:    false,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Type:        discordgo.ApplicationCommandOptionUser,
-								Name:        "user",
-								Description: "user",
-								Required:    false,
-							},
-						},
-					},
-					{
-						// sign - 07
+						// sign - 05
 						Type:        discordgo.ApplicationCommandOptionSubCommand,
 						Name:        "youtube",
 						Description: "Generate realistic Youtube messages",
@@ -1970,6 +1782,202 @@ func imageSpec() *discordgo.ApplicationCommand {
 								Type:        discordgo.ApplicationCommandOptionUser,
 								Name:        "user",
 								Description: "Name and image to be displayed",
+								Required:    false,
+							},
+						},
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+				Name:        "meme",
+				Description: "Visual-template memes featuring the avatar",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						// meme - 01
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "5guys1girl",
+						Description: "The meme",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "guys",
+								Description: "user",
+								Required:    true,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "girl",
+								Description: "user",
+								Required:    true,
+							},
+						},
+					},
+					{
+						// meme - 02
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "bad",
+						Description: "Bad",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// meme - 03
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "batman-slap",
+						Description: "My parents are dead!",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "batman",
+								Description: "The Batman",
+								Required:    true,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "robin",
+								Description: "The Robin",
+								Required:    true,
+							},
+						},
+					},
+					{
+						// meme - 04
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "delete-meme",
+						Description: "Generates a windows error meme based on a given image",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionString,
+								Name:        "meme-url",
+								Description: "URL to the image to place in the error dialog",
+								Required:    true,
+							},
+						},
+					},
+					{
+						// meme - 05
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "fedora",
+						Description: "Tips fedora in appreciation. *Platypus noise*.",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "Fedora someone else",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// meme - 06
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "sith-kermit",
+						Description: "Sith vs Kermit",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "sith",
+								Description: "The Sith",
+								Required:    true,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "kermit",
+								Description: "The Kermit",
+								Required:    true,
+							},
+						},
+					},
+					{
+						// meme - 07
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "thanks-obama",
+						Description: "What's his last name?!",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// meme - 08
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "trash-opinion",
+						Description: "Image is trash",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// meme - 09
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "wanted",
+						Description: "Wanted poster of an image",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
+								Required:    false,
+							},
+						},
+					},
+					{
+						// meme - 10
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "why_are_you_gay",
+						Description: "The meme",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "interviewee",
+								Description: "The interviewee",
+								Required:    true,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "interviewer",
+								Description: "The interviewer",
+								Required:    true,
+							},
+						},
+					},
+					{
+						// meme - 11
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "worse-than-hitler",
+						Description: "?????",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionUser,
+								Name:        "user",
+								Description: "user",
 								Required:    false,
 							},
 						},
