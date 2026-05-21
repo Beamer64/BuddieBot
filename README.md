@@ -1,10 +1,4 @@
-<h1 align="center">
-  <br>
-  <img src="https://github.com/Beamer64/BuddieBot/blob/master/res/repo_imgs/BuddieBot.png" width="500" height="700" alt="">
-  <br>
-  BuddieBot
-  <br>
-</h1>
+span
 
 <h3 align=center>A Homemade Discord Bot for Golang practice and development...also for funsies.</a></h3>
 
@@ -22,7 +16,7 @@
 
 <div align="center">
   <a target="_blank">
-    <img src="https://img.shields.io/badge/Total%20Lines-8653-maroon.svg" alt="shield.png">
+    <img src="https://img.shields.io/badge/Total%20Lines-9812-maroon.svg" alt="shield.png">
   </a>
 </div>
 
@@ -218,6 +212,7 @@ logging:
 When you run the bot in your debugger, it auto-spawns Lavalink and reaps the Java child on shutdown (signal-based on
 graceful stop; OS-level mechanisms — `Pdeathsig` on Linux, Job Objects on Windows — handle hard kills). If a stuck
 Java process ever survives, kill it manually:
+
 * **Windows:** `taskkill /IM java.exe /F`
 * **Linux:** `pkill -f Lavalink.jar`
 
