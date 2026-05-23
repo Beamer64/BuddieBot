@@ -46,7 +46,6 @@ mkdir -p "${build_dir}/config_files"
 echo "==> Staging runtime files"
 cp config_files/cmd.yaml "${build_dir}/config_files/cmd.yaml"
 ln -s "${BUILD_ROOT}/config.yaml" "${build_dir}/config_files/config.yaml"
-cp -r datasets "${build_dir}/datasets"
 
 # --- atomically swing the current symlink
 echo "==> Swinging current symlink"
