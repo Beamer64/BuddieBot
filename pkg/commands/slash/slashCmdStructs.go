@@ -10,13 +10,6 @@ type tuuckCmdInfo struct {
 	Example string
 }
 
-type wyrPoll struct {
-	OptionA string
-	VotesA  int
-	OptionB string
-	VotesB  int
-}
-
 type steamGames struct {
 	Applist steamAppList `json:"applist"`
 }
@@ -87,31 +80,6 @@ type katz struct {
 	MinLifeExpectancy float64 `json:"min_life_expectancy"`
 	MaxLifeExpectancy float64 `json:"max_life_expectancy"`
 	Name              string  `json:"name"`
-}
-
-type joke struct {
-	ID   string `json:"id"`
-	Joke string `json:"joke"`
-}
-
-type pickupLine struct {
-	Category string `json:"category"`
-	Joke     string `json:"joke"`
-}
-
-type wyr struct {
-	ID   string `json:"id"`
-	Data string `json:"data"`
-}
-
-type albumPicker struct {
-	Genres      string `json:"Genres"`
-	Descriptors string `json:"Descriptors"`
-	Artist      string `json:"Artist"`
-	AlbumName   string `json:"Album_Name"`
-	SecGenres   string `json:"Sec_Genres"`
-	URL         string `json:"url"`
-	// SpotifyAlbumURL string `json:"spotify_album_url"`
 }
 
 // region FakePerson Structs

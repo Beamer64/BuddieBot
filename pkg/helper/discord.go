@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 )
@@ -78,7 +79,32 @@ func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.Messa
 	}
 }
 
-func SendResponseErrorToUser(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
+func LogAndReact(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs, err error) {
+	if err == nil {
+		return
+	}
+	LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
+	if dmErr := SendErrorDMToUser(s, m); dmErr != nil {
+		log.Printf("prefix: DM error to user %s failed (%v) — falling back to reaction", m.Author.ID, dmErr)
+		if reactErr := s.MessageReactionAdd(m.ChannelID, m.ID, ErrorReaction); reactErr != nil {
+			log.Printf("prefix: add error reaction on message %s: %v", m.ID, reactErr)
+		}
+	}
+}
+
+// SendErrorDMToUser opens a DM channel with the message author
+func SendErrorDMToUser(s *discordgo.Session, m *discordgo.MessageCreate) error {
+	dm, err := s.UserChannelCreate(m.Author.ID)
+	if err != nil {
+		return fmt.Errorf("open DM with user %s: %w", m.Author.ID, err)
+	}
+	if _, err := s.ChannelMessageSend(dm.ID, "There was an error with this request. Big Brother is already looking into it."); err != nil {
+		return fmt.Errorf("send error DM to user %s: %w", m.Author.ID, err)
+	}
+	return nil
+}
+
+func SendEphemeralResponseErrorToUserInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
 	err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -97,7 +123,7 @@ func SendResponseErrorToUser(s *discordgo.Session, i *discordgo.InteractionCreat
 // itself fails, that secondary failure is logged and the original error is
 // still returned so callers see the underlying cause.
 func ReturnUserError(s *discordgo.Session, i *discordgo.InteractionCreate, userMsg string, err error) error {
-	if sendErr := SendResponseErrorToUser(s, i, userMsg); sendErr != nil {
+	if sendErr := SendEphemeralResponseErrorToUserInteraction(s, i, userMsg); sendErr != nil {
 		log.Printf("failed to send error response: %v (original: %v)", sendErr, err)
 	}
 	return err
@@ -105,12 +131,14 @@ func ReturnUserError(s *discordgo.Session, i *discordgo.InteractionCreate, userM
 
 // EditWithErrorMessage replaces a previously-deferred interaction response
 // with a user-facing error message. Use this in handlers that defer the
-// interaction up-front — SendResponseErrorToUser would 404 in that flow
+// interaction up-front — SendEphemeralResponseErrorToUserInteraction would 404 in that flow
 // because the initial response was already consumed by the defer.
 func EditWithErrorMessage(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
-	_, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: &message,
-	})
+	_, err := s.InteractionResponseEdit(
+		i.Interaction, &discordgo.WebhookEdit{
+			Content: &message,
+		},
+	)
 	return err
 }
 
@@ -134,11 +162,13 @@ func LogErrorsToErrorChannel(s *discordgo.Session, errorLogChannelID string, err
 
 	msg := &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{GetErrorEmbed(err, s, guildID)},
-		Files: []*discordgo.File{{
-			Name:        fmt.Sprintf("error-%s.txt", time.Now().Format("20060102-150405")),
-			ContentType: "text/plain",
-			Reader:      strings.NewReader(fullStack),
-		}},
+		Files: []*discordgo.File{
+			{
+				Name:        fmt.Sprintf("error-%s.txt", time.Now().Format("20060102-150405")),
+				ContentType: "text/plain",
+				Reader:      strings.NewReader(fullStack),
+			},
+		},
 	}
 
 	if _, sendErr := s.ChannelMessageSendComplex(errorLogChannelID, msg); sendErr != nil {
@@ -155,7 +185,8 @@ func MemberHasRole(session *discordgo.Session, m *discordgo.Member, guildID stri
 	for _, roleID := range m.Roles {
 		role, err := session.State.Role(guildID, roleID)
 		if err != nil {
-			log.Printf("%+v", errors.WithStack(err))
+			log.Printf("MemberHasRole: resolve role %s in guild %s: %v", roleID, guildID, err)
+			continue
 		}
 
 		if strings.ToLower(role.Name) == roleName {

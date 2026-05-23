@@ -6,15 +6,23 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/Beamer64/bb_data/emojis"
 	"github.com/bwmarrin/discordgo"
 )
 
 func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	if err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		},
+	); err != nil {
+		return fmt.Errorf("failed to defer interaction: %w", err)
+	}
+
 	option := strings.ToLower(i.ApplicationCommandData().Options[0].Name)
 
 	var data *discordgo.InteractionResponseData
@@ -25,27 +33,23 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		data, err = sendSteamPickResponse(cfg)
 	case "choices":
 		data = sendChoicesPickResponse(i)
-	case "album":
-		data, err = sendAlbumPickResponse(i, cfg)
 	case "poll":
 		return sendPollResponse(s, i, cfg)
 	default:
-		return fmt.Errorf("unknown option: %s", option)
+		return helper.ReturnUserErrorDeferred(s, i, "Unknown pick option.", fmt.Errorf("unknown option: %s", option))
 	}
 	if err != nil {
-		return helper.ReturnUserError(s, i, "Unable to pick atm, try again later.", err)
+		return helper.ReturnUserErrorDeferred(s, i, "Unable to pick atm, try again later.", err)
 	}
 
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: data,
+	if _, err = s.InteractionResponseEdit(
+		i.Interaction, &discordgo.WebhookEdit{
+			Content: &data.Content,
+			Embeds:  &data.Embeds,
 		},
-	)
-	if err != nil {
-		return err
+	); err != nil {
+		return fmt.Errorf("send /pick %s response: %w", option, err)
 	}
-
 	return nil
 }
 
@@ -94,50 +98,14 @@ func sendChoicesPickResponse(i *discordgo.InteractionCreate) *discordgo.Interact
 	return data
 }
 
-func sendAlbumPickResponse(i *discordgo.InteractionCreate, cfg *config.Configs) (*discordgo.InteractionResponseData, error) {
-	var tags []string
-	for _, v := range i.ApplicationCommandData().Options[0].Options {
-		tags = append(tags, v.StringValue())
-	}
-
-	albums, err := callAlbumPickerAPI(cfg, tags, "")
-	if err != nil {
-		return nil, err
-	}
-
-	tagsStr := strings.Join(tags, ", ")
-
-	data := &discordgo.InteractionResponseData{
-		Content: "Here are some hand-picked albums",
-		Components: []discordgo.MessageComponent{
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.SelectMenu{
-						CustomID:    "album-suggest",
-						Placeholder: "Album",
-						Options: []discordgo.SelectMenuOption{
-							{Label: albums[0].AlbumName, Value: tagsStr + "*{1}*", Default: false},
-							{Label: albums[1].AlbumName, Value: tagsStr + "*{2}*", Default: false},
-							{Label: albums[2].AlbumName, Value: tagsStr + "*{3}*", Default: false},
-							{Label: albums[3].AlbumName, Value: tagsStr + "*{4}*", Default: false},
-							{Label: albums[4].AlbumName, Value: tagsStr + "*{5}*", Default: false},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	return data, err
-}
-
+// Called from sendPickResponse, which already defers the interaction.
 func sendPollResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	question := i.ApplicationCommandData().Options[0].Options[0]
 	var fields []*discordgo.MessageEmbedField
-	var emojis []string
+	var pollEmojis []string
 
 	for _, v := range i.ApplicationCommandData().Options[0].Options {
-		emoji := helper.GetRandomStringFromSet(cfg.Emojis)
+		emoji := emojis.Random()
 		if v.Name != "request" {
 			f := &discordgo.MessageEmbedField{
 				Name:   v.StringValue(),
@@ -145,7 +113,7 @@ func sendPollResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 				Inline: false,
 			}
 			fields = append(fields, f)
-			emojis = append(emojis, emoji)
+			pollEmojis = append(pollEmojis, emoji)
 		}
 	}
 
@@ -155,110 +123,21 @@ func sendPollResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		Fields: fields,
 	}
 
-	data := &discordgo.InteractionResponseData{
-		Content: PollMessageContent,
-		Embeds:  []*discordgo.MessageEmbed{embed},
-	}
-
-	err := s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: data,
+	content := helper.PollMessageContent
+	embeds := []*discordgo.MessageEmbed{embed}
+	if _, err := s.InteractionResponseEdit(
+		i.Interaction, &discordgo.WebhookEdit{
+			Content: &content,
+			Embeds:  &embeds,
 		},
-	)
-	if err != nil {
-		return err
+	); err != nil {
+		return fmt.Errorf("send /pick poll response: %w", err)
 	}
 
-	err = addPollReactions(emojis, i, s)
-	if err != nil {
-		return err
+	if err := addPollReactions(pollEmojis, i, s); err != nil {
+		return fmt.Errorf("add poll reactions: %w", err)
 	}
-
 	return nil
-}
-
-func callAlbumPickerAPI(cfg *config.Configs, tagSlice []string, tagStr string) ([]albumPicker, error) {
-	var albumPickerObjs []albumPicker
-
-	urlTags := ""
-	if tagStr == "" {
-		// we need to separate by commas and spaces and add brackets because API bad
-		urlTags = strings.Join(tagSlice, ", ")
-	} else {
-		urlTags = tagStr
-	}
-
-	URL := cfg.Configs.ApiURLs.AlbumPickerAPI + url.PathEscape("["+urlTags+"]")
-
-	res, err := http.Get(URL)
-	if err != nil {
-		return albumPickerObjs, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API call failed with status code %d", res.StatusCode)
-	}
-
-	err = json.NewDecoder(res.Body).Decode(&albumPickerObjs)
-	if err != nil {
-		return albumPickerObjs, err
-	}
-
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(res.Body)
-
-	return albumPickerObjs, nil
-}
-
-func getAlbumPickerEmbed(tags string, cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	index := getAlbumPickerIndex(tags)
-
-	replacer := strings.NewReplacer("*{1}*", "", "*{2}*", "", "*{3}*", "", "*{4}*", "", "*{5}*", "")
-	tags = replacer.Replace(tags)
-
-	albumPickerObj, err := callAlbumPickerAPI(cfg, nil, tags)
-	if err != nil {
-		return nil, err
-	}
-
-	embed := &discordgo.MessageEmbed{
-		Title: "Check out these albums!",
-		Color: helper.RandomDiscordColor(),
-		Image: &discordgo.MessageEmbedImage{
-			URL: albumPickerObj[index].URL,
-		},
-		Footer: &discordgo.MessageEmbedFooter{
-
-			Text: "http://www.albumrecommender.com",
-		},
-		Fields: []*discordgo.MessageEmbedField{
-			{Name: "Album Name", Value: helper.CheckIfStructValueISEmpty(albumPickerObj[index].AlbumName), Inline: true},
-			{Name: "Album Artist", Value: helper.CheckIfStructValueISEmpty(albumPickerObj[index].Artist), Inline: true},
-			{Name: "Genres", Value: helper.CheckIfStructValueISEmpty(albumPickerObj[index].Genres), Inline: false},
-			{Name: "Secondary Genres", Value: helper.CheckIfStructValueISEmpty(albumPickerObj[index].SecGenres), Inline: false},
-			{Name: "Descriptors", Value: helper.CheckIfStructValueISEmpty(albumPickerObj[index].Descriptors), Inline: false},
-		},
-	}
-
-	return embed, nil
-}
-
-func getAlbumPickerIndex(tags string) int {
-	switch {
-	case strings.Contains(tags, "*{1}*"):
-		return 0
-	case strings.Contains(tags, "*{2}*"):
-		return 1
-	case strings.Contains(tags, "*{3}*"):
-		return 2
-	case strings.Contains(tags, "*{4}*"):
-		return 3
-	case strings.Contains(tags, "*{5}*"):
-		return 4
-	}
-	return 0
 }
 
 func getSteamGame(cfg *config.Configs) (string, error) {
@@ -310,93 +189,11 @@ func addPollReactions(emojis []string, i *discordgo.InteractionCreate, s *discor
 	return nil
 }
 
-func sendAlbumPickCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	tags := i.MessageComponentData().Values[0]
-
-	embed, err := getAlbumPickerEmbed(tags, cfg)
-	if err != nil {
-		return helper.ReturnUserError(s, i, "Unable to fetch Albums atm, try again later.", err)
-	}
-
-	msgEdit := discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)
-	msgContent := ""
-	msgEdit.Content = &msgContent
-	msgEdit.Embeds = &[]*discordgo.MessageEmbed{embed}
-
-	// edit response (i.Interaction) and replace with embed
-	_, err = s.ChannelMessageEditComplex(msgEdit)
-	if err != nil {
-		return err
-	}
-
-	// 'This interaction failed' will show if not included
-	// todo fix later
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "",
-			},
-		},
-	)
-	if err != nil {
-		if !strings.Contains(err.Error(), "Cannot send an empty message") {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func pickSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "pick",
 		Description: "I'll pick stuff for you. I'll also pick a steam game with the 1st choice of 'steam'",
 		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "album",
-				Description: "I can recommend an album for you to listen to!",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "1st",
-						Description: "First tag",
-						Required:    true,
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "2nd",
-						Description: "Second tag",
-						Required:    false,
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "3rd",
-						Description: "Third tag",
-						Required:    false,
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "4th",
-						Description: "Fourth tag",
-						Required:    false,
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "5th",
-						Description: "Fifth tag",
-						Required:    false,
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "6th",
-						Description: "Sixth tag",
-						Required:    false,
-					},
-				},
-			},
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,
 				Name:        "choices",

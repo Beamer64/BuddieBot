@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bufio"
 	"log"
 	"os"
 	"os/exec"
@@ -14,11 +13,9 @@ import (
 )
 
 type Configs struct {
-	Configs         *configuration
-	Cmd             *command
-	LoadingMessages []string
-	Emojis          []string
-	Player          *voice_chat.Player
+	Configs *configuration
+	Cmd     *command
+	Player  *voice_chat.Player
 }
 
 type configuration struct {
@@ -27,7 +24,6 @@ type configuration struct {
 		TestBotToken     string `yaml:"testBotToken"`
 		WebHookToken     string `yaml:"webHookToken"`
 		BotPublicKey     string `yaml:"botPublicKey"`
-		TenorAPIkey      string `yaml:"tenorAPIkey"`
 		NinjaAPIKey      string `yaml:"ninjaAPIKey"`
 		DoggoAPIkey      string `yaml:"doggoAPIkey"`
 		ModerationPATKey string `yaml:"moderationPATKey"`
@@ -40,7 +36,6 @@ type configuration struct {
 		AdviceAPI      string `yaml:"adviceAPI"`
 		DoggoAPI       string `yaml:"doggoAPI"`
 		NinjaKatzAPI   string `yaml:"ninjaKatzAPI"`
-		AlbumPickerAPI string `yaml:"albumPickerAPI"`
 		FakePersonAPI  string `yaml:"fakePersonAPI"`
 		XkcdAPI        string `yaml:"xkcdAPI"`
 		ImgbbAPI       string `yaml:"imgbbAPI"`
@@ -74,10 +69,6 @@ type configuration struct {
 		AccessKey string `yaml:"accessKey"`
 		SecretKey string `yaml:"secretKey"`
 	} `yaml:"database"`
-
-	ReqFileDirs struct {
-		Datasets string `yaml:"datasets"`
-	} `yaml:"reqFileDirs"`
 
 	Lavalink struct {
 		ProdHost     string `yaml:"prodHost"`
@@ -136,86 +127,12 @@ type command struct {
 	Msg struct {
 		Invalid         string `yaml:"invalid"`
 		NotBotAdmin     string `yaml:"notBotAdmin"`
-		TenorAPIError   string `yaml:"tenorAPIError"`
 		YoutubeAPIError string `yaml:"youtubeAPIError"`
 	} `yaml:"message"`
 }
 
 func ReadConfig() (*Configs, error) {
-	configs, err := marshalConfigs("config_files/", "../config_files/", "../../config_files/")
-	if err != nil {
-		return nil, err
-	}
-
-	configs, err = marshalDatasets(configs, "datasets/", "../datasets/", "../../datasets/")
-	if err != nil {
-		return nil, err
-	}
-
-	return configs, nil
-}
-
-func marshalDatasets(configs *Configs, possibleDsPaths ...string) (*Configs, error) {
-	var datasetDir string
-	for _, cp := range possibleDsPaths {
-		if !strings.HasSuffix(cp, "/") {
-			return nil, errors.New(cp + " is not a valid path, needs to end with '/'")
-		}
-
-		// attempt to open dir
-		files, err := os.ReadDir(cp)
-		if err != nil {
-			log.Printf("Couldn't find file in dir %s\n", cp)
-			continue
-		}
-
-		// build a map of necessary Dataset files
-		requiredDatasetFiles := map[string]bool{
-			"loading_messages.txt": false,
-			"emojis.txt":           false,
-		}
-
-		// loops through all files in dir, check if any of them are required
-		for _, f := range files {
-			if _, ok := requiredDatasetFiles[f.Name()]; ok {
-				requiredDatasetFiles[f.Name()] = true
-			}
-		}
-
-		allDatasetsFound := true
-		for _, v := range requiredDatasetFiles {
-			if !v {
-				allDatasetsFound = false
-				break
-			}
-		}
-
-		if !allDatasetsFound {
-			log.Printf("missing one or more required Dataset files in directory %s: \n %+v \n", cp, requiredDatasetFiles)
-		} else {
-			log.Printf("SUCCESS found Required Files dir %s\n", cp)
-			datasetDir = cp
-			break
-		}
-	}
-
-	log.Println("Reading from loading messages file...")
-	msgs, err := grabStringLists(datasetDir + "loading_messages.txt")
-	if err != nil {
-		return nil, err
-	}
-
-	log.Println("Reading from emojis file...")
-	emojis, err := grabStringLists(datasetDir + "emojis.txt")
-	if err != nil {
-		return nil, err
-	}
-
-	configs.Emojis = emojis
-	configs.LoadingMessages = msgs
-	configs.Configs.ReqFileDirs.Datasets = datasetDir
-
-	return configs, nil
+	return marshalConfigs("config_files/", "../config_files/", "../../config_files/")
 }
 
 func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
@@ -304,27 +221,6 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 		Configs: cfg,
 		Cmd:     cmd,
 	}, nil
-}
-
-// finds and returns []string from txt file
-func grabStringLists(strListPath string) ([]string, error) {
-	file, err := os.Open(strListPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
-	err = file.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	return lines, nil
 }
 
 // IsLaunchedByDebugger Determines if application is being run by the debugger.

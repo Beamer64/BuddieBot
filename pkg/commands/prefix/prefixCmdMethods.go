@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"image"
-	"image/color"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +11,6 @@ import (
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/Beamer64/BuddieBot/pkg/voice_chat"
-	"github.com/StephaneBunel/bresenham"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -42,17 +39,15 @@ func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	}
 
 	if helper.IsLaunchedByDebugger() {
-		_, err := s.ChannelMessageSendComplex(m.ChannelID, msg)
-		if err != nil {
-			return err
+		if _, err := s.ChannelMessageSendComplex(m.ChannelID, msg); err != nil {
+			return fmt.Errorf("send release notes to channel %s: %w", m.ChannelID, err)
 		}
 	} else {
 		for _, guild := range s.State.Guilds {
 			for _, channel := range guild.Channels {
 				if channel.Type == discordgo.ChannelTypeGuildText {
-					_, err := s.ChannelMessageSendComplex(channel.ID, msg)
-					if err != nil {
-						return err
+					if _, err := s.ChannelMessageSendComplex(channel.ID, msg); err != nil {
+						return fmt.Errorf("send release notes to guild %s channel %s: %w", guild.ID, channel.ID, err)
 					}
 					break
 				}
@@ -350,160 +345,6 @@ func clearQueue(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Co
 // endregion audio commands
 
 // region misc
-
-func sendCistercianNumeral(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs, param string) error {
-	posNum, hasPrefix := strings.CutPrefix(param, "-")
-
-	// check if the param is a number
-	if intNum, err := strconv.Atoi(posNum); err == nil {
-		if intNum >= -9999 && intNum <= 9999 {
-
-			img, err := drawCistLines(hasPrefix, posNum)
-			if err != nil {
-				return err
-			}
-
-			imgPath := "../../res/genFiles/symbol.png"
-			err = helper.CreateImgFile(imgPath, img)
-			if err != nil {
-				return err
-			}
-
-			imgURL, err := helper.GetImgbbUploadURL(cfg, imgPath, 10)
-			if err != nil {
-				return err
-			}
-
-			embed := &discordgo.MessageEmbed{
-				Title: fmt.Sprintf("Cistercian Numeral for %v", intNum),
-				Color: helper.RandomDiscordColor(),
-				Image: &discordgo.MessageEmbedImage{
-					URL: imgURL,
-				},
-				Footer: &discordgo.MessageEmbedFooter{
-					Text: "https://en.wikipedia.org/wiki/Cistercian_numerals",
-				},
-			}
-
-			_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed)
-			if err != nil {
-				return err
-			}
-
-		} else {
-			_, err = s.ChannelMessageSend(m.ChannelID, "Please enter a number from -9999 to 9999")
-			if err != nil {
-				return err
-			}
-		}
-	} else {
-		_, err = s.ChannelMessageSend(m.ChannelID, "Please enter a positive or negative number only")
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func drawCistLines(hasPrefix bool, posNum string) (image.Image, error) {
-	var imgRect = image.Rect(0, 0, 200, 200)
-	var img = image.NewRGBA(imgRect)
-	r := helper.RangeIn(0, 255)
-	g := helper.RangeIn(0, 255)
-	b := helper.RangeIn(0, 255)
-	var col = color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 255}
-
-	if hasPrefix {
-		// draw horizontal line
-		bresenham.DrawLine(img, 60, 100, 140, 100, col)
-	}
-
-	// draw vertical line
-	bresenham.DrawLine(img, 100, 20, 100, 180, col)
-
-	var x1 int
-	var x2 int
-	var y1 int
-	var y2 int
-	for pos, char := range posNum {
-		// fmt.Printf("character %c starts at byte position %d\n", char, pos)
-		switch pos {
-		case 0: // thous
-			switch char {
-			case '5':
-				bresenham.DrawLine(img, 60, 180, 100, 140, col)
-			case '7':
-				bresenham.DrawLine(img, 60, 180, 60, 140, col)
-			case '8':
-				bresenham.DrawLine(img, 60, 140, 60, 180, col)
-			case '9':
-				bresenham.DrawLine(img, 60, 180, 60, 140, col)
-				bresenham.DrawLine(img, 60, 140, 100, 140, col)
-			}
-
-			x1 = thous[string(char)].x1
-			y1 = thous[string(char)].y1
-			x2 = thous[string(char)].x2
-			y2 = thous[string(char)].y2
-		case 1: // hunds
-			switch char {
-			case '5':
-				bresenham.DrawLine(img, 140, 180, 100, 140, col)
-			case '7':
-				bresenham.DrawLine(img, 140, 180, 140, 140, col)
-			case '8':
-				bresenham.DrawLine(img, 140, 140, 140, 180, col)
-			case '9':
-				bresenham.DrawLine(img, 140, 180, 140, 140, col)
-				bresenham.DrawLine(img, 140, 140, 100, 140, col)
-			}
-
-			x1 = hunds[string(char)].x1
-			y1 = hunds[string(char)].y1
-			x2 = hunds[string(char)].x2
-			y2 = hunds[string(char)].y2
-		case 2: // tens
-			switch char {
-			case '5':
-				bresenham.DrawLine(img, 60, 20, 100, 60, col)
-			case '7':
-				bresenham.DrawLine(img, 60, 20, 60, 60, col)
-			case '8':
-				bresenham.DrawLine(img, 60, 60, 60, 20, col)
-			case '9':
-				bresenham.DrawLine(img, 60, 20, 60, 60, col)
-				bresenham.DrawLine(img, 60, 60, 100, 60, col)
-			}
-
-			x1 = tens[string(char)].x1
-			y1 = tens[string(char)].y1
-			x2 = tens[string(char)].x2
-			y2 = tens[string(char)].y2
-		case 3: // ones
-			switch char {
-			case '5':
-				bresenham.DrawLine(img, 100, 60, 140, 20, col)
-			case '7':
-				bresenham.DrawLine(img, 140, 20, 140, 60, col)
-			case '8':
-				bresenham.DrawLine(img, 140, 60, 140, 20, col)
-			case '9':
-				bresenham.DrawLine(img, 140, 20, 140, 60, col)
-				bresenham.DrawLine(img, 140, 60, 100, 60, col)
-			}
-
-			x1 = ones[string(char)].x1
-			y1 = ones[string(char)].y1
-			x2 = ones[string(char)].x2
-			y2 = ones[string(char)].y2
-		}
-
-		bresenham.DrawLine(img, x1, y1, x2, y2, col)
-	}
-
-	return img, nil
-}
 
 func sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	_, err := s.ChannelMessageSend(

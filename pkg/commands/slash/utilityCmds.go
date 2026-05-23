@@ -10,6 +10,14 @@ import (
 )
 
 func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	if err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		},
+	); err != nil {
+		return fmt.Errorf("failed to defer interaction: %w", err)
+	}
+
 	options := i.ApplicationCommandData().Options
 	if len(options) == 0 {
 		return sendTuuckCommands(s, i, cfg)
@@ -22,7 +30,7 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 	cmdInfo := getCommandInfo(cmdName, cfg)
 	if cmdInfo == nil {
-		return helper.SendResponseErrorToUser(s, i, fmt.Sprintf("Invalid command: %s", cmdName))
+		return helper.ReturnUserErrorDeferred(s, i, fmt.Sprintf("Invalid command: %s", cmdName), nil)
 	}
 
 	embed := &discordgo.MessageEmbed{
@@ -47,18 +55,18 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 		},
 	}
 
-	err := s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{embed},
-			},
+	embeds := []*discordgo.MessageEmbed{embed}
+	if _, err := s.InteractionResponseEdit(
+		i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &embeds,
 		},
-	)
-
-	return err
+	); err != nil {
+		return fmt.Errorf("send /tuuck %s response: %w", cmdName, err)
+	}
+	return nil
 }
 
+// Called from sendTuuckResponse, which already defers the interaction.
 func sendTuuckCommands(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	var content strings.Builder
 	content.WriteString("A list of current Slash command groups\n```\n")
@@ -75,16 +83,15 @@ func sendTuuckCommands(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 	content.WriteString("```\nYou can get more information about a command by using `/tuuck <command_name>`")
 
-	err := s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: content.String(),
-			},
+	contentStr := content.String()
+	if _, err := s.InteractionResponseEdit(
+		i.Interaction, &discordgo.WebhookEdit{
+			Content: &contentStr,
 		},
-	)
-
-	return err
+	); err != nil {
+		return fmt.Errorf("send /tuuck commands list: %w", err)
+	}
+	return nil
 }
 
 func getCommandInfo(cmdName string, cfg *config.Configs) *tuuckCmdInfo {

@@ -4,12 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"math/rand"
 	"regexp"
 
-	"github.com/Beamer64/BuddieBot/pkg/api"
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/Beamer64/bb_data/wyr"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -31,11 +30,6 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	var err error
 
 	switch commandName {
-	case "coin-flip":
-		embed, err = getCoinFlipEmbed(cfg)
-		if err == nil {
-			webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
-		}
 
 	case "just-lost":
 		embed = &discordgo.MessageEmbed{
@@ -44,14 +38,13 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			Description: "..Told you not to play.",
 		}
 
-		channel, err := s.UserChannelCreate(i.Member.User.ID)
-		if err != nil {
-			return err
+		channel, dmErr := s.UserChannelCreate(i.Member.User.ID)
+		if dmErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("create DM channel for user %s: %w", i.Member.User.ID, dmErr))
 		}
 
-		_, err = s.ChannelMessageSendEmbed(channel.ID, embed)
-		if err != nil {
-			return err
+		if _, sendErr := s.ChannelMessageSendEmbed(channel.ID, embed); sendErr != nil {
+			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("send just-lost DM to user %s: %w", i.Member.User.ID, sendErr))
 		}
 
 		embed = &discordgo.MessageEmbed{
@@ -69,16 +62,14 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	}
 
 	if err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("error in gameCmds.sendPlayResponse() : %w", err)
+		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendPlayResponse %s: %w", commandName, err))
 	}
 
 	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("failed to send message for command %s: %w", commandName, err)
+		return fmt.Errorf("send /play response for %s: %w", commandName, err)
 	}
 
 	return nil
@@ -144,11 +135,10 @@ func wyrVotePercents(votesA, votesB int) (percentA, percentB float64) {
 }
 
 func getWYRwebhook(cfg *config.Configs) (*discordgo.WebhookEdit, error) {
-	if len(wyrPolls) == 0 {
+	randomPoll := wyr.Random()
+	if randomPoll.OptionA == "" {
 		return nil, errors.New("WYR polls not loaded")
 	}
-
-	randomPoll := wyrPolls[rand.Intn(len(wyrPolls))]
 	percentA, percentB := wyrVotePercents(randomPoll.VotesA, randomPoll.VotesB)
 
 	embed := &discordgo.MessageEmbed{
@@ -203,71 +193,41 @@ func getWYRwebhook(cfg *config.Configs) (*discordgo.WebhookEdit, error) {
 	return webhookEdit, nil
 }
 
-func getCoinFlipEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	randNum := rand.Intn(200)
-
-	search, results := "", ""
-	if randNum%2 == 0 {
-		search = "Coin Flip Heads"
-		results = "Heads"
-
-	} else {
-		search = "Coin Flip Tails"
-		results = "Tails"
-	}
-
-	gifURL, err := api.RequestGifURL(search, cfg.Configs.Keys.TenorAPIkey)
-	if err != nil {
-		return nil, err
-	}
-
-	embed := &discordgo.MessageEmbed{
-		Title:       "Flipping...",
-		Description: fmt.Sprintf("It's %s!", results),
-		Color:       helper.RandomDiscordColor(),
-		Image: &discordgo.MessageEmbedImage{
-			URL: gifURL,
-		},
-	}
-
-	return embed, nil
-}
-
 func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	const errRespMsg = "Unable to fetch WYR atm, try again later."
 	customID := i.MessageComponentData().CustomID
 
 	webhookEdit, err := getWYRvotesWebhook(cfg, customID)
 	if err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch WYR atm, try again later.")
-		return err
+		_ = helper.SendEphemeralResponseErrorToUserInteraction(s, i, errRespMsg)
+		return fmt.Errorf("build WYR votes webhook: %w", err)
 	}
 
-	_, err = s.ChannelMessageEditComplex(
+	if _, err = s.ChannelMessageEditComplex(
 		&discordgo.MessageEdit{
 			ID:         i.Message.ID, // message ID of the original message with the buttons
 			Channel:    i.ChannelID,  // channel where the message is
 			Content:    new(string),  // new text or nil if only editing embeds
 			Components: webhookEdit.Components,
 		},
-	)
+	); err != nil {
+		_ = helper.SendEphemeralResponseErrorToUserInteraction(s, i, errRespMsg)
+		return fmt.Errorf("edit WYR votes message %s: %w", i.Message.ID, err)
+	}
 
 	// respond with an update to acknowledge interaction
-	err = s.InteractionRespond(
+	if err = s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredMessageUpdate,
 		},
-	)
-	if err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch WYR atm, try again later.")
-		return err
+	); err != nil {
+		return fmt.Errorf("ack WYR votes interaction: %w", err)
 	}
 
 	return nil
 }
 
 func sendWYRrerollResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	errRespMsg := "Unable to make call at this moment, please try later :("
-
 	// Defer the interaction response to avoid timeout
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
@@ -279,15 +239,13 @@ func sendWYRrerollResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 	webhookEdit, err := getWYRwebhook(cfg)
 	if err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch WYR atm, try again later.")
-		return err
+		return helper.ReturnUserErrorDeferred(s, i, "Unable to fetch WYR atm, try again later.", fmt.Errorf("getWYRwebhook: %w", err))
 	}
 
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("failed to send message for command WYR: %w", err)
+		return fmt.Errorf("send /play WYR response: %w", err)
 	}
 
 	return nil
@@ -298,12 +256,6 @@ func playSpec() *discordgo.ApplicationCommand {
 		Name:        "play",
 		Description: "Play some games! *More coming soon",
 		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "coin-flip",
-				Description: "Flips a coin...",
-				Required:    false,
-			},
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,
 				Name:        "just-lost",

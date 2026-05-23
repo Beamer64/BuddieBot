@@ -5,30 +5,40 @@ import (
 	"strings"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
-	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/Beamer64/bb_data/textfonts"
 	"github.com/bwmarrin/discordgo"
 )
 
 func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *config.Configs) error {
-	options := i.ApplicationCommandData().Options[0]
+	// Flat options: `type` (required choice), `user` (optional), `text` (optional).
+	optMap := map[string]*discordgo.ApplicationCommandInteractionDataOption{}
+	for _, opt := range i.ApplicationCommandData().Options {
+		optMap[opt.Name] = opt
+	}
+	cmdType := optMap["type"].StringValue()
 
-	var err error
+	// Defer the interaction response to avoid timeout
+	if err := s.InteractionRespond(
+		i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		},
+	); err != nil {
+		return fmt.Errorf("failed to defer interaction for /get type %s: %w", cmdType, err)
+	}
+
 	content := ""
 
-	switch options.Name {
+	switch cmdType {
 	case "clapback":
-		text := options.Options[0].StringValue()
+		text := optMap["text"].StringValue()
 		content = strings.ReplaceAll(text, " ", " 👏 ") + " 👏"
 
 	case "bubble", "1337", "cursive", "flipped", "cursed":
-		text := strings.ToLower(options.Options[0].StringValue())
-		content, err = helper.ToConvertedText(text, options.Name)
-		if err != nil {
-			return helper.ReturnUserError(s, i, "Unable to convert text atm, try again later.", err)
-		}
+		text := strings.ToLower(optMap["text"].StringValue())
+		content = textfonts.Convert(text, cmdType)
 
-	case "emojiletters":
-		text := strings.ToLower(options.Options[0].StringValue())
+	case "emoji-letters":
+		text := strings.ToLower(optMap["text"].StringValue())
 		words := strings.Split(text, " ")
 
 		for _, v := range words {
@@ -42,18 +52,20 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *co
 			content = fmt.Sprintf("%s%s   ", content, v)
 		}
 
+	default:
+		return fmt.Errorf("unknown option: %s", cmdType)
+
 	}
 
-	err = s.InteractionRespond(
-		i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: content,
-			},
-		},
-	)
-	if err != nil {
-		return err
+	webhookEdit := &discordgo.WebhookEdit{
+		Content: &content,
+	}
+
+	// Edit the interaction response with the generated data
+	if _, err := s.InteractionResponseEdit(
+		i.Interaction, webhookEdit,
+	); err != nil {
+		return fmt.Errorf("send /get response for type %s: %w", cmdType, err)
 	}
 
 	return nil
@@ -65,102 +77,25 @@ func txtSpec() *discordgo.ApplicationCommand {
 		Description: "Funky Texts",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "1337",
-				Description: "1337C0D3",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "text",
-						Description: "73X7 70 CH4N63",
-						Required:    true,
-					},
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "type",
+				Description: "Text responsibly",
+				Required:    true,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{Name: "1337", Value: "1337"},
+					{Name: "bubble", Value: "bubble"},
+					{Name: "clapback", Value: "clapback"},
+					{Name: "cursed", Value: "cursed"},
+					{Name: "cursive", Value: "cursive"},
+					{Name: "emoji-letters", Value: "emoji-letters"},
+					{Name: "flipped", Value: "flipped"},
 				},
 			},
 			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "bubble",
-				Description: "Bubble Text",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "text",
-						Description: "Text to change",
-						Required:    true,
-					},
-				},
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "clapback",
-				Description: "Say it with sass",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "text",
-						Description: "Text to change",
-						Required:    true,
-					},
-				},
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "cursed",
-				Description: "Cursed Text",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "text",
-						Description: "Text to change",
-						Required:    true,
-					},
-				},
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "cursive",
-				Description: "Say it with class",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "text",
-						Description: "Text to change",
-						Required:    true,
-					},
-				},
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "emojiletters",
-				Description: "Emoji Text",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "text",
-						Description: "Text to change",
-						Required:    true,
-					},
-				},
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "flipped",
-				Description: "bǝqqilᖷ",
-				Required:    false,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "text",
-						Description: "Text to change",
-						Required:    true,
-					},
-				},
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "text",
+				Description: "Text",
+				Required:    true,
 			},
 		},
 	}

@@ -16,7 +16,7 @@ type slashHandler func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 // errorLogger and userNotifier are dispatch-time dependencies. Production
 // code injects helper.LogErrorsToErrorChannel-shaped logging and
-// helper.SendResponseErrorToUser via wrap(); tests use wrapWithDeps to inject
+// helper.SendEphemeralResponseErrorToUserInteraction via wrap(); tests use wrapWithDeps to inject
 // fakes for assertions.
 //
 // The logger receives the full *config.Configs so it can extract whatever
@@ -36,7 +36,7 @@ func defaultErrorLogger(s *discordgo.Session, cfg *config.Configs, err error, gu
 // dispatcher expects. It logs returned errors to the configured error channel
 // and recovers from panics so a single bad invocation can't crash the bot.
 func wrap(h slashHandler) func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-	return wrapWithDeps(h, defaultErrorLogger, helper.SendResponseErrorToUser)
+	return wrapWithDeps(h, defaultErrorLogger, helper.SendEphemeralResponseErrorToUserInteraction)
 }
 
 // wrapWithDeps is wrap() with injectable dependencies for testing.
@@ -59,10 +59,9 @@ func wrapWithDeps(h slashHandler, logErr errorLogger, notifyUser userNotifier) f
 // ComponentHandlers handles message components (buttons, dropdowns, etc.)
 // in interactions. Keys are matched by prefix in CommandHandler.
 var ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
-	"horo-select":   wrap(sendHoroscopeCompResponse),
-	"album-suggest": wrap(sendAlbumPickCompResponse),
-	"wyr-reroll":    wrap(sendWYRrerollResp),
-	"wyr-votes":     wrap(sendWYRvotesResp),
+	"horo-select": wrap(sendHoroscopeCompResponse),
+	"wyr-reroll":  wrap(sendWYRrerollResp),
+	"wyr-votes":   wrap(sendWYRvotesResp),
 }
 
 // CommandHandlers handles top-level slash command interactions.
@@ -76,4 +75,5 @@ var CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interac
 	"pick":      wrap(sendPickResponse),
 	"tuuck":     wrap(sendTuuckResponse),
 	"play":      wrap(sendPlayResponse),
+	"generate":  wrap(sendGenerateResponse),
 }

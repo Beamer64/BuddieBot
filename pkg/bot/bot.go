@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/commands/prefix"
@@ -56,17 +58,14 @@ func Init(cfg *config.Configs) error {
 		log.Println("Lavalink ready")
 	}
 
+	discordgo.Logger = filteredDiscordLogger
+
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
 		stopDevRunner()
 		return fmt.Errorf("failed to create Discord session: %w", err)
 	}
 	botSession = session
-
-	if err := slash.LoadStaticData(cfg); err != nil {
-		stopDevRunner()
-		return fmt.Errorf("failed to load static data: %w", err)
-	}
 
 	if err := bb_data.Load(); err != nil {
 		stopDevRunner()
@@ -234,6 +233,25 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 	// Session
 	s.AddHandler(events.NewReadyHandler(cfg).ReadyHandler)
 
+	// Gateway state observability — brackets any heartbeat-error spam with
+	// clear "disconnected" / "resumed" markers so we can tell at a glance
+	// whether the reconnect actually happened.
+	s.AddHandler(
+		func(_ *discordgo.Session, _ *discordgo.Connect) {
+			log.Println("discordgo: gateway connected")
+		},
+	)
+	s.AddHandler(
+		func(_ *discordgo.Session, _ *discordgo.Disconnect) {
+			log.Println("discordgo: gateway disconnected (auto-reconnect pending)")
+		},
+	)
+	s.AddHandler(
+		func(_ *discordgo.Session, _ *discordgo.Resumed) {
+			log.Println("discordgo: gateway session resumed")
+		},
+	)
+
 	// Guild
 	guildHandler := events.NewGuildHandler(cfg)
 	s.AddHandler(guildHandler.GuildCreateHandler)
@@ -248,6 +266,27 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 
 	// Commands
 	s.AddHandler(events.NewCommandHandler(cfg).CommandHandler)
+}
+
+// filteredDiscordLogger mirrors discordgo's default logger format but drops
+// the "websocket: close sent" line that the heartbeat goroutine emits ~1×/s
+// after a TCP-level connection abort. The original abort error still logs,
+// and the Disconnect/Resumed handlers bracket the recovery window — the
+// repeating close-sent line adds no signal.
+func filteredDiscordLogger(msgL, caller int, format string, a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
+	if strings.Contains(msg, "websocket: close sent") {
+		return
+	}
+	pc, file, line, _ := runtime.Caller(caller)
+	if idx := strings.LastIndexAny(file, "/\\"); idx >= 0 {
+		file = file[idx+1:]
+	}
+	name := runtime.FuncForPC(pc).Name()
+	if idx := strings.LastIndex(name, "."); idx >= 0 {
+		name = name[idx+1:]
+	}
+	log.Printf("[DG%d] %s:%d:%s() %s\n", msgL, file, line, name, msg)
 }
 
 // registerVoiceForwarders bridges discordgo's voice gateway events to the

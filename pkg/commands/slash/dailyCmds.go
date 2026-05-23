@@ -62,16 +62,14 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 		return fmt.Errorf("unknown option: %s", cmdType)
 	}
 	if err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("error in dailyCmds.sendDailyResponse() : %w", err)
+		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendDailyResponse %s: %w", cmdType, err))
 	}
 
 	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("failed to send message for /daily type %s: %w", cmdType, err)
+		return fmt.Errorf("send /daily response for type %s: %w", cmdType, err)
 	}
 
 	return nil
@@ -122,9 +120,7 @@ func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 
 	embed, err := getHoroscopeEmbed(sign)
 	if err != nil {
-		// Respond to user with a fallback message if something goes wrong
-		_ = helper.SendResponseErrorToUser(s, i, "Unable to fetch Horoscope atm, try again later.")
-		return fmt.Errorf("failed to get horoscope embed: %w", err)
+		return helper.ReturnUserErrorDeferred(s, i, "Unable to fetch Horoscope atm, try again later.", fmt.Errorf("get horoscope embed for %s: %w", sign, err))
 	}
 
 	// Replace the interaction message with new content

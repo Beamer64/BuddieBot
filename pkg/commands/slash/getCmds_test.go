@@ -34,18 +34,18 @@ func TestGetXkcd(t *testing.T) {
 }
 
 // TestGetLandsat exercises the chromedp screenshot path. Gated behind
-// INTEGRATION_HEAVY because it spawns a headless Chrome and writes a
-// file — slow and fragile compared to the HTTP-only tests.
+// INTEGRATION_HEAVY because it spawns a headless Chrome — slow and
+// fragile compared to the HTTP-only tests.
 func TestGetLandsat(t *testing.T) {
 	requireINTEGRATIONHeavy(t)
 	cfg := loadTestConfig(t)
 	defer rateLimit("landsat-chromedp")()
 
-	path, err := getLandsatImage(cfg, "TEST")
+	imgBytes, err := getLandsatImage(cfg, "TEST")
 	if err != nil {
 		t.Fatalf("getLandsatImage: %v", err)
 	}
-	if path == "" {
-		t.Fatal("empty path returned — chromedp screenshot may have silently failed")
+	if len(imgBytes) == 0 {
+		t.Fatal("empty image bytes returned — chromedp screenshot may have silently failed")
 	}
 }

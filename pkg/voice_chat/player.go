@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -402,6 +403,7 @@ func (p *Player) Stop(ctx context.Context, guildID string) error {
 // announce channel so the user understands why the next track skipped
 // or why the bot left voice.
 func (p *Player) OnTrackException(player disgolink.Player, e lavalink.TrackExceptionEvent) {
+	defer recoverCallback("OnTrackException", player.GuildID())
 	gID := player.GuildID()
 
 	p.mu.Lock()
@@ -464,6 +466,7 @@ func briefExceptionReason(msg string) string {
 // message to the channel of the most recent $play. If the queue is
 // empty it disconnects from voice and forgets the announce channel.
 func (p *Player) OnTrackEnd(player disgolink.Player, e lavalink.TrackEndEvent) {
+	defer recoverCallback("OnTrackEnd", player.GuildID())
 	if !e.Reason.MayStartNext() {
 		// Stopped, replaced, or cleanup — Player.Stop already disconnected,
 		// or another caller is replacing the track. Don't intervene.
@@ -542,4 +545,13 @@ func loadTrack(ctx context.Context, node disgolink.Node, url string) (*lavalink.
 		return nil, ErrNoTrackFound
 	}
 	return track, nil
+}
+
+// recoverCallback is deferred at the top of each disgolink listener so a
+// panic in our handler doesn't kill the disgolink goroutine silently.
+// Logs to stderr — the player has no error-channel config to forward to.
+func recoverCallback(name string, gID snowflake.ID) {
+	if r := recover(); r != nil {
+		log.Printf("voice_chat: panic in %s for guild %s: %v\n%s", name, gID, r, debug.Stack())
+	}
 }

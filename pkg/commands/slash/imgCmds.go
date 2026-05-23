@@ -8,6 +8,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"net/http"
+	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
@@ -20,6 +21,10 @@ import (
 	"github.com/Beamer64/bb_images/special"
 	"github.com/bwmarrin/discordgo"
 )
+
+// Per-user cooldown for /image commands. Prevents one account from
+// queueing many heavy GIF generations back-to-back.
+var imgCmdLimiter = helper.NewRateLimiter(5 * time.Second)
 
 func fetchImage(url string) (image.Image, error) {
 	resp, err := http.Get(url)
@@ -35,6 +40,13 @@ func fetchImage(url string) (image.Image, error) {
 }
 
 func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	// Rate-limit check BEFORE deferring: ReturnUserError needs the
+	// initial response slot, which a defer would consume.
+	if ok, retry := imgCmdLimiter.Allow(i.Member.User.ID); !ok {
+		msg := fmt.Sprintf("Slow down! Try again in `%.1fs`.", retry.Seconds())
+		return helper.ReturnUserError(s, i, msg, nil)
+	}
+
 	// Defer immediately so heavy filters (Stringify, Triggered, etc.) get
 	// Discord's 15-minute window instead of the 3-second initial-response
 	// deadline that fires "Unknown interaction" 404s.
@@ -46,23 +58,22 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		return fmt.Errorf("failed to defer interaction: %w", err)
 	}
 
-	// Options[0] is the SubCommandGroup ("filter" | "distort" | "meme" | "template");
+	// .Options[0].Options[0] is the SubCommandGroup ("filter" | "distort" | "meme" | "template");
 	// the actual effect subcommand and its args live one level deeper.
 	options := i.ApplicationCommandData().Options[0].Options[0]
+	errRespMsg := "Unable to edit image at this moment, please try later :("
 
 	var imgName string
+	var footerTxt string
 	var bufferImage []byte
 	var err error
 
 	user, err := s.User(i.Member.User.ID)
 	if err != nil {
-		return err
+		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user %s: %w", i.Member.User.ID, err))
 	}
 
-	// Resolve target user: prefer the first user-typed option among args,
-	// otherwise default to the invoker. Handles text-only and text-first
-	// commands (change-my-mind, tweet, YouTube, ...) without overwriting
-	// user to nil when Options[0] is a string.
+	// Get the user param if there is one
 	for _, opt := range options.Options {
 		if opt.Type == discordgo.ApplicationCommandOptionUser {
 			if u := opt.UserValue(s); u != nil {
@@ -71,7 +82,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			break
 		}
 	}
-	errRespMsg := "Unable to edit image at this moment, please try later :("
 
 	switch options.Name {
 	case "pixelate":
@@ -85,6 +95,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Pixelate.png"
+		footerTxt = "Pixelation level: 8"
 
 	case "mirror":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -97,6 +108,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Mirror.png"
+		footerTxt = "Mirror Mirror On the Wall.. "
 
 	case "flip-image":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -109,6 +121,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "FlipImage.png"
+		footerTxt = "ti esrever dna ti pilf ,nwod gniht ym tup I"
 
 	case "colors":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -121,6 +134,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Colors.png"
+		footerTxt = "What's your favorite color?"
 
 	case "murica":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -133,6 +147,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "america.gif"
+		footerTxt = "Back-to-back WWII champions!"
 
 	case "communism":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -145,6 +160,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "communism.gif"
+		footerTxt = "The Redder, the Better. Right, Comrade?"
 
 	case "triggered":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -157,6 +173,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Triggered.gif"
+		footerTxt = "Your cortisol is spiking"
 
 	case "expand":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -169,6 +186,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "ExpandImage.gif"
+		footerTxt = "Like Odin's firetrucks"
 
 	case "wasted":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -181,6 +199,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Wasted.png"
+		footerTxt = "L1, L1, LEFT, L1, L1, RIGHT, TRIANGLE, CIRCLE"
 
 	case "sketch":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -193,6 +212,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Sketch.png"
+		footerTxt = "Is this who you saw?"
 
 	case "spin":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -205,6 +225,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "SpinImage.gif"
+		footerTxt = "Hold on tight!"
 
 	case "bomb":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -218,6 +239,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "bomb.gif"
+		footerTxt = "I am become eepy, napper of days."
 
 	case "shake":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -230,6 +252,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Shake.gif"
+		footerTxt = "Not stirred"
 
 	case "invert":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -242,6 +265,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Invert.png"
+		footerTxt = "we fired the person that normally writes these..."
 
 	case "sobel":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -254,6 +278,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Sobel.png"
+		footerTxt = "I had to google what sobel was."
 
 	case "hog":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -266,6 +291,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Hog.png"
+		footerTxt = "Not affiliated with Wild Hogs starring Tim Allen."
 
 	case "triangle":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -278,6 +304,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Triangle.png"
+		footerTxt = "Fun Fact! This developer failed Geometry!"
 
 	case "blur":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -290,6 +317,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Blur.png"
+		footerTxt = "I can't find my glasses"
 
 	case "rgb":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -302,6 +330,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "RGB.png"
+		footerTxt = "Is it red? Is it green? Is it blue? Idk, I'm color blind!"
 
 	case "delete-meme":
 		memeURL := options.Options[0].StringValue()
@@ -317,6 +346,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "delete-meme.png"
+		footerTxt = "Press F to pay respects"
 
 	case "fedora":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -330,6 +360,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "fedora.png"
+		footerTxt = "M'lady"
 
 	case "worse-than-hitler":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -343,6 +374,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "worse-than-hitler.png"
+		footerTxt = "hard to beat.."
 
 	case "bad":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -356,6 +388,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "bad.png"
+		footerTxt = "naughty naughty"
 
 	case "math":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -369,6 +402,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "math.gif"
+		footerTxt = "Algebraic!"
 
 	case "lego":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -382,6 +416,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "lego.png"
+		footerTxt = "please dont sue..."
 
 	case "wanted":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -395,6 +430,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "wanted.png"
+		footerTxt = "DEAD OR ALIVE, YOU'RE COMING WITH ME"
 
 	case "stringify":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -407,6 +443,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Stringify.png"
+		footerTxt = "Silly string implies the existence of serious string.."
 
 	case "burn":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -419,6 +456,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Burn.png"
+		footerTxt = "Disco inferno, burn baby burn"
 
 	case "earth":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -431,6 +469,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Earth.png"
+		footerTxt = "One does not simply look at an Earth filter and not think about the environment.."
 
 	case "freeze":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -443,6 +482,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Freeze.png"
+		footerTxt = "I bet you wore shorts in the winter because it \"wasn't cold\""
 
 	case "ground":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -455,6 +495,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Ground.png"
+		footerTxt = "The natural enemy of sky"
 
 	case "mosaic":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -467,6 +508,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Mosaic.png"
+		footerTxt = "is this what a minecraft sees?"
 
 	case "sith-kermit":
 		sith := options.Options[0].UserValue(s)
@@ -487,6 +529,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "sith-kermit.png"
+		footerTxt = "Do it"
 
 	case "jail":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -499,6 +542,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Jail.png"
+		footerTxt = "POV for some of your classmates hehe"
 
 	case "shatter":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -512,6 +556,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "shatter.png"
+		footerTxt = "Kyle strikes again"
 
 	case "pride":
 		flag := options.Options[0].StringValue()
@@ -520,7 +565,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		case 1:
 			user, err = s.User(i.Member.User.ID)
 			if err != nil {
-				return err
+				return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image pride: %w", err))
 			}
 
 		case 2:
@@ -538,6 +583,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "pride.png"
+		footerTxt = "Pride is a beautiful thing"
 
 	case "trash-opinion":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -551,6 +597,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "trash-opinion.png"
+		footerTxt = "Thanks for sharing"
 
 	case "deepfry":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -563,6 +610,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "deepfry.png"
+		footerTxt = "Extra cwispy"
 
 	case "ascii":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -575,6 +623,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Ascii.png"
+		footerTxt = "Ascii and ye shall receivii.."
 
 	case "charcoal":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -587,6 +636,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Charcoal.png"
+		footerTxt = "Like one of your french girls, Jack."
 
 	case "posterize":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -599,6 +649,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Posterize.png"
+		footerTxt = "Filler Text!"
 
 	case "sepia":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -611,6 +662,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Sepia.png"
+		footerTxt = "Don't smile, it was the law."
 
 	case "swirl":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -623,6 +675,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Swirl.png"
+		footerTxt = "Hold on to your butts.."
 
 	case "paint":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -635,6 +688,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Paint.png"
+		footerTxt = "I like it. Picasso."
 
 	case "night":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -647,6 +701,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "night.png"
+		footerTxt = "When the lights go out..."
 
 	case "rainbow":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -659,6 +714,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Rainbow.gif"
+		footerTxt = "Double Rainbow, all the waaayy"
 
 	case "magik":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -671,6 +727,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "Magik.png"
+		footerTxt = "Hold on, I need to take my meds.."
 
 	case "5guys1girl":
 		guys := options.Options[0].UserValue(s)
@@ -691,6 +748,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "5guys1girl.png"
+		footerTxt = "I've never seen how this ends"
 
 	case "batman-slap":
 		batman := options.Options[0].UserValue(s)
@@ -711,6 +769,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "batman-slap.png"
+		footerTxt = "Bat Slap!"
 
 	case "thanks-obama":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -724,6 +783,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "thanks-obama.png"
+		footerTxt = "I deserve this."
 
 	case "tweet":
 		tweet := options.Options[0].StringValue()
@@ -732,7 +792,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		case 1:
 			user, err = s.User(i.Member.User.ID)
 			if err != nil {
-				return err
+				return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image tweet: %w", err))
 			}
 
 		case 2:
@@ -753,6 +813,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "tweet.png"
+		footerTxt = "Your 4 followers are gonna love this.."
 
 	case "youtube":
 		comment := options.Options[0].StringValue()
@@ -760,7 +821,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		case 1:
 			user, err = s.User(i.Member.User.ID)
 			if err != nil {
-				return err
+				return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image youtube: %w", err))
 			}
 
 		case 2:
@@ -777,6 +838,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "youtube.png"
+		footerTxt = "FIRST!"
 
 	case "discord":
 		msg := options.Options[0].StringValue()
@@ -784,7 +846,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		case 1:
 			user, err = s.User(i.Member.User.ID)
 			if err != nil {
-				return err
+				return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image discord: %w", err))
 			}
 
 		case 2:
@@ -805,6 +867,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "discord.png"
+		footerTxt = "Taking Discord Kitten applications"
 
 	case "retro-meme":
 		// Both text args are optional now, so iterate by option name
@@ -829,6 +892,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "retro-meme.png"
+		footerTxt = "Bottom Text"
 
 	case "why_are_you_gay":
 		interviewee := options.Options[0].UserValue(s)
@@ -849,6 +913,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "why_are_you_gay.png"
+		footerTxt = "Its a fair question.."
 
 	case "elmo-burn":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -862,6 +927,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "elmo-burn.gif"
+		footerTxt = "Elmo go commit arson now"
 
 	case "tv-static":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -874,6 +940,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "static.gif"
+		footerTxt = "When your foot falls asleep"
 
 	case "rain":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -886,6 +953,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "rain.gif"
+		footerTxt = "*Sad violin music*"
 
 	case "glitch":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -898,6 +966,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "glitch.gif"
+		footerTxt = "\"We've detected a glitch in the system\""
 
 	case "static-ɢʟɨȶƈɦ":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
@@ -910,6 +979,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "static.gif"
+		footerTxt = "Now with 57% more static!"
 
 	case "change-my-mind":
 		text := options.Options[0].StringValue()
@@ -920,11 +990,25 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 
 		imgName = "ChangeMyMind.png"
+		footerTxt = "Hot take, but..."
 
 	}
 
+	// Wrap the generated image in an embed. The attachment:// scheme tells
+	// Discord to substitute the upload below — same single HTTP call as a
+	// bare-file response, no third-party hosting needed.
+	embeds := []*discordgo.MessageEmbed{
+		{
+			Color: helper.RandomDiscordColor(),
+			Image: &discordgo.MessageEmbedImage{URL: "attachment://" + imgName},
+			Footer: &discordgo.MessageEmbedFooter{
+				Text: footerTxt,
+			},
+		},
+	}
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &embeds,
 			Files: []*discordgo.File{
 				{
 					Name:        imgName,
@@ -945,12 +1029,6 @@ func imageSpec() *discordgo.ApplicationCommand {
 		Name:        "image",
 		Description: "Image manipulation commands",
 		Options: []*discordgo.ApplicationCommandOption{
-			//
-			// Groups are ordered: filter → distort → animated → overlay → sign → meme.
-			// Entries within each group are sorted alphabetically and numbered
-			// // <group> - NN. When adding a new entry, slot it alphabetically
-			// and renumber the entries below it.
-			//
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
 				Name:        "filter",

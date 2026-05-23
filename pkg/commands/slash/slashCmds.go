@@ -20,4 +20,5 @@ var Commands = []*discordgo.ApplicationCommand{
 	playSpec(),
 	txtSpec(),
 	tuuckSpec(),
+	generateSpec(),
 }

@@ -126,7 +126,7 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 	}
 
 	// find the poll msg
-	if msg.Content == slash.PollMessageContent {
+	if msg.Content == helper.PollMessageContent {
 		for _, v := range msg.Reactions {
 			// remove extra reactions
 			if v.Emoji.Name == mr.Emoji.Name && v.Count < 2 {
@@ -136,11 +136,8 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 				}
 			}
 		}
-	} else if mr.MessageReaction.Emoji.Name == slash.LmgtfyEmojiName {
-		msg, _ = s.ChannelMessage(mr.ChannelID, mr.MessageID)
-
-		err = r.sendLmgtfy(s, msg)
-		if err != nil {
+	} else if mr.MessageReaction.Emoji.Name == helper.LmgtfyEmojiName {
+		if err := r.sendLmgtfy(s, msg); err != nil {
 			helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 		}
 	}

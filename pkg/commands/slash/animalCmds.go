@@ -46,16 +46,14 @@ func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 		return fmt.Errorf("unknown option: %s", commandName)
 	}
 	if err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("error in animalCmds.sendAnimalsResponse() : %w", err)
+		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendAnimalsResponse %s: %w", commandName, err))
 	}
 
 	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("failed to send message for command %s: %w", commandName, err)
+		return fmt.Errorf("send /animals response for %s: %w", commandName, err)
 	}
 
 	return nil

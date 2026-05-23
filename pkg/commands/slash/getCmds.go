@@ -1,14 +1,9 @@
 package slash
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
@@ -19,27 +14,16 @@ import (
 	"github.com/Beamer64/bb_data/yomomma"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/bwmarrin/discordgo"
-	"github.com/chromedp/chromedp"
 )
 
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	// Flat options: `type` (required choice), `user` (optional), `text` (optional).
-	// Index by name because the array order reflects how the user filled them in.
 	optMap := map[string]*discordgo.ApplicationCommandInteractionDataOption{}
 	for _, opt := range i.ApplicationCommandData().Options {
 		optMap[opt.Name] = opt
 	}
 	cmdType := optMap["type"].StringValue()
 	errRespMsg := "Unable to make call at this moment, please try later :("
-
-	// Per-type required args that Discord can't enforce because they're
-	// optional at the top level. Validate before deferring so we can use
-	// the immediate (non-deferred) error response.
-	if cmdType == "landsat" {
-		if optMap["text"] == nil || optMap["text"].StringValue() == "" {
-			return helper.ReturnUserError(s, i, "`text` is required for /get type:landsat", nil)
-		}
-	}
 
 	// Defer the interaction response to avoid timeout
 	if err := s.InteractionRespond(
@@ -50,18 +34,14 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		return fmt.Errorf("failed to defer interaction for /get type %s: %w", cmdType, err)
 	}
 
-	var webhookEdit *discordgo.WebhookEdit
 	var err error
 	var embed *discordgo.MessageEmbed
 
-	var pingedUser string
+	pingedUser := fmt.Sprintf("<@!%s>", i.Member.User.ID)
 	if userOpt, ok := optMap["user"]; ok {
 		if u := userOpt.UserValue(s); u != nil {
 			pingedUser = fmt.Sprintf("<@!%s>", u.ID)
 		}
-	}
-	if pingedUser == "" {
-		pingedUser = fmt.Sprintf("<@!%s>", i.Member.User.ID)
 	}
 
 	switch cmdType {
@@ -74,10 +54,6 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 				{Name: roasts.Random(), Value: ""},
 			},
 		}
-
-	case "landsat":
-		text := optMap["text"].StringValue()
-		embed, err = getLandSatImageEmbed(cfg, text)
 
 	case "joke":
 		embed = &discordgo.MessageEmbed{
@@ -100,7 +76,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "yomomma":
 
 		embed = &discordgo.MessageEmbed{
-			Title: "(•_•) ( •_•)>⌐■-■ (⌐■_■)",
+			Title: "(•.•) ( •.•)>⌐■-■ (⌐■_■)",
 			Color: helper.RandomDiscordColor(),
 			Fields: []*discordgo.MessageEmbedField{
 				{Name: yomomma.Random(), Value: ""},
@@ -116,14 +92,6 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 			},
 		}
 
-	case "fake-person":
-		personData, err := callFakePersonAPI(cfg)
-		if err != nil {
-			return helper.ReturnUserError(s, i, errRespMsg, err)
-		}
-
-		embed = getFakePersonEmbed(personData)
-
 	case "xkcd":
 		embed, err = getXkcdEmbed(cfg)
 
@@ -137,82 +105,22 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		return fmt.Errorf("unknown option: %s", cmdType)
 	}
 	if err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("error in dailyCmds.sendDailyResponse() : %w", err)
+		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendGetResponse %s: %w", cmdType, err))
 	}
 
-	if pingedUser != "" {
-		webhookEdit = &discordgo.WebhookEdit{Content: &pingedUser, Embeds: &[]*discordgo.MessageEmbed{embed}}
-	} else {
-		webhookEdit = &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{embed}}
+	webhookEdit := &discordgo.WebhookEdit{
+		Content: &pingedUser,
+		Embeds:  &[]*discordgo.MessageEmbed{embed},
 	}
 
 	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
-		_ = helper.SendResponseErrorToUser(s, i, errRespMsg)
-		return fmt.Errorf("failed to send message for /get type %s: %w", cmdType, err)
+		return fmt.Errorf("send /get response for type %s: %w", cmdType, err)
 	}
 
 	return nil
-}
-
-func getLandSatImageEmbed(cfg *config.Configs, text string) (*discordgo.MessageEmbed, error) {
-	imgPath, err := getLandsatImage(cfg, text)
-	if err != nil {
-		return nil, err
-	}
-
-	imgURL, err := helper.GetImgbbUploadURL(cfg, imgPath, 10)
-	if err != nil {
-		return nil, err
-	}
-
-	embed := &discordgo.MessageEmbed{
-		Title: "Landsat, more like...landFLAT...amirite non-round supporters??.",
-		Color: helper.RandomDiscordColor(),
-		Image: &discordgo.MessageEmbedImage{
-			URL: imgURL,
-		},
-		Footer: &discordgo.MessageEmbedFooter{
-			Text:    cfg.Configs.ApiURLs.LandsatAPI,
-			IconURL: imgURL,
-		},
-	}
-
-	return embed, nil
-}
-
-func getLandsatImage(cfg *config.Configs, text string) (string, error) {
-	landsatUrl := cfg.Configs.ApiURLs.LandsatAPI
-
-	ctx, cancel := chromedp.NewContext(context.Background())
-	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	var buf []byte
-	// Navigate to the page, insert text, and click the button
-	err := chromedp.Run(
-		ctx,
-		chromedp.Navigate(landsatUrl),
-		chromedp.WaitVisible(`#nameInput`),
-		chromedp.SendKeys(`#nameInput`, text, chromedp.NodeVisible),
-		chromedp.WaitVisible(`#enterButton`),
-		chromedp.Click(`#enterButton`),
-		chromedp.Sleep(5*time.Second),
-		chromedp.Screenshot("#nameBoxes", &buf, chromedp.NodeVisible),
-	)
-	if err != nil {
-		return "", err
-	}
-
-	filename := "../../res/genFiles/landSat.png"
-	if err = os.WriteFile(filename, buf, 0644); err != nil {
-		return "", err
-	}
-
-	return filename, nil
 }
 
 func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
@@ -259,114 +167,6 @@ func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
 	return embed, nil
 }
 
-func callFakePersonAPI(cfg *config.Configs) (fakePerson, error) {
-	var personObj fakePerson
-
-	resp, err := http.Get(cfg.Configs.ApiURLs.FakePersonAPI)
-	if err != nil {
-		return personObj, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return personObj, fmt.Errorf("API call failed with status code %d", resp.StatusCode)
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(&personObj)
-	if err != nil {
-		return personObj, err
-	}
-
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(resp.Body)
-
-	return personObj, nil
-}
-
-func getFakePersonEmbed(fakePersonObj fakePerson) *discordgo.MessageEmbed {
-	fpObj := fakePersonObj.Results[0]
-	dob := strings.Split(fpObj.Dob.Date, "T")
-
-	embed := &discordgo.MessageEmbed{
-		Title:       "Fake Person Generator",
-		Description: "BuddieBot has created life!",
-		Color:       helper.RandomDiscordColor(),
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "Gender",
-				Value:  fpObj.Gender,
-				Inline: true,
-			},
-			{
-				Name:   "Name",
-				Value:  fmt.Sprintf("%s %s %s", fpObj.Name.Title, fpObj.Name.First, fpObj.Name.Last),
-				Inline: true,
-			},
-			{
-				Name:   "DOB",
-				Value:  dob[0],
-				Inline: true,
-			},
-			{
-				Name:   "Age",
-				Value:  fmt.Sprintf("%v", fpObj.Dob.Age),
-				Inline: true,
-			},
-			{
-				Name: "Address",
-				Value: fmt.Sprintf(
-					"%v %s\n%s, %s, %v %s", fpObj.Location.Street.Number, fpObj.Location.Street.Name, fpObj.Location.City, fpObj.Location.State, fpObj.Location.Postcode,
-					fpObj.Location.Country,
-				),
-				Inline: false,
-			},
-			{
-				Name:   "Email",
-				Value:  fpObj.Email,
-				Inline: true,
-			},
-			{
-				Name:   "Username",
-				Value:  fpObj.Login.Username,
-				Inline: true,
-			},
-			{
-				Name:   "Password",
-				Value:  fpObj.Login.Password,
-				Inline: true,
-			},
-			{
-				Name:   "Phone",
-				Value:  fpObj.Phone,
-				Inline: true,
-			},
-			{
-				Name:   "Cell",
-				Value:  fpObj.Cell,
-				Inline: true,
-			},
-			{
-				Name:   fpObj.ID.Name,
-				Value:  fpObj.ID.Value,
-				Inline: true,
-			},
-			{
-				Name:   "Nationality",
-				Value:  fpObj.Nat,
-				Inline: true,
-			},
-		},
-		Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: fpObj.Picture.Large,
-		},
-		Footer: &discordgo.MessageEmbedFooter{
-			Text: "Generated with randomuser.me",
-		},
-	}
-
-	return embed
-}
-
 func getSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "get",
@@ -379,9 +179,7 @@ func getSpec() *discordgo.ApplicationCommand {
 				Required:    true,
 				Choices: []*discordgo.ApplicationCommandOptionChoice{
 					{Name: "8ball", Value: "8ball"},
-					{Name: "fake-person", Value: "fake-person"},
 					{Name: "joke", Value: "joke"},
-					{Name: "landsat", Value: "landsat"},
 					{Name: "pickup-line", Value: "pickup-line"},
 					{Name: "rekd", Value: "rekd"},
 					{Name: "xkcd", Value: "xkcd"},
@@ -391,13 +189,7 @@ func getSpec() *discordgo.ApplicationCommand {
 			{
 				Type:        discordgo.ApplicationCommandOptionUser,
 				Name:        "user",
-				Description: "Target user (used by rekd, yomomma)",
-				Required:    false,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "text",
-				Description: "Text input (required for landsat)",
+				Description: "Target someone else",
 				Required:    false,
 			},
 		},

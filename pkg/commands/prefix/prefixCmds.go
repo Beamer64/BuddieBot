@@ -14,7 +14,6 @@ import (
 var Names = []string{
 	"test",
 	"release",
-	"cistercian",
 	"weast",
 	"palindrome",
 	"romans",
@@ -46,102 +45,83 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 
 		switch strings.ToLower(command) {
 
-		// ------------Dev-------------
+		// --------------------------------------------------------DEV--------------------------------------------------------------------
 
+		// {prefix}test
+		// used to test specific commands or scenarios
 		case "test":
-			err := testMethod(s, m, cfg, param)
-			if err != nil {
-				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-			}
+			helper.LogAndReact(s, m, cfg, testMethod(s, m, cfg, param))
 
+		// {prefix}release
+		// sends the release notes to all the available guilds
 		case "release":
 			if m.GuildID == cfg.Configs.DiscordIDs.TestGuildID {
 				if helper.MemberHasRole(s, m.Member, m.GuildID, cfg.Configs.Settings.BotAdminRole) {
-					err := sendReleaseNotes(s, m)
-					if err != nil {
-						helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-					}
-
+					helper.LogAndReact(s, m, cfg, sendReleaseNotes(s, m))
 				} else {
 					_, err := s.ChannelMessageSend(m.ChannelID, cfg.Cmd.Msg.NotBotAdmin)
-					if err != nil {
-						helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-					}
+					helper.LogAndReact(s, m, cfg, err)
 				}
 			}
 
-		// -------------Misc-------------
+		// ----------------------------------------------------------Misc-----------------------------------------------------------------
 
-		case "cistercian":
-			err := sendCistercianNumeral(s, m, cfg, param)
-			if err != nil {
-				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-			}
-
+		// {prefix}weast
+		// Easter egg
 		case "weast":
-			err := sendWeasterEgg(s, m)
-			if err != nil {
-				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-			}
+			helper.LogAndReact(s, m, cfg, sendWeasterEgg(s, m))
 
+		// {prefix}palindrome {text}
+		// determines if the text is a palindrome
 		case "palindrome":
-			err := checkPalindrome(s, m, param)
-			if err != nil {
-				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-			}
+			helper.LogAndReact(s, m, cfg, checkPalindrome(s, m, param))
 
+		// {prefix}romans {number}
+		// converts numbers to the roman numeral equivalent
 		case "romans":
-			err := romanNums(s, m, param)
-			if err != nil {
-				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-			}
+			helper.LogAndReact(s, m, cfg, romanNums(s, m, param))
 
-		// -------------Audio-------------
+		// ----------------------------------------------------------Audio-----------------------------------------------------------------
 
+		// {prefix}play {audio url}
+		// plays the audio url in the same voice channel as the person who triggered
 		case "play":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := playAudioLink(s, m, cfg, param)
-				if err != nil {
-					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-				}
+				helper.LogAndReact(s, m, cfg, playAudioLink(s, m, cfg, param))
 			}
 
+		// {prefix}stop
+		// stops playing the current audio
 		case "stop":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := stopAudioPlayback(s, m, cfg)
-				if err != nil {
-					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-				}
+				helper.LogAndReact(s, m, cfg, stopAudioPlayback(s, m, cfg))
 			}
 
+		// {prefix}queue
+		// displays the audio queue
 		case "queue":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := sendQueue(s, m, cfg)
-				if err != nil {
-					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-				}
+				helper.LogAndReact(s, m, cfg, sendQueue(s, m, cfg))
 			}
 
+		// {prefix}skip
+		// skips to the next audio in the queue
 		case "skip":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := skipPlayback(s, m, cfg)
-				if err != nil {
-					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-				}
+				helper.LogAndReact(s, m, cfg, skipPlayback(s, m, cfg))
 			}
 
+		// {prefix}clear
+		// clears the audio queue
 		case "clear":
 			if isAudioGuild(m.GuildID, cfg) {
-				err := clearQueue(s, m, cfg)
-				if err != nil {
-					helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
-				}
+				helper.LogAndReact(s, m, cfg, clearQueue(s, m, cfg))
 			}
 
-		// Sends the "Invalid" command Message
+		// Sends the "Invalid" command Message — the message itself is the
+		// user feedback, so any send failure only needs to be logged.
 		default:
-			_, err := s.ChannelMessageSend(m.ChannelID, cfg.Cmd.Msg.Invalid)
-			if err != nil {
+			if _, err := s.ChannelMessageSend(m.ChannelID, cfg.Cmd.Msg.Invalid); err != nil {
 				helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 			}
 		}

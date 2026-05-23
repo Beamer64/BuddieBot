@@ -1,9 +1,6 @@
 package helper
 
 import (
-	"encoding/json"
-	"io"
-	"os"
 	"strconv"
 )
 
@@ -39,54 +36,4 @@ func CheckIfStructValueISEmpty(value interface{}) string {
 	default:
 		return "N/A"
 	}
-}
-
-func ToConvertedText(text string, convertGroup string) (string, error) {
-	letters, err := getLetters()
-	if err != nil {
-		return "", err
-	}
-
-	convertedText := ""
-	for _, char := range text {
-		randSubs := ""
-		subSet := letters[convertGroup][0][string(char)]
-		if subSet != nil {
-			randSubs = GetRandomStringFromSet(subSet)
-		} else {
-			randSubs = string(char)
-		}
-		convertedText += randSubs
-	}
-
-	return convertedText, nil
-}
-
-func getLetters() (map[string][]map[string][]string, error) {
-	fontsDir := "datasets/text_fonts.json"
-	if IsLaunchedByDebugger() {
-		fontsDir = "../../datasets/text_fonts.json"
-	}
-
-	jsonFile, err := os.Open(fontsDir)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func(jsonFile *os.File) {
-		_ = jsonFile.Close()
-	}(jsonFile)
-
-	byteValue, err := io.ReadAll(jsonFile)
-	if err != nil {
-		return nil, err
-	}
-
-	letters := make(map[string][]map[string][]string)
-	err = json.Unmarshal(byteValue, &letters)
-	if err != nil {
-		return nil, err
-	}
-
-	return letters, nil
 }

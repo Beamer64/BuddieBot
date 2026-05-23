@@ -13,8 +13,7 @@ import (
 )
 
 // requireINTEGRATION skips the test unless INTEGRATION=true. Matches the
-// existing pattern from pkg/web/web_test.go — default `go test ./...` is
-// silent and fast; `INTEGRATION=true go test` runs live API checks.
+// INTEGRATION=true go test` runs live API checks.
 func requireINTEGRATION(t *testing.T) {
 	t.Helper()
 	if os.Getenv("INTEGRATION") != "true" {
@@ -46,26 +45,28 @@ var (
 
 func loadTestConfig(t *testing.T) *config.Configs {
 	t.Helper()
-	cfgOnce.Do(func() {
-		root, err := findRepoRoot()
-		if err != nil {
-			cfgErr = err
-			return
-		}
-		original, err := os.Getwd()
-		if err != nil {
-			cfgErr = err
-			return
-		}
-		if err := os.Chdir(root); err != nil {
-			cfgErr = err
-			return
-		}
-		defer func() {
-			_ = os.Chdir(original)
-		}()
-		cfgInst, cfgErr = config.ReadConfig()
-	})
+	cfgOnce.Do(
+		func() {
+			root, err := findRepoRoot()
+			if err != nil {
+				cfgErr = err
+				return
+			}
+			original, err := os.Getwd()
+			if err != nil {
+				cfgErr = err
+				return
+			}
+			if err := os.Chdir(root); err != nil {
+				cfgErr = err
+				return
+			}
+			defer func() {
+				_ = os.Chdir(original)
+			}()
+			cfgInst, cfgErr = config.ReadConfig()
+		},
+	)
 	if cfgErr != nil {
 		t.Fatalf("load test config: %v", cfgErr)
 	}
@@ -107,7 +108,7 @@ func requireKey(t *testing.T, key, name string) {
 // each other), and on release sleeps for rateLimitDelay() to give the
 // upstream API breathing room before the next call.
 //
-//	release := rateLimit("tenor")
+//	release := rateLimit("steam")
 //	defer release()
 var (
 	rateLimitsMu sync.Mutex

@@ -23,9 +23,4 @@ func TestReadConfig(t *testing.T) {
 	if reflect.DeepEqual(cfg.Cmd, &command{}) {
 		t.Fatal("cfg.CommandMessages is empty")
 	}
-
-	if len(cfg.LoadingMessages) == 0 {
-		t.Fatal("cfg.LoadingMessages is empty")
-	}
-
 }
