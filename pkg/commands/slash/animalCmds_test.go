@@ -7,7 +7,7 @@ import "testing"
 func TestAnimalsKatz(t *testing.T) {
 	requireINTEGRATION(t)
 	cfg := loadTestConfig(t)
-	requireKey(t, cfg.Configs.Keys.NinjaAPIKey, "NinjaAPIKey")
+	requireKey(t, cfg.Keys.NinjaAPIKey, "NinjaAPIKey")
 	defer rateLimit("ninja-api")()
 
 	cats, err := callKatzAPI(cfg)
@@ -28,7 +28,7 @@ func TestAnimalsKatz(t *testing.T) {
 func TestAnimalsDoggo(t *testing.T) {
 	requireINTEGRATION(t)
 	cfg := loadTestConfig(t)
-	requireKey(t, cfg.Configs.Keys.DoggoAPIkey, "DoggoAPIkey")
+	requireKey(t, cfg.Keys.DoggoAPIkey, "DoggoAPIkey")
 	defer rateLimit("thedogapi")()
 
 	dog, err := callDoggoAPI(cfg, 1)

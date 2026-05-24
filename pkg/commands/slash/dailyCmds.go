@@ -156,7 +156,7 @@ func getDailyTongueTwister(_ *config.Configs) (*discordgo.MessageEmbed, error) {
 }
 
 func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	resp, err := http.Get(cfg.Configs.ApiURLs.AdviceAPI)
+	resp, err := http.Get(cfg.ApiURLs.AdviceAPI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch advice: %w", err)
 	}
@@ -215,7 +215,7 @@ func getDailyAffirmationEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, err
 // the specific failure (network, non-200, decode, empty body).
 func fetchAffirmationFromAPI(cfg *config.Configs) (string, error) {
 	client := &http.Client{Timeout: 4 * time.Second}
-	resp, err := client.Get(cfg.Configs.ApiURLs.AffirmationAPI)
+	resp, err := client.Get(cfg.ApiURLs.AffirmationAPI)
 	if err != nil {
 		return "", fmt.Errorf("get: %w", err)
 	}

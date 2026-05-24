@@ -6,9 +6,13 @@ Discord bot in Go: music (Lavalink), image manipulation, games, utilities. Hoste
 
 `go.mod` `replace` directives point at:
 - `../bb_images` — image processing library
-- `../bb_data` — static data files (jokes, roasts, etc.)
+- `../bb_data` — static data files (jokes, roasts, etc.) embedded via `go:embed`
 
-Keep them as on-disk siblings. The deploy workflow checks all three out side-by-side.
+Keep them as on-disk siblings. The deploy workflow checks all three out side-by-side. **Any code or data you add to bb_data or bb_images needs to be committed AND pushed to that sibling repo** — the vendored copy in BuddieBot covers the build, but CI re-clones the siblings from GitHub.
+
+## Config
+
+`config.Configs` embeds `*configuration` anonymously, so callers read `cfg.Keys.X` / `cfg.DiscordIDs.X` / etc. (no doubled `cfg.Configs.Configs.X`). The yaml file at `config_files/config.yaml` (prod) is loaded into the embedded struct; orphan yaml keys are silently ignored.
 
 ## Slash command conventions
 
@@ -26,7 +30,29 @@ Then:
 - **Post-defer errors** → `helper.ReturnUserErrorDeferred(s, i, userMsg, err)`
 - **Final response** → `s.InteractionResponseEdit(...)` with `discordgo.WebhookEdit`
 
-Pre-defer helpers (`helper.SendResponseErrorToUser`, `helper.ReturnUserError`) only for validation that happens before the defer (e.g. `/get landsat` text length check). They assume the initial-response slot is still open.
+Pre-defer helpers (`helper.SendEphemeralError`, `helper.ReturnUserError`) only for validation that happens before the defer (e.g. `/generate type:landsat` text length check). They assume the initial-response slot is still open.
+
+### Validator-registry pattern (used by `/generate`)
+
+When a command has per-subcommand validation and you want validation to be pluggable as new subcommands are added, define a map from subcommand name to a `func(s, i, opts) bool` validator. The validator returns `false` (after calling `helper.ReturnUserError`) to abort cleanly; `true` to proceed. The dispatcher just does a map lookup, no inline switch over subcommand names. See `generateCmds.go` (`generateValidators`).
+
+## Command landscape
+
+| Group | Lives in | Notes |
+|---|---|---|
+| `/animals doggo|katz` | `animalCmds.go` | dog/cat APIs |
+| `/audio play|stop|resume-queue|queue|skip|clear` | `audioCmds.go` | Lavalink playback (see below) |
+| `/daily advice|kanye|affirmation|fact|tongue-twister|horoscope` | `dailyCmds.go` | One-shot daily content |
+| `/game just-lost|wyr` | `gameCmds.go` | Mini-games. wyr has component buttons. |
+| `/generate cistercian|landsat|fake-person` | `generateCmds.go` | Produces images/embeds |
+| `/get rekd|joke|8ball|yomomma|pickup-line|xkcd` | `getCmds.go` | Text-based responses |
+| `/image …` | `imgCmds.go` | 60+ effects (see Image command organization) |
+| `/pick steam|choices|poll` | `pickCmds.go` | Picks one of N |
+| `/rate-this …` | `rateThisCmds.go` | Random scoring of a target |
+| `/tuuck` | `utilityCmds.go` | Help — sources directly from `slash.Commands` |
+| `/txt …` | `txtCmds.go` | Text-transformation effects |
+
+Prefix commands (`$`-prefixed) are limited to `$release`, `$weast`, `$palindrome`, `$romans` now — the audio commands migrated to `/audio`.
 
 ## Image command organization (`/image`)
 
@@ -56,6 +82,28 @@ Discord caps each group at 25 entries.
 | `special` | PNG | Stylized algorithmic effects (lego, ascii) |
 | `internal/draw` | helpers | Decode/Encode/RenderFrames/LazyFrames/AnimateOverGIF |
 | `internal/templates` | helpers | Detect, ConnectedRegions |
+
+## bb_data structure
+
+Each subpackage embeds its dataset via `go:embed`, exposes `Load(fs.FS)` for one-time startup wiring, and a `Random()` accessor (or similar) for runtime use. `bb_data.Load()` is called once from `bot.Init` and chains every subpackage's `Load`.
+
+| Package | Source file | Accessor |
+|---|---|---|
+| `affirmations` | `affirmations.jsonl` | `Random() string` |
+| `eightball` | `8ball.txt` | `Random() string` |
+| `emojis` | `emojis.txt` | `Random() string` |
+| `facts` | `facts.txt` | `Random() string` |
+| `jokes` | `shortjokes.json` | `Random() string` |
+| `kanye` | `kanyequotes.json` | `Random() string` |
+| `loadingmessages` | `loading_messages.txt` | `Random() string` |
+| `pickuplines` | `pickuplines.json` | `Random() string` |
+| `roasts` | `roasts.txt` | `Random() string` |
+| `textfonts` | `text_fonts.json` | `Convert(text, group) string`, `Groups() []string` |
+| `tonguetwister` | `tongue_twisters.txt` | `Random() string` |
+| `wyr` | `WYR.csv` | `Random() Poll`, `Count() int` |
+| `yomomma` | `yomomma.json` | `Random() string` |
+
+The `datasets/` directory contains additional JSON files (`captcha.json`, `countries.json`, `pokemons.json`, etc.) that don't have corresponding subpackages — currently unused. The `internal/pick` package has the shared `Random[T]`, `LoadLines`, `LoadJSON`, `LoadJSONL` helpers.
 
 ## Key helpers
 
@@ -93,7 +141,7 @@ For "one avatar drawn into multiple slots" templates (5guys1girl, thanks-obama):
 
 ### Image responses
 
-All commands that generate an image attach the bytes directly to the Discord interaction response (or channel message for prefix commands) and reference them from an embed via `attachment://<filename>`. No third-party host. The pattern:
+All commands that generate an image attach the bytes directly to the Discord interaction response and reference them from an embed via `attachment://<filename>`. No third-party host. Pattern:
 
 ```go
 embed := &discordgo.MessageEmbed{
@@ -112,14 +160,44 @@ webhookEdit := &discordgo.WebhookEdit{
 ### Rate limiting / semaphores
 
 - `imgCmdLimiter` (in `imgCmds.go`) — 5s per-user cooldown on `/image *`
-- `landsatLimiter` (in `getCmds.go`) — 30s per-user cooldown on `/get landsat`
-- `landsatSem` (in `getCmds.go`) — 2-permit semaphore around the headless-Chrome work
+- `landsatLimiter` (in `generateCmds.go`) — 30s per-user cooldown on `/generate type:landsat`
+- `landsatSem` (in `generateCmds.go`) — 2-permit semaphore around the headless-Chrome work
 
 To add a new limiter: `helper.NewRateLimiter(cooldown)` at package scope, call `.Allow(userID)` *before* the defer so the rate-limit message can use the immediate response slot.
 
-## Lavalink (audio)
+## Audio (`/audio` + Lavalink)
 
-Config has `prod*` and `test*` fields for host/port/password; resolved at load via `isLaunchedByDebugger()`. Dev (Delve attached) spawns a child Lavalink via the `lavalink_runner` package; prod connects to a systemd-managed Lavalink. Don't call `lavalink_runner.Start()` in prod paths.
+User-facing commands all live under `/audio`:
+
+| Subcommand | What it does |
+|---|---|
+| `play url-1[,url-2,url-3]` | Resolves URL(s) via Lavalink; YouTube playlist URLs auto-queue every track in the playlist. Starts playback if idle; queues otherwise. |
+| `stop` | Disconnects from voice but **saves** the active track + queue. Use `resume-queue` to resume. |
+| `resume-queue` | Rejoins voice, restarts the saved track from position 0, continues the queue. |
+| `queue` | Shows currently playing OR the stopped/saved track, plus upcoming queue. |
+| `skip` | Advances to next; if queue is empty, leaves voice. |
+| `clear` | Wipes upcoming queue **and** the saved/stopped track. Full session reset. |
+
+`/audio` is gated by `helper.IsAudioGuild(...)` — only the master and test guilds. In other servers the command shows but returns a user-facing "not enabled here" message.
+
+State lives in `voice_chat.Player`:
+- `queues[gID]` — upcoming track list
+- `announceChannels[gID]` — channel for auto-advance "Now playing" announcements
+- `pausedTracks[gID]` — saved active track when Stop was called (replayed by ResumeQueue from position 0)
+
+`PlayResult.Playlist` is non-nil when Play resolved a playlist URL; `voice_chat.FormatPlayResult(r, resumeCmd)` is the shared user-facing formatter (single track or playlist, with stopped-state hints).
+
+Config has `prod*` and `test*` Lavalink fields for host/port/password, resolved at load via `helper.IsLaunchedByDebugger()`. Dev (Delve attached) spawns a child Lavalink via the `lavalink_runner` package; prod connects to a systemd-managed Lavalink. Don't call `lavalink_runner.Start()` in prod paths.
+
+## Tests
+
+Test files mirror their production file names: `fooCmds.go` → `fooCmds_test.go`. INTEGRATION-tagged tests skip by default (they need real Discord/API credentials) and only run with `INTEGRATION=true` in the environment — use them sparingly, they're mostly debug scripts.
+
+A few invariant-style tests are worth knowing about:
+- `TestPrefixNamesMatchSwitch` ([prefixCmds_test.go](pkg/commands/prefix/prefixCmds_test.go)) catches drift between the `Names` slice and the dispatch switch in `prefixCmds.go`. If you add/remove a prefix command and only update one of those two places, this test will tell you.
+- `TestCommandHandlers_AllNonNil`, `TestComponentHandlers_AllNonNil`, `TestCommands_AllHaveDescriptions` ([handlers_test.go](pkg/commands/slash/handlers_test.go)) catch nil-handler entries and missing spec descriptions (which Discord rejects at registration).
+
+The voice_chat package has pure-function tests for `FormatPlayResult`, `FriendlyPlayError`, `IsUserFacingError`, `briefExceptionReason`. The stateful methods (`Play`, `Stop`, `ResumeQueue`, `Skip`, `Queue`) are untested — they'd need interface extraction for `disgolink.Client` and `*discordgo.Session` to be mockable.
 
 ## Build / test / deploy
 
@@ -128,9 +206,9 @@ Config has `prod*` and `test*` fields for host/port/password; resolved at load v
 go mod vendor
 go build ./...
 go vet ./...
-
-# bb_images/
 go test ./...
+
+# bb_images/, bb_data/ — same commands in their dirs
 
 # LOC count
 ./scripts/count_loc.sh
@@ -148,6 +226,7 @@ Production config (`/opt/buddiebot/config.yaml` on the Mint server) is written f
 - **`static-ɢʟɨȶƈɦ`** is intentional — Unicode lookalike letters in the command name. Not a typo.
 - **Avatar fetch** uses the `fetchImage(URL)` helper in `imgCmds.go`, not bare `http.Get`.
 - **`replace` directives matter for CI** — the deploy workflow already checks out bb_images and bb_data as siblings. Don't "fix" them with v0.0.0 pseudo-versions.
+- **bb_data / bb_images changes need pushing** — re-vendoring in BuddieBot only helps the local build. CI clones the sibling repos fresh from GitHub; uncommitted changes there cause "no required module provides package …" failures.
 
 ## Style
 

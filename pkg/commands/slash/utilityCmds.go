@@ -2,14 +2,14 @@ package slash
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
-	"reflect"
-	"strings"
 )
 
-func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *config.Configs) error {
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -20,39 +20,34 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 	options := i.ApplicationCommandData().Options
 	if len(options) == 0 {
-		return sendTuuckCommands(s, i, cfg)
+		return sendTuuckCommands(s, i)
 	}
 
-	cmdName := options[0].StringValue()
-	if strings.HasPrefix(cmdName, "/") {
-		cmdName = cmdName[1:]
-	}
+	cmdName := strings.TrimSpace(options[0].StringValue())
+	cmdName = strings.TrimPrefix(cmdName, "/")
 
-	cmdInfo := getCommandInfo(cmdName, cfg)
-	if cmdInfo == nil {
+	spec := findCommandSpec(cmdName)
+	if spec == nil {
 		return helper.ReturnUserErrorDeferred(s, i, fmt.Sprintf("Invalid command: %s", cmdName), nil)
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title: cmdInfo.Name + " info",
+		Title: "/" + spec.Name,
 		Color: helper.RandomDiscordColor(),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Description",
-				Value:  cmdInfo.Desc,
-				Inline: false,
-			},
-			{
-				Name:   "Usage",
-				Value:  "`" + cmdInfo.Name + "`",
-				Inline: false,
-			},
-			{
-				Name:   "Example",
-				Value:  cmdInfo.Example,
+				Value:  spec.Description,
 				Inline: false,
 			},
 		},
+	}
+	if usage := buildTuuckUsage(spec); usage != "" {
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:   "Subcommands / options",
+			Value:  usage,
+			Inline: false,
+		})
 	}
 
 	embeds := []*discordgo.MessageEmbed{embed}
@@ -66,22 +61,16 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	return nil
 }
 
-// Called from sendTuuckResponse, which already defers the interaction.
-func sendTuuckCommands(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+// sendTuuckCommands lists every registered top-level slash command from
+// the in-memory Commands slice — no more reflection over a yaml-loaded
+// struct that drifts every time a command is renamed.
+func sendTuuckCommands(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	var content strings.Builder
-	content.WriteString("A list of current Slash command groups\n```\n")
-
-	v := reflect.ValueOf(&cfg.Cmd.SlashName).Elem()
-
-	for n := 0; n < v.NumField(); n++ {
-		field := v.Type().Field(n)
-		_, err := fmt.Fprintf(&content, "%s\n", field.Name)
-		if err != nil {
-			return fmt.Errorf("error formatting string: %w", err)
-		}
+	content.WriteString("A list of current slash commands:\n```\n")
+	for _, spec := range Commands {
+		fmt.Fprintf(&content, "/%-12s — %s\n", spec.Name, spec.Description)
 	}
-
-	content.WriteString("```\nYou can get more information about a command by using `/tuuck <command_name>`")
+	content.WriteString("```\nUse `/tuuck <command-name>` for more detail on a specific command.")
 
 	contentStr := content.String()
 	if _, err := s.InteractionResponseEdit(
@@ -94,42 +83,39 @@ func sendTuuckCommands(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	return nil
 }
 
-func getCommandInfo(cmdName string, cfg *config.Configs) *tuuckCmdInfo {
-	var info tuuckCmdInfo
-
-	n := reflect.ValueOf(&cfg.Cmd.SlashName).Elem()
-	d := reflect.ValueOf(&cfg.Cmd.Desc).Elem()
-	e := reflect.ValueOf(&cfg.Cmd.Example).Elem()
-
-	for i := 0; i < n.NumField(); i++ {
-		field := n.Type().Field(i)
-		if strings.EqualFold(field.Name, cmdName) {
-			info.Name = fmt.Sprintf("%s", n.Field(i).Interface())
-			break
+// findCommandSpec returns the ApplicationCommand whose Name matches
+// (case-insensitively), or nil if none.
+func findCommandSpec(name string) *discordgo.ApplicationCommand {
+	for _, spec := range Commands {
+		if strings.EqualFold(spec.Name, name) {
+			return spec
 		}
 	}
+	return nil
+}
 
-	for i := 0; i < d.NumField(); i++ {
-		field := d.Type().Field(i)
-		if strings.EqualFold(field.Name, cmdName) {
-			info.Desc = fmt.Sprintf("%s", d.Field(i).Interface())
-			break
+// buildTuuckUsage renders the spec's subcommands or top-level options
+// as a bulleted multi-line string. Returns "" if the command has no
+// options worth showing.
+func buildTuuckUsage(spec *discordgo.ApplicationCommand) string {
+	if len(spec.Options) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for _, opt := range spec.Options {
+		switch opt.Type {
+		case discordgo.ApplicationCommandOptionSubCommand,
+			discordgo.ApplicationCommandOptionSubCommandGroup:
+			fmt.Fprintf(&b, "• `%s` — %s\n", opt.Name, opt.Description)
+		default:
+			req := ""
+			if opt.Required {
+				req = " (required)"
+			}
+			fmt.Fprintf(&b, "• `%s`%s — %s\n", opt.Name, req, opt.Description)
 		}
 	}
-
-	for i := 0; i < e.NumField(); i++ {
-		field := e.Type().Field(i)
-		if strings.EqualFold(field.Name, cmdName) {
-			info.Example = fmt.Sprintf("%s", e.Field(i).Interface())
-			break
-		}
-	}
-
-	if info.Name != "" {
-		return &info
-	} else {
-		return nil
-	}
+	return strings.TrimRight(b.String(), "\n")
 }
 
 func tuuckSpec() *discordgo.ApplicationCommand {

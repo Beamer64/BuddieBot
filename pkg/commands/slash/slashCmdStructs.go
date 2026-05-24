@@ -4,12 +4,6 @@ import (
 	"time"
 )
 
-type tuuckCmdInfo struct {
-	Name    string
-	Desc    string
-	Example string
-}
-
 type steamGames struct {
 	Applist steamAppList `json:"applist"`
 }

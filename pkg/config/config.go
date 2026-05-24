@@ -3,31 +3,29 @@ package config
 import (
 	"log"
 	"os"
-	"os/exec"
-	"strconv"
 	"strings"
 
+	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/Beamer64/BuddieBot/pkg/voice_chat"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
+// Configs is the top-level config bundle. The yaml-loaded settings are
+// embedded so callers can write `cfg.Keys.X` directly. Cmd holds the
+// loaded cmd.yaml message strings; Player is wired up at bot init.
 type Configs struct {
-	Configs *configuration
-	Cmd     *command
-	Player  *voice_chat.Player
+	*configuration
+	Cmd    *command
+	Player *voice_chat.Player
 }
 
 type configuration struct {
 	Keys struct {
-		ProdBotToken     string `yaml:"prodBotToken"`
-		TestBotToken     string `yaml:"testBotToken"`
-		WebHookToken     string `yaml:"webHookToken"`
-		BotPublicKey     string `yaml:"botPublicKey"`
-		NinjaAPIKey      string `yaml:"ninjaAPIKey"`
-		DoggoAPIkey      string `yaml:"doggoAPIkey"`
-		ModerationPATKey string `yaml:"moderationPATKey"`
-		ImgbbAPIkey      string `yaml:"imgbbAPIkey"`
+		ProdBotToken string `yaml:"prodBotToken"`
+		TestBotToken string `yaml:"testBotToken"`
+		NinjaAPIKey  string `yaml:"ninjaAPIKey"`
+		DoggoAPIkey  string `yaml:"doggoAPIkey"`
 	} `yaml:"keys"`
 
 	ApiURLs struct {
@@ -38,37 +36,20 @@ type configuration struct {
 		NinjaKatzAPI   string `yaml:"ninjaKatzAPI"`
 		FakePersonAPI  string `yaml:"fakePersonAPI"`
 		XkcdAPI        string `yaml:"xkcdAPI"`
-		ImgbbAPI       string `yaml:"imgbbAPI"`
 		LandsatAPI     string `yaml:"landsatAPI"`
 	} `yaml:"apiURLs"`
 
 	DiscordIDs struct {
-		CurrentBotAppID         string `yaml:"currentBotAppID"`
-		ProdBotAppID            string `yaml:"prodBotAppID"`
-		TestBotAppID            string `yaml:"testBotAppID"`
-		MasterGuildID           string `yaml:"masterGuildID"`
-		TestGuildID             string `yaml:"testGuildID"`
-		WebHookID               string `yaml:"webHookID"`
-		ErrorLogChannelID       string `yaml:"errorLogChannelID"`
-		EventNotifChannelID     string `yaml:"eventNotifChannelID"`
-		FeatureTestingChannelID string `yaml:"featureTestingChannelID"`
+		MasterGuildID       string `yaml:"masterGuildID"`
+		TestGuildID         string `yaml:"testGuildID"`
+		ErrorLogChannelID   string `yaml:"errorLogChannelID"`
+		EventNotifChannelID string `yaml:"eventNotifChannelID"`
 	} `yaml:"discordIDs"`
 
 	Settings struct {
-		BotPrefix            string `yaml:"botPrefix"`
-		BotAdminRole         string `yaml:"botAdminRole"`
-		Email                string `yaml:"email"`
-		EmailPassword        string `yaml:"emailPassword"`
-		EnableNSFWModeration bool   `yaml:"enableNSFWModeration"`
-		NsfwChannelName      string `yaml:"nsfwChannelName"`
+		BotPrefix    string `yaml:"botPrefix"`
+		BotAdminRole string `yaml:"botAdminRole"`
 	} `yaml:"settings"`
-
-	Database struct {
-		TableName string `yaml:"tableName"`
-		Region    string `yaml:"region"`
-		AccessKey string `yaml:"accessKey"`
-		SecretKey string `yaml:"secretKey"`
-	} `yaml:"database"`
 
 	Lavalink struct {
 		ProdHost     string `yaml:"prodHost"`
@@ -87,47 +68,9 @@ type configuration struct {
 }
 
 type command struct {
-	SlashName struct {
-		Tuuck   string `yaml:"tuuck"`
-		Pick    string `yaml:"pick"`
-		Animals string `yaml:"animals"`
-		Daily   string `yaml:"daily"`
-		ImgSet  string `yaml:"img-set"`
-		Play    string `yaml:"play"`
-		Get     string `yaml:"get"`
-	} `yaml:"slash-name"`
-
-	PrefixName struct {
-	} `yaml:"prefix-name"`
-
-	Desc struct {
-		Tuuck    string `yaml:"tuuck"`
-		CoinFlip string `yaml:"coin-flip"`
-		LMGTFY   string `yaml:"lmgtfy"`
-		Pick     string `yaml:"pick"`
-		Animals  string `yaml:"animals"`
-		Daily    string `yaml:"daily"`
-		ImgSet   string `yaml:"img-set"`
-		Play     string `yaml:"play"`
-		Get      string `yaml:"get"`
-	} `yaml:"description"`
-
-	Example struct {
-		Tuuck    string `yaml:"tuuck"`
-		CoinFlip string `yaml:"coin-flip"`
-		LMGTFY   string `yaml:"lmgtfy"`
-		Pick     string `yaml:"pick"`
-		Animals  string `yaml:"animals"`
-		Daily    string `yaml:"daily"`
-		ImgSet   string `yaml:"img-set"`
-		Play     string `yaml:"play"`
-		Get      string `yaml:"get"`
-	} `yaml:"example"`
-
 	Msg struct {
-		Invalid         string `yaml:"invalid"`
-		NotBotAdmin     string `yaml:"notBotAdmin"`
-		YoutubeAPIError string `yaml:"youtubeAPIError"`
+		Invalid     string `yaml:"invalid"`
+		NotBotAdmin string `yaml:"notBotAdmin"`
 	} `yaml:"message"`
 }
 
@@ -200,13 +143,11 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 		return nil, err
 	}
 
-	if isLaunchedByDebugger() {
-		cfg.DiscordIDs.CurrentBotAppID = cfg.DiscordIDs.TestBotAppID
+	if helper.IsLaunchedByDebugger() {
 		cfg.Lavalink.Host = cfg.Lavalink.TestHost
 		cfg.Lavalink.Port = cfg.Lavalink.TestPort
 		cfg.Lavalink.Password = cfg.Lavalink.TestPassword
 	} else {
-		cfg.DiscordIDs.CurrentBotAppID = cfg.DiscordIDs.ProdBotAppID
 		cfg.Lavalink.Host = cfg.Lavalink.ProdHost
 		cfg.Lavalink.Port = cfg.Lavalink.ProdPort
 		cfg.Lavalink.Password = cfg.Lavalink.ProdPassword
@@ -218,18 +159,7 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 	}
 
 	return &Configs{
-		Configs: cfg,
-		Cmd:     cmd,
+		configuration: cfg,
+		Cmd:           cmd,
 	}, nil
-}
-
-// IsLaunchedByDebugger Determines if application is being run by the debugger.
-func isLaunchedByDebugger() bool {
-	// gops executable must be in the path. See https://github.com/google/gops
-	gopsOut, err := exec.Command("gops", strconv.Itoa(os.Getppid())).Output()
-	if err == nil && strings.Contains(string(gopsOut), "\\dlv.exe") {
-		// our parent process is (probably) the Delve debugger
-		return true
-	}
-	return false
 }

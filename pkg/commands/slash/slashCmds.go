@@ -17,8 +17,9 @@ var Commands = []*discordgo.ApplicationCommand{
 	imageSpec(),
 	dailySpec(),
 	pickSpec(),
-	playSpec(),
+	gameSpec(),
 	txtSpec(),
 	tuuckSpec(),
 	generateSpec(),
+	audioSpec(),
 }

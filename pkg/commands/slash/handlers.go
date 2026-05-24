@@ -16,7 +16,7 @@ type slashHandler func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 // errorLogger and userNotifier are dispatch-time dependencies. Production
 // code injects helper.LogErrorsToErrorChannel-shaped logging and
-// helper.SendEphemeralResponseErrorToUserInteraction via wrap(); tests use wrapWithDeps to inject
+// helper.SendEphemeralError via wrap(); tests use wrapWithDeps to inject
 // fakes for assertions.
 //
 // The logger receives the full *config.Configs so it can extract whatever
@@ -29,14 +29,14 @@ type userNotifier func(s *discordgo.Session, i *discordgo.InteractionCreate, msg
 // defaultErrorLogger is the production error logger — extracts the error
 // channel ID from cfg and forwards to helper.LogErrorsToErrorChannel.
 func defaultErrorLogger(s *discordgo.Session, cfg *config.Configs, err error, guildID string) {
-	helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, guildID)
+	helper.LogErrorsToErrorChannel(s, cfg.DiscordIDs.ErrorLogChannelID, err, guildID)
 }
 
 // wrap converts a slashHandler into the func signature the discordgo
 // dispatcher expects. It logs returned errors to the configured error channel
 // and recovers from panics so a single bad invocation can't crash the bot.
 func wrap(h slashHandler) func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-	return wrapWithDeps(h, defaultErrorLogger, helper.SendEphemeralResponseErrorToUserInteraction)
+	return wrapWithDeps(h, defaultErrorLogger, helper.SendEphemeralError)
 }
 
 // wrapWithDeps is wrap() with injectable dependencies for testing.
@@ -74,6 +74,7 @@ var CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interac
 	"daily":     wrap(sendDailyResponse),
 	"pick":      wrap(sendPickResponse),
 	"tuuck":     wrap(sendTuuckResponse),
-	"play":      wrap(sendPlayResponse),
+	"game":      wrap(sendGameResponse),
 	"generate":  wrap(sendGenerateResponse),
+	"audio":     wrap(sendAudioResponse),
 }

@@ -36,10 +36,10 @@ func Init(cfg *config.Configs) error {
 	token := ""
 	botENV := ""
 	if helper.IsLaunchedByDebugger() {
-		token = cfg.Configs.Keys.TestBotToken
+		token = cfg.Keys.TestBotToken
 		botENV = "BB Test is ready for commands!"
 	} else {
-		token = cfg.Configs.Keys.ProdBotToken
+		token = cfg.Keys.ProdBotToken
 		botENV = "BuddieBot is ready for commands!"
 	}
 
@@ -49,8 +49,8 @@ func Init(cfg *config.Configs) error {
 		if !ok {
 			return fmt.Errorf("Lavalink.jar not found in ./lavalink/, ../lavalink/, or ../../lavalink/ — see README dev setup")
 		}
-		readyURL := fmt.Sprintf("http://%s:%s/version", cfg.Configs.Lavalink.Host, cfg.Configs.Lavalink.Port)
-		runner, err := lavalink_runner.Start(filepath.Join(lavalinkDir, "Lavalink.jar"), lavalinkDir, readyURL, cfg.Configs.Lavalink.Password, 90*time.Second)
+		readyURL := fmt.Sprintf("http://%s:%s/version", cfg.Lavalink.Host, cfg.Lavalink.Port)
+		runner, err := lavalink_runner.Start(filepath.Join(lavalinkDir, "Lavalink.jar"), lavalinkDir, readyURL, cfg.Lavalink.Password, 90*time.Second)
 		if err != nil {
 			return fmt.Errorf("dev lavalink: %w", err)
 		}
@@ -87,12 +87,12 @@ func Init(cfg *config.Configs) error {
 	linkClient = disgolink.New(botUserID)
 	nodeCtx, nodeCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer nodeCancel()
-	log.Printf("connecting to Lavalink at %s:%s", cfg.Configs.Lavalink.Host, cfg.Configs.Lavalink.Port)
+	log.Printf("connecting to Lavalink at %s:%s", cfg.Lavalink.Host, cfg.Lavalink.Port)
 	if _, err := linkClient.AddNode(
 		nodeCtx, disgolink.NodeConfig{
 			Name:     "main",
-			Address:  cfg.Configs.Lavalink.Host + ":" + cfg.Configs.Lavalink.Port,
-			Password: cfg.Configs.Lavalink.Password,
+			Address:  cfg.Lavalink.Host + ":" + cfg.Lavalink.Port,
+			Password: cfg.Lavalink.Password,
 		},
 	); err != nil {
 		stopDevRunner()
@@ -258,7 +258,6 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 	s.AddHandler(guildHandler.GuildDeleteHandler)
 	s.AddHandler(guildHandler.GuildJoinHandler)
 	s.AddHandler(guildHandler.GuildLeaveHandler)
-	s.AddHandler(guildHandler.GuildMemberUpdateHandler)
 
 	// Messages
 	s.AddHandler(events.NewMessageCreateHandler(cfg, u).MessageCreateHandler)

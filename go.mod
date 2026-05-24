@@ -15,7 +15,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/subosito/shorturl v1.0.0
 	golang.org/x/sys v0.42.0
-	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -52,9 +51,7 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-//layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32 // indirect
 )
 
 replace github.com/Beamer64/bb_data => ../bb_data

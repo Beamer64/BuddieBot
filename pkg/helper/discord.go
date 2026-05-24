@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 )
@@ -79,11 +78,11 @@ func GetErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.Messa
 	}
 }
 
-func LogAndReact(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs, err error) {
+func LogAndReact(s *discordgo.Session, m *discordgo.MessageCreate, errorLogChannelID string, err error) {
 	if err == nil {
 		return
 	}
-	LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
+	LogErrorsToErrorChannel(s, errorLogChannelID, err, m.GuildID)
 	if dmErr := SendErrorDMToUser(s, m); dmErr != nil {
 		log.Printf("prefix: DM error to user %s failed (%v) — falling back to reaction", m.Author.ID, dmErr)
 		if reactErr := s.MessageReactionAdd(m.ChannelID, m.ID, ErrorReaction); reactErr != nil {
@@ -104,7 +103,7 @@ func SendErrorDMToUser(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	return nil
 }
 
-func SendEphemeralResponseErrorToUserInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
+func SendEphemeralError(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
 	err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -123,7 +122,7 @@ func SendEphemeralResponseErrorToUserInteraction(s *discordgo.Session, i *discor
 // itself fails, that secondary failure is logged and the original error is
 // still returned so callers see the underlying cause.
 func ReturnUserError(s *discordgo.Session, i *discordgo.InteractionCreate, userMsg string, err error) error {
-	if sendErr := SendEphemeralResponseErrorToUserInteraction(s, i, userMsg); sendErr != nil {
+	if sendErr := SendEphemeralError(s, i, userMsg); sendErr != nil {
 		log.Printf("failed to send error response: %v (original: %v)", sendErr, err)
 	}
 	return err
@@ -131,7 +130,7 @@ func ReturnUserError(s *discordgo.Session, i *discordgo.InteractionCreate, userM
 
 // EditWithErrorMessage replaces a previously-deferred interaction response
 // with a user-facing error message. Use this in handlers that defer the
-// interaction up-front — SendEphemeralResponseErrorToUserInteraction would 404 in that flow
+// interaction up-front — SendEphemeralError would 404 in that flow
 // because the initial response was already consumed by the defer.
 func EditWithErrorMessage(s *discordgo.Session, i *discordgo.InteractionCreate, message string) error {
 	_, err := s.InteractionResponseEdit(
@@ -174,6 +173,13 @@ func LogErrorsToErrorChannel(s *discordgo.Session, errorLogChannelID string, err
 	if _, sendErr := s.ChannelMessageSendComplex(errorLogChannelID, msg); sendErr != nil {
 		log.Printf("failed to send error report to channel: %v (original: %v)", sendErr, err)
 	}
+}
+
+// IsAudioGuild reports whether the given guild has audio commands
+// enabled. Currently only the master and test guilds; audio commands
+// gate on this and return a user-facing message in other guilds.
+func IsAudioGuild(guildID, masterGuildID, testGuildID string) bool {
+	return guildID == masterGuildID || guildID == testGuildID
 }
 
 func MemberHasRole(session *discordgo.Session, m *discordgo.Member, guildID string, roleName string) bool {

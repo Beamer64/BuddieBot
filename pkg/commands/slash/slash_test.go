@@ -9,39 +9,9 @@ import (
 	"os"
 	"strconv"
 	"testing"
-	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 )
-
-func TestPickChoices(t *testing.T) {
-	if os.Getenv("INTEGRATION") != "true" {
-		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}
-
-	/*cfg, err := config_files.ReadConfig()
-	if err != nil {
-		t.Fatal(err)
-	}*/
-
-	for i := 0; i < 10; i++ {
-		time.Sleep(1 * time.Second)
-		seed := rand.NewSource(time.Now().UnixNano())
-		randSource := rand.New(seed)
-
-		testData := []string{
-			"test 1",
-			"test 2",
-			"test 3",
-			"test 4",
-			"test 5",
-		}
-		randomIndex := randSource.Intn(len(testData))
-		choice := testData[randomIndex]
-
-		println(choice)
-	}
-}
 
 func TestCallKatzAPI(t *testing.T) {
 	if os.Getenv("INTEGRATION") != "true" {
@@ -60,7 +30,7 @@ func TestCallKatzAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req.Header.Add("X-Api-Key", cfg.Configs.Keys.NinjaAPIKey)
+	req.Header.Add("X-Api-Key", cfg.Keys.NinjaAPIKey)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

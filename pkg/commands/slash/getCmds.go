@@ -95,12 +95,6 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "xkcd":
 		embed, err = getXkcdEmbed(cfg)
 
-		/*case "captcha":
-		data, err := client.WTP()
-		if err != nil {
-			return err
-		}*/
-
 	default:
 		return fmt.Errorf("unknown option: %s", cmdType)
 	}
@@ -124,7 +118,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 }
 
 func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	resp, err := http.Get(cfg.Configs.ApiURLs.XkcdAPI)
+	resp, err := http.Get(cfg.ApiURLs.XkcdAPI)
 	if err != nil {
 		return nil, err
 	}

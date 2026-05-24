@@ -83,7 +83,7 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 				Color: helper.RandomDiscordColor(),
 				Image: &discordgo.MessageEmbedImage{URL: "attachment://" + attachmentName},
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: cfg.Configs.ApiURLs.LandsatAPI,
+					Text: cfg.ApiURLs.LandsatAPI,
 				},
 			}
 		}
@@ -150,7 +150,7 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 func callFakePersonAPI(cfg *config.Configs) (fakePerson, error) {
 	var personObj fakePerson
 
-	resp, err := http.Get(cfg.Configs.ApiURLs.FakePersonAPI)
+	resp, err := http.Get(cfg.ApiURLs.FakePersonAPI)
 	if err != nil {
 		return personObj, err
 	}
@@ -384,7 +384,7 @@ func getLandsatImage(cfg *config.Configs, text string) ([]byte, error) {
 	landsatSem <- struct{}{}
 	defer func() { <-landsatSem }()
 
-	landsatUrl := cfg.Configs.ApiURLs.LandsatAPI
+	landsatUrl := cfg.ApiURLs.LandsatAPI
 
 	ctx, cancel := chromedp.NewContext(context.Background())
 	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)

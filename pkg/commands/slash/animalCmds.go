@@ -109,14 +109,14 @@ func retryDoggoFetch(cfg *config.Configs) (doggo, error) {
 }
 
 func callDoggoAPI(cfg *config.Configs, id int) (doggo, error) {
-	url := cfg.Configs.ApiURLs.DoggoAPI + strconv.Itoa(id)
+	url := cfg.ApiURLs.DoggoAPI + strconv.Itoa(id)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return doggo{}, fmt.Errorf("creating request to Doggo API: %w", err)
 	}
 
-	req.Header.Set("x-api-key", cfg.Configs.Keys.DoggoAPIkey)
+	req.Header.Set("x-api-key", cfg.Keys.DoggoAPIkey)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -191,7 +191,7 @@ func callKatzAPI(cfg *config.Configs) ([]katz, error) {
 	// Choose a random letter to search with
 	randomChar := string("abcdefghijklmnopqrstuvwxyz"[rand.Intn(26)])
 
-	url := cfg.Configs.ApiURLs.NinjaKatzAPI + randomChar
+	url := cfg.ApiURLs.NinjaKatzAPI + randomChar
 
 	req, err := createNinjaAPIrequest(cfg, url)
 	if err != nil {
@@ -222,7 +222,7 @@ func createNinjaAPIrequest(cfg *config.Configs, url string) (*http.Request, erro
 		return nil, fmt.Errorf("failed to create new request: %w", err)
 	}
 
-	req.Header.Set("x-api-key", cfg.Configs.Keys.NinjaAPIKey)
+	req.Header.Set("x-api-key", cfg.Keys.NinjaAPIKey)
 	return req, nil
 }
 

@@ -19,7 +19,7 @@ import (
 func recoverPanic(s *discordgo.Session, cfg *config.Configs, guildID string) {
 	if r := recover(); r != nil {
 		err := fmt.Errorf("panic in event handler: %v\n%s", r, debug.Stack())
-		helper.LogErrorsToErrorChannel(s, cfg.Configs.DiscordIDs.ErrorLogChannelID, err, guildID)
+		helper.LogErrorsToErrorChannel(s, cfg.DiscordIDs.ErrorLogChannelID, err, guildID)
 	}
 }
 
@@ -97,7 +97,7 @@ func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 	defer recoverPanic(s, h.cfg, "")
 	err := s.UpdateGameStatus(0, "try /tuuck")
 	if err != nil {
-		helper.LogErrorsToErrorChannel(s, h.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, "")
+		helper.LogErrorsToErrorChannel(s, h.cfg.DiscordIDs.ErrorLogChannelID, err, "")
 		return
 	}
 
@@ -115,13 +115,13 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 
 	channel, err := s.Channel(mr.ChannelID)
 	if err != nil {
-		helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
+		helper.LogErrorsToErrorChannel(s, r.cfg.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 		return
 	}
 
 	msg, err := s.ChannelMessage(channel.ID, mr.MessageID)
 	if err != nil {
-		helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
+		helper.LogErrorsToErrorChannel(s, r.cfg.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 		return
 	}
 
@@ -132,13 +132,13 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 			if v.Emoji.Name == mr.Emoji.Name && v.Count < 2 {
 				err = s.MessageReactionRemove(channel.ID, msg.ID, mr.MessageReaction.Emoji.Name, mr.UserID)
 				if err != nil {
-					helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
+					helper.LogErrorsToErrorChannel(s, r.cfg.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 				}
 			}
 		}
 	} else if mr.MessageReaction.Emoji.Name == helper.LmgtfyEmojiName {
 		if err := r.sendLmgtfy(s, msg); err != nil {
-			helper.LogErrorsToErrorChannel(s, r.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
+			helper.LogErrorsToErrorChannel(s, r.cfg.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 		}
 	}
 }
@@ -153,33 +153,12 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 	prefix.ParsePrefixCmds(s, m, d.cfg)
 }
 
-// GuildMemberUpdateHandler Sent when a guild member is updated.
-func (g *GuildHandler) GuildMemberUpdateHandler(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
-	/*embed := &discordgo.MessageEmbed{
-		Title: "Hey, GuildMemberUpdateHandler is working now",
-		Color: 1321,
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "User",
-				Value:  e.User.Username,
-				Inline: true,
-			},
-			{
-				Name:   "ID",
-				Value:  e.User.ID,
-				Inline: true,
-			},
-		},
-	}
-	_, _ = s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)*/
-}
-
 // GuildJoinHandler when someone joins our server
 func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	defer recoverPanic(s, g.cfg, m.GuildID)
 	guild, err := s.Guild(m.GuildID)
 	if err != nil {
-		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
+		helper.LogErrorsToErrorChannel(s, g.cfg.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 		return
 	}
 
@@ -191,7 +170,7 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.Guil
 	defer recoverPanic(s, g.cfg, m.GuildID)
 	guild, err := s.Guild(m.GuildID)
 	if err != nil {
-		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
+		helper.LogErrorsToErrorChannel(s, g.cfg.DiscordIDs.ErrorLogChannelID, err, m.GuildID)
 		return
 	}
 
@@ -236,9 +215,9 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 		},
 	}
 
-	_, err := s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
+	_, err := s.ChannelMessageSendEmbed(g.cfg.DiscordIDs.EventNotifChannelID, embed)
 	if err != nil {
-		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, e.ID)
+		helper.LogErrorsToErrorChannel(s, g.cfg.DiscordIDs.ErrorLogChannelID, err, e.ID)
 		return
 	}
 }
@@ -274,9 +253,9 @@ func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.Gui
 		},
 	}
 
-	_, err := s.ChannelMessageSendEmbed(g.cfg.Configs.DiscordIDs.EventNotifChannelID, embed)
+	_, err := s.ChannelMessageSendEmbed(g.cfg.DiscordIDs.EventNotifChannelID, embed)
 	if err != nil {
-		helper.LogErrorsToErrorChannel(s, g.cfg.Configs.DiscordIDs.ErrorLogChannelID, err, guildID)
+		helper.LogErrorsToErrorChannel(s, g.cfg.DiscordIDs.ErrorLogChannelID, err, guildID)
 		return
 	}
 }

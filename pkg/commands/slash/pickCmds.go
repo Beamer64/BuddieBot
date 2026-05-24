@@ -141,7 +141,7 @@ func sendPollResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 }
 
 func getSteamGame(cfg *config.Configs) (string, error) {
-	res, err := http.Get(cfg.Configs.ApiURLs.SteamAPI)
+	res, err := http.Get(cfg.ApiURLs.SteamAPI)
 	if err != nil {
 		return "", err
 	}

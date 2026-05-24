@@ -12,7 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+func sendGameResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	commandName := i.ApplicationCommandData().Options[0].Name
 	errRespMsg := "Unable to fetch game atm, try again later."
 
@@ -62,14 +62,14 @@ func sendPlayResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	}
 
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendPlayResponse %s: %w", commandName, err))
+		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendGameResponse %s: %w", commandName, err))
 	}
 
 	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
-		return fmt.Errorf("send /play response for %s: %w", commandName, err)
+		return fmt.Errorf("send /game response for %s: %w", commandName, err)
 	}
 
 	return nil
@@ -193,13 +193,21 @@ func getWYRwebhook(cfg *config.Configs) (*discordgo.WebhookEdit, error) {
 	return webhookEdit, nil
 }
 
+// sendWYRvotesResp handles the WYR vote-button presses. Unlike most
+// slash handlers it does NOT defer up-front — it does the channel-
+// message edit first, then acknowledges the interaction with a
+// DeferredMessageUpdate at the end. That ordering means the initial
+// response slot is still available during the early error paths, so the
+// `_ = helper.SendEphemeralError(...)` calls below are correctly
+// targeting the pre-defer slot. (After the InteractionRespond below,
+// they'd 404 — but those error paths are pre-respond.)
 func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	const errRespMsg = "Unable to fetch WYR atm, try again later."
 	customID := i.MessageComponentData().CustomID
 
 	webhookEdit, err := getWYRvotesWebhook(cfg, customID)
 	if err != nil {
-		_ = helper.SendEphemeralResponseErrorToUserInteraction(s, i, errRespMsg)
+		_ = helper.SendEphemeralError(s, i, errRespMsg)
 		return fmt.Errorf("build WYR votes webhook: %w", err)
 	}
 
@@ -211,7 +219,7 @@ func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			Components: webhookEdit.Components,
 		},
 	); err != nil {
-		_ = helper.SendEphemeralResponseErrorToUserInteraction(s, i, errRespMsg)
+		_ = helper.SendEphemeralError(s, i, errRespMsg)
 		return fmt.Errorf("edit WYR votes message %s: %w", i.Message.ID, err)
 	}
 
@@ -245,15 +253,15 @@ func sendWYRrerollResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
-		return fmt.Errorf("send /play WYR response: %w", err)
+		return fmt.Errorf("send /game WYR response: %w", err)
 	}
 
 	return nil
 }
 
-func playSpec() *discordgo.ApplicationCommand {
+func gameSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
-		Name:        "play",
+		Name:        "game",
 		Description: "Play some games! *More coming soon",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
