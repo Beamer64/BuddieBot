@@ -33,6 +33,7 @@ func (db *DB) GetUserByDiscordID(ctx context.Context, discordUserID string, guil
 	if err != nil {
 		return nil, fmt.Errorf("user by discord id %s in guild %d: %w", discordUserID, guildID, err)
 	}
+
 	return &u, nil
 }
 
