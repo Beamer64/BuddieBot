@@ -26,20 +26,18 @@ const (
 	typeName  string = "type"
 )
 
-// generateOpts is the parsed-option map passed to each /generate validator.
 type generateOpts = map[string]*discordgo.ApplicationCommandInteractionDataOption
 
-// generateValidators dispatches per-cmdType input validation BEFORE the interaction is deferred.
-// Adding a new /generate subcommand: write a validateXyz function near
-// the subcommand's other code, add one entry here. cmdTypes without an
-// entry are treated as having no validation requirements.
+// generateValidators dispatches per-cmdType pre-defer validation. Add a
+// new subcommand: write validateXyz next to its handler, register it
+// here. cmdTypes absent from the map skip validation.
 var generateValidators = map[string]func(*discordgo.Session, *discordgo.InteractionCreate, generateOpts) bool{
-	"landsat":    validateLandsat,
-	"cistercian": validateCistercian,
+	"landsat":     validateLandsat,
+	"cistercian":  validateCistercian,
+	"fake-person": validateFakePerson,
 }
 
 func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	// Flat options: `type` (required choice), `text` (optional, required for some types).
 	optMap := generateOpts{}
 	for _, opt := range i.ApplicationCommandData().Options {
 		optMap[opt.Name] = opt
@@ -49,11 +47,10 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 
 	if validate, ok := generateValidators[cmdType]; ok {
 		if !validate(s, i, optMap) {
-			return nil // validator already surfaced a user-facing message
+			return nil // validator already messaged the user
 		}
 	}
 
-	// Defer the interaction response to avoid timeout
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -64,8 +61,7 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 
 	var err error
 	var embed *discordgo.MessageEmbed
-	// Set by cases that need to attach a file alongside the embed; the
-	// embed references the file via attachment:// — no third-party host.
+	// attachment: cases that attach a file; embed references it via attachment://.
 	var (
 		attachment     []byte
 		attachmentName string
@@ -76,6 +72,11 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		var imgBytes []byte
 		imgBytes, err = getLandsatImage(cfg, optMap[inputName].StringValue())
 		if err == nil {
+			// Footer credit. Failure here is non-fatal — the embed renders
+			// with an empty footer rather than blocking the whole response.
+			footerCtx, footerCancel := context.WithTimeout(context.Background(), 2*time.Second)
+			footerURL, _ := cfg.DB.GetApiURL(footerCtx, "landsat")
+			footerCancel()
 			attachment = imgBytes
 			attachmentName = "landsat.png"
 			embed = &discordgo.MessageEmbed{
@@ -83,13 +84,13 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 				Color: helper.RandomDiscordColor(),
 				Image: &discordgo.MessageEmbedImage{URL: "attachment://" + attachmentName},
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: cfg.ApiURLs.LandsatAPI,
+					Text: footerURL,
 				},
 			}
 		}
 
 	case "cistercian":
-		// Validation above already confirmed parse + range
+		// Validator already confirmed parse + range.
 		n, _ := strconv.Atoi(strings.TrimSpace(optMap[inputName].StringValue()))
 
 		negative := n < 0
@@ -150,7 +151,13 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 func callFakePersonAPI(cfg *config.Configs) (fakePerson, error) {
 	var personObj fakePerson
 
-	resp, err := http.Get(cfg.ApiURLs.FakePersonAPI)
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	url, err := cfg.DB.GetApiURL(urlCtx, "fakePerson")
+	urlCancel()
+	if err != nil {
+		return personObj, fmt.Errorf("get fakePerson url: %w", err)
+	}
+	resp, err := http.Get(url)
 	if err != nil {
 		return personObj, err
 	}
@@ -372,34 +379,48 @@ func validateLandsat(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 	return true
 }
 
-// landsatSem caps concurrent headless-Chrome instances. Each Chrome
-// allocates ~200MB and lives ~5s
+// landsatSem caps concurrent Chrome instances (~200MB each).
 var landsatSem = make(chan struct{}, 2)
 
-// landsatLimiter: per-user cooldown. Longer than the image limiter
-// because each call costs ~10s of wall time and Chrome RAM
+// landsatLimiter: longer than imgCmdLimiter — each call is ~10s wall + Chrome RAM.
 var landsatLimiter = helper.NewRateLimiter(30 * time.Second)
+
+// fakePersonLimiter: thispersondoesnotexist runs a fresh GAN per request.
+var fakePersonLimiter = helper.NewRateLimiter(10 * time.Second)
+
+func validateFakePerson(s *discordgo.Session, i *discordgo.InteractionCreate, _ generateOpts) bool {
+	if ok, retry := fakePersonLimiter.Allow(i.Member.User.ID); !ok {
+		msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
+		_ = helper.ReturnUserError(s, i, msg, nil)
+		return false
+	}
+	return true
+}
 
 func getLandsatImage(cfg *config.Configs, text string) ([]byte, error) {
 	landsatSem <- struct{}{}
 	defer func() { <-landsatSem }()
 
-	landsatUrl := cfg.ApiURLs.LandsatAPI
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	landsatUrl, err := cfg.DB.GetApiURL(urlCtx, "landsat")
+	urlCancel()
+	if err != nil {
+		return nil, fmt.Errorf("get landsat url: %w", err)
+	}
 
 	ctx, cancel := chromedp.NewContext(context.Background())
 	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var buf []byte
-	err := chromedp.Run(
+	err = chromedp.Run(
 		ctx,
 		chromedp.Navigate(landsatUrl),
 		chromedp.WaitVisible(`#nameInput`),
 		chromedp.SendKeys(`#nameInput`, text, chromedp.NodeVisible),
 		chromedp.WaitVisible(`#enterButton`),
 		chromedp.Click(`#enterButton`),
-		// Fixed sleep: no DOM signal observed so far reliably indicates
-		// the JPG tiles have actually painted.
+		// Fixed sleep — no DOM signal reliably indicates the JPG tiles have painted.
 		chromedp.Sleep(5*time.Second),
 		chromedp.Screenshot(`#nameBoxes`, &buf, chromedp.NodeVisible),
 	)

@@ -13,8 +13,7 @@ func StringInSlice(s string, slice []string) bool {
 	return false
 }
 
-// CheckIfStructValueISEmpty checks if the value is empty and returns it as
-// string if not. Otherwise returns "N/A".
+// CheckIfStructValueISEmpty returns value as a string, or "N/A" if empty.
 func CheckIfStructValueISEmpty(value interface{}) string {
 	if value == nil {
 		return "N/A"

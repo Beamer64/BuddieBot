@@ -4,7 +4,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// releaseNotesEmbed is the embed for the release notes
 var releaseNotesEmbed = &discordgo.MessageEmbed{
 	Title: "Release Notes!",
 	URL:   "https://github.com/Beamer64/BuddieBot/blob/master/res/release.md",
@@ -15,10 +14,7 @@ var releaseNotesEmbed = &discordgo.MessageEmbed{
 		Name:    "",
 		IconURL: "",
 	},
-	// Fields is intended to hold the per-release highlights. Edit this
-	// slice fresh for each release before running $release — the
-	// dynamic command-mention IDs (`</foo:NNN>`) only render correctly
-	// for the currently-registered command IDs, so don't carry stale
-	// entries across releases.
+	// Edit Fields fresh per release — `</foo:NNN>` command mentions only
+	// resolve against currently-registered command IDs.
 	Fields: []*discordgo.MessageEmbedField{},
 }

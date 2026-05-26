@@ -11,11 +11,8 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// On Windows we use a Job Object with KILL_ON_JOB_CLOSE to ensure the
-// Java child dies with our process. The Job Object handle is held for
-// the lifetime of the bot — when the bot exits any way (graceful, panic,
-// TerminateProcess), the kernel releases our handles and the Job's
-// kill-on-close trigger fires on the way out.
+// A Job Object with KILL_ON_JOB_CLOSE ensures the child dies with us on
+// any exit path — handle release at process exit fires the kill trigger.
 
 var (
 	jobOnce   sync.Once

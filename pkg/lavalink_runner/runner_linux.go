@@ -7,8 +7,7 @@ import (
 	"syscall"
 )
 
-// prepareCmd asks the kernel to send SIGKILL to the child if our process
-// dies. Works for any death path — graceful, panic, or SIGKILL.
+// prepareCmd: Pdeathsig=SIGKILL ensures the child dies with us on any death path.
 func prepareCmd(cmd *exec.Cmd) error {
 	if cmd.SysProcAttr == nil {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}

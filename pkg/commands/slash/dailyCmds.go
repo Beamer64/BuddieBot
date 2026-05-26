@@ -1,6 +1,7 @@
 package slash
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,11 +19,30 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
+// horoCompLimiter: per-user cooldown on the horoscope dropdown. Each
+// selection scrapes horoscope.com; without it, button-mashing risks
+// getting the bot's IP rate-limited or banned.
+var horoCompLimiter = helper.NewRateLimiter(10 * time.Second)
+
+// dailyLimiters: per-user cooldowns for /daily subcommands hitting external
+// APIs. Subcommands absent from the map run unlimited (local data).
+var dailyLimiters = map[string]*helper.RateLimiter{
+	"advice":      helper.NewRateLimiter(3 * time.Second),
+	"affirmation": helper.NewRateLimiter(3 * time.Second),
+}
+
 func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	cmdType := i.ApplicationCommandData().Options[0].StringValue()
 	errRespMsg := "Unable to make call at this moment, please try later :("
 
-	// Defer the interaction response to avoid timeout
+	// Rate-limit BEFORE deferring — ReturnUserError uses the initial response slot.
+	if limiter := dailyLimiters[cmdType]; limiter != nil {
+		if ok, retry := limiter.Allow(i.Member.User.ID); !ok {
+			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
+			return helper.ReturnUserError(s, i, msg, nil)
+		}
+	}
+
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -65,7 +85,6 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendDailyResponse %s: %w", cmdType, err))
 	}
 
-	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
@@ -107,9 +126,14 @@ func getHoroscopeWebHookEdit() *discordgo.WebhookEdit {
 }
 
 func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *config.Configs) error {
+	// Rate-limit BEFORE deferring — ReturnUserError uses the initial response slot.
+	if ok, retry := horoCompLimiter.Allow(i.Member.User.ID); !ok {
+		msg := fmt.Sprintf("Slow down — the stars need a moment. Try again in `%.0fs`.", retry.Seconds())
+		return helper.ReturnUserError(s, i, msg, nil)
+	}
+
 	sign := i.MessageComponentData().Values[0]
 
-	// Defer the response to prevent interaction timeout
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredMessageUpdate,
@@ -123,7 +147,6 @@ func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 		return helper.ReturnUserErrorDeferred(s, i, "Unable to fetch Horoscope atm, try again later.", fmt.Errorf("get horoscope embed for %s: %w", sign, err))
 	}
 
-	// Replace the interaction message with new content
 	_, err = s.ChannelMessageEditComplex(
 		&discordgo.MessageEdit{
 			Channel: i.ChannelID,
@@ -156,7 +179,13 @@ func getDailyTongueTwister(_ *config.Configs) (*discordgo.MessageEmbed, error) {
 }
 
 func getDailyAdviceEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	resp, err := http.Get(cfg.ApiURLs.AdviceAPI)
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	url, err := cfg.DB.GetApiURL(urlCtx, "advice")
+	urlCancel()
+	if err != nil {
+		return nil, fmt.Errorf("get advice url: %w", err)
+	}
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch advice: %w", err)
 	}
@@ -210,12 +239,17 @@ func getDailyAffirmationEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, err
 	}, nil
 }
 
-// fetchAffirmationFromAPI tries the configured affirmation API with a
-// short timeout. Returns the affirmation text or an error describing
-// the specific failure (network, non-200, decode, empty body).
+// fetchAffirmationFromAPI returns an error per failure mode (network,
+// non-200, decode, empty body) so the caller can log specifics.
 func fetchAffirmationFromAPI(cfg *config.Configs) (string, error) {
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	url, err := cfg.DB.GetApiURL(urlCtx, "affirmation")
+	urlCancel()
+	if err != nil {
+		return "", fmt.Errorf("get affirmation url: %w", err)
+	}
 	client := &http.Client{Timeout: 4 * time.Second}
-	resp, err := client.Get(cfg.ApiURLs.AffirmationAPI)
+	resp, err := client.Get(url)
 	if err != nil {
 		return "", fmt.Errorf("get: %w", err)
 	}

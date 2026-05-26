@@ -61,9 +61,7 @@ func sendTuuckResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *
 	return nil
 }
 
-// sendTuuckCommands lists every registered top-level slash command from
-// the in-memory Commands slice — no more reflection over a yaml-loaded
-// struct that drifts every time a command is renamed.
+// sendTuuckCommands lists every spec in the in-memory Commands slice.
 func sendTuuckCommands(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	var content strings.Builder
 	content.WriteString("A list of current slash commands:\n```\n")
@@ -83,8 +81,7 @@ func sendTuuckCommands(s *discordgo.Session, i *discordgo.InteractionCreate) err
 	return nil
 }
 
-// findCommandSpec returns the ApplicationCommand whose Name matches
-// (case-insensitively), or nil if none.
+// findCommandSpec matches Name case-insensitively. Returns nil if none.
 func findCommandSpec(name string) *discordgo.ApplicationCommand {
 	for _, spec := range Commands {
 		if strings.EqualFold(spec.Name, name) {
@@ -94,9 +91,8 @@ func findCommandSpec(name string) *discordgo.ApplicationCommand {
 	return nil
 }
 
-// buildTuuckUsage renders the spec's subcommands or top-level options
-// as a bulleted multi-line string. Returns "" if the command has no
-// options worth showing.
+// buildTuuckUsage renders subcommands / top-level options as bullets.
+// Returns "" when there's nothing worth showing.
 func buildTuuckUsage(spec *discordgo.ApplicationCommand) string {
 	if len(spec.Options) == 0 {
 		return ""

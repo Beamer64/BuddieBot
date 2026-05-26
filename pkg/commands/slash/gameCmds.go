@@ -16,7 +16,6 @@ func sendGameResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	commandName := i.ApplicationCommandData().Options[0].Name
 	errRespMsg := "Unable to fetch game atm, try again later."
 
-	// Defer the interaction response to avoid timeout
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -65,7 +64,6 @@ func sendGameResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendGameResponse %s: %w", commandName, err))
 	}
 
-	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
@@ -122,8 +120,7 @@ func getWYRvotesWebhook(cfg *config.Configs, customID string) (*discordgo.Webhoo
 	return webhookEdit, nil
 }
 
-// wyrVotePercents returns the rounded percentage split for a WYR poll's two
-// option vote counts. Extracted for unit testing.
+// wyrVotePercents — extracted for unit testing.
 func wyrVotePercents(votesA, votesB int) (percentA, percentB float64) {
 	sum := votesA + votesB
 	if sum == 0 {
@@ -193,14 +190,9 @@ func getWYRwebhook(cfg *config.Configs) (*discordgo.WebhookEdit, error) {
 	return webhookEdit, nil
 }
 
-// sendWYRvotesResp handles the WYR vote-button presses. Unlike most
-// slash handlers it does NOT defer up-front — it does the channel-
-// message edit first, then acknowledges the interaction with a
-// DeferredMessageUpdate at the end. That ordering means the initial
-// response slot is still available during the early error paths, so the
-// `_ = helper.SendEphemeralError(...)` calls below are correctly
-// targeting the pre-defer slot. (After the InteractionRespond below,
-// they'd 404 — but those error paths are pre-respond.)
+// sendWYRvotesResp handles vote-button presses. Edit-first, ack-last:
+// the early error paths still have the initial-response slot for
+// SendEphemeralError; after the InteractionRespond below it'd 404.
 func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	const errRespMsg = "Unable to fetch WYR atm, try again later."
 	customID := i.MessageComponentData().CustomID
@@ -213,9 +205,9 @@ func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 
 	if _, err = s.ChannelMessageEditComplex(
 		&discordgo.MessageEdit{
-			ID:         i.Message.ID, // message ID of the original message with the buttons
-			Channel:    i.ChannelID,  // channel where the message is
-			Content:    new(string),  // new text or nil if only editing embeds
+			ID:         i.Message.ID,
+			Channel:    i.ChannelID,
+			Content:    new(string),
 			Components: webhookEdit.Components,
 		},
 	); err != nil {
@@ -223,7 +215,6 @@ func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		return fmt.Errorf("edit WYR votes message %s: %w", i.Message.ID, err)
 	}
 
-	// respond with an update to acknowledge interaction
 	if err = s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredMessageUpdate,
@@ -236,7 +227,6 @@ func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 }
 
 func sendWYRrerollResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	// Defer the interaction response to avoid timeout
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,

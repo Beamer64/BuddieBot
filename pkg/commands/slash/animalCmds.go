@@ -1,22 +1,38 @@
 package slash
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 )
 
+// animalLimiters: per-user cooldowns for /animals subcommands. doggo's
+// retry loop amplifies per-call cost; katz uses an api-ninjas key with quota.
+var animalLimiters = map[string]*helper.RateLimiter{
+	"doggo": helper.NewRateLimiter(5 * time.Second),
+	"katz":  helper.NewRateLimiter(5 * time.Second),
+}
+
 func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	commandName := i.ApplicationCommandData().Options[0].Name
 	errRespMsg := "Unable to make call at this moment, please try later :("
 
-	// Defer the interaction to prevent timeout
+	// Rate-limit BEFORE deferring — ReturnUserError uses the initial response slot.
+	if limiter := animalLimiters[commandName]; limiter != nil {
+		if ok, retry := limiter.Allow(i.Member.User.ID); !ok {
+			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
+			return helper.ReturnUserError(s, i, msg, nil)
+		}
+	}
+
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -28,7 +44,6 @@ func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 	var webhookEdit *discordgo.WebhookEdit
 	var err error
 
-	// Map command names to embed functions
 	embeds := map[string]func(*config.Configs) (*discordgo.MessageEmbed, error){
 		"doggo": getDoggoEmbed,
 		"katz":  getKatzEmbed,
@@ -49,7 +64,6 @@ func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendAnimalsResponse %s: %w", commandName, err))
 	}
 
-	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
@@ -109,7 +123,13 @@ func retryDoggoFetch(cfg *config.Configs) (doggo, error) {
 }
 
 func callDoggoAPI(cfg *config.Configs, id int) (doggo, error) {
-	url := cfg.ApiURLs.DoggoAPI + strconv.Itoa(id)
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	base, err := cfg.DB.GetApiURL(urlCtx, "doggo")
+	urlCancel()
+	if err != nil {
+		return doggo{}, fmt.Errorf("get doggo url: %w", err)
+	}
+	url := base + strconv.Itoa(id)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -191,7 +211,13 @@ func callKatzAPI(cfg *config.Configs) ([]katz, error) {
 	// Choose a random letter to search with
 	randomChar := string("abcdefghijklmnopqrstuvwxyz"[rand.Intn(26)])
 
-	url := cfg.ApiURLs.NinjaKatzAPI + randomChar
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	base, err := cfg.DB.GetApiURL(urlCtx, "ninjaKatz")
+	urlCancel()
+	if err != nil {
+		return nil, fmt.Errorf("get ninjaKatz url: %w", err)
+	}
+	url := base + randomChar
 
 	req, err := createNinjaAPIrequest(cfg, url)
 	if err != nil {

@@ -10,14 +10,12 @@ import (
 )
 
 func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *config.Configs) error {
-	// Flat options: `type` (required choice), `user` (optional), `text` (optional).
 	optMap := map[string]*discordgo.ApplicationCommandInteractionDataOption{}
 	for _, opt := range i.ApplicationCommandData().Options {
 		optMap[opt.Name] = opt
 	}
 	cmdType := optMap["type"].StringValue()
 
-	// Defer the interaction response to avoid timeout
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -61,7 +59,6 @@ func sendTxtResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *co
 		Content: &content,
 	}
 
-	// Edit the interaction response with the generated data
 	if _, err := s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {

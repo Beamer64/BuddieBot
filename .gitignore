@@ -149,3 +149,8 @@ version.txt
 
 # Lavalink dev runtime (jar, plugins, logs) — bot spawns this in debug mode
 /lavalink/
+
+# SQLite database files (dev DB lives at ./buddiebot.db; WAL sidecars likewise)
+*.db
+*.db-wal
+*.db-shm

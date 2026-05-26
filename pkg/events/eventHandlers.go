@@ -13,9 +13,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// recoverPanic should be deferred at the top of each event handler so a
-// single bad event can't crash the whole bot. Logs the panic + stack to the
-// error channel and console.
+// recoverPanic — defer at the top of each event handler so one bad event
+// can't crash the bot. Logs panic + stack to the error channel.
 func recoverPanic(s *discordgo.Session, cfg *config.Configs, guildID string) {
 	if r := recover(); r != nil {
 		err := fmt.Errorf("panic in event handler: %v\n%s", r, debug.Stack())
@@ -66,9 +65,6 @@ func NewReadyHandler(cfg *config.Configs) *ReadyHandler {
 	return &ReadyHandler{cfg: cfg}
 }
 
-// Events
-
-// CommandHandler new commands
 func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	defer recoverPanic(s, c.cfg, i.GuildID)
 	switch i.Type {
@@ -78,21 +74,15 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 		}
 	case discordgo.InteractionMessageComponent:
 		customID := i.MessageComponentData().CustomID
-
 		for key, h := range slash.ComponentHandlers {
-			if strings.HasPrefix(customID, key) { // or strings.Contains(customID, key)
+			if strings.HasPrefix(customID, key) {
 				h(s, i, c.cfg)
 				return
 			}
 		}
-
-		/*if h, ok := slash.ComponentHandlers[i.MessageComponentData().CustomID]; ok {
-			h(s, i, c.cfg)
-		}*/
 	}
 }
 
-// ReadyHandler session is created
 func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 	defer recoverPanic(s, h.cfg, "")
 	err := s.UpdateGameStatus(0, "try /tuuck")
@@ -101,12 +91,10 @@ func (h *ReadyHandler) ReadyHandler(s *discordgo.Session, e *discordgo.Ready) {
 		return
 	}
 
-	// FYI can get all connected Guild list here
 	log.Println(fmt.Sprintf("Invited to %d Servers!", len(e.Guilds)))
 	log.Printf("Logged in as %s\n", e.User.String())
 }
 
-// ReactHandlerAdd when reactions are added to messages
 func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.MessageReactionAdd) {
 	defer recoverPanic(s, r.cfg, mr.GuildID)
 	if mr.UserID == r.botID {
@@ -125,10 +113,9 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 		return
 	}
 
-	// find the poll msg
 	if msg.Content == helper.PollMessageContent {
 		for _, v := range msg.Reactions {
-			// remove extra reactions
+			// Drop reactions that don't match an existing poll option.
 			if v.Emoji.Name == mr.Emoji.Name && v.Count < 2 {
 				err = s.MessageReactionRemove(channel.ID, msg.ID, mr.MessageReaction.Emoji.Name, mr.UserID)
 				if err != nil {
@@ -143,7 +130,6 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 	}
 }
 
-// MessageCreateHandler handles all messages sent to the discord server
 func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	defer recoverPanic(s, d.cfg, m.GuildID)
 	if m.Author.ID == d.botID {
@@ -153,7 +139,6 @@ func (d *MessageCreateHandler) MessageCreateHandler(s *discordgo.Session, m *dis
 	prefix.ParsePrefixCmds(s, m, d.cfg)
 }
 
-// GuildJoinHandler when someone joins our server
 func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	defer recoverPanic(s, g.cfg, m.GuildID)
 	guild, err := s.Guild(m.GuildID)
@@ -165,7 +150,6 @@ func (g *GuildHandler) GuildJoinHandler(s *discordgo.Session, m *discordgo.Guild
 	log.Printf("Hey! Look at this goofy goober! %s joined our %s server!\n", m.Member.User.String(), guild.Name)
 }
 
-// GuildLeaveHandler when someone leaves our server
 func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
 	defer recoverPanic(s, g.cfg, m.GuildID)
 	guild, err := s.Guild(m.GuildID)
@@ -177,7 +161,6 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.Guil
 	log.Printf("%s left the server %s\n Seacrest OUT..", m.Member.User.String(), guild.Name)
 }
 
-// GuildCreateHandler bot joins new guild
 func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
 	defer recoverPanic(s, g.cfg, e.ID)
 	if helper.IsLaunchedByDebugger() {
@@ -222,7 +205,6 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 	}
 }
 
-// GuildDeleteHandler when bot leaves a server
 func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.GuildDelete) {
 	defer recoverPanic(s, g.cfg, e.ID)
 	if helper.IsLaunchedByDebugger() {

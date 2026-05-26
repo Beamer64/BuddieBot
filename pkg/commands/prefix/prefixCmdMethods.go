@@ -10,10 +10,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// functions here should mostly be used for the prefix commands ($)
-
-// region dev commands
-
 func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	embed := releaseNotesEmbed
 
@@ -44,10 +40,6 @@ func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	return nil
 }
 
-// endregion dev commands
-
-// region misc
-
 func sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	_, err := s.ChannelMessageSend(
 		m.ChannelID,
@@ -59,11 +51,10 @@ func sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {
 }
 
 func checkPalindrome(s *discordgo.Session, m *discordgo.MessageCreate, str string) error {
-	// Convert to runes so multi-byte characters (emoji, accented letters, etc.) are handled correctly
+	// Runes, not bytes — multi-byte characters (emoji, accents) must compare whole.
 	runes := []rune(str)
 	isPalindrome := true
 
-	// Compare from both ends moving inward — only need to check half the string
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
 		if runes[i] != runes[j] {
 			isPalindrome = false
@@ -128,8 +119,7 @@ func romanNums(s *discordgo.Session, m *discordgo.MessageCreate, str string) err
 			'M': 1000,
 		}
 
-		// convert the subtraction instances into their full value.
-		// 900, 400, 90, 40, 9, 4
+		// Expand subtraction pairs (CM/CD/XC/XL/IX/IV) so a sum works.
 		replacer := strings.NewReplacer("CM", "CCCCCCCCC", "CD", "CCCC", "XC", "XXXXXXXXX", "XL", "XXXX", "IX", "IIIIIIIII", "IV", "IIII")
 		str = replacer.Replace(str)
 
@@ -150,5 +140,3 @@ func romanNums(s *discordgo.Session, m *discordgo.MessageCreate, str string) err
 
 	return nil
 }
-
-// endregion misc

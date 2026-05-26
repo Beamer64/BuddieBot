@@ -14,8 +14,14 @@ import (
 )
 
 func sendAudioResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	if !helper.IsAudioGuild(i.GuildID, cfg.DiscordIDs.MasterGuildID, cfg.DiscordIDs.TestGuildID) {
-		return helper.ReturnUserError(s, i, "Audio commands aren't enabled in this server.", nil)
+	gateCtx, gateCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	enabled, err := cfg.DB.GuildAudioEnabled(gateCtx, i.GuildID)
+	gateCancel()
+	if err != nil {
+		return helper.ReturnUserError(s, i, "Audio check failed, try again.", fmt.Errorf("guild audio enabled lookup: %w", err))
+	}
+	if !enabled {
+		return helper.ReturnUserError(s, i, "Audio commands aren't enabled in this server. Ask a bot admin for access.", nil)
 	}
 	if cfg.Player == nil {
 		return helper.ReturnUserError(s, i, "Audio is not available right now.", nil)
@@ -23,9 +29,7 @@ func sendAudioResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 	sub := i.ApplicationCommandData().Options[0]
 
-	// Defer up-front — /audio play and /audio resume-queue do the
-	// voice-connect retry loop which can run well past Discord's
-	// 3-second initial-response deadline.
+	// Defer up-front — play / resume-queue can run past the 3s initial-response deadline.
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -52,11 +56,8 @@ func sendAudioResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	}
 }
 
-// audioPlay parses the up-to-three url options in declared order and
-// dispatches to the single- or batch-URL path. url-1 is required by
-// the spec; url-2 and url-3 are optional. Empty/whitespace values are
-// ignored so a user clearing a previously-typed option doesn't trip
-// the validation.
+// audioPlay dispatches to single- or batch-URL play. Empty/whitespace url
+// values are skipped so clearing an option doesn't trip validation.
 func audioPlay(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, opts []*discordgo.ApplicationCommandInteractionDataOption) error {
 	provided := map[string]string{}
 	for _, opt := range opts {
@@ -78,28 +79,18 @@ func audioPlay(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config
 	return audioPlayBatch(s, i, cfg, urls)
 }
 
-// audioPlayOne handles the single-URL case. The URL may resolve to a
-// single track or a playlist — voice_chat.FormatPlayResult handles
-// both. Keeps the per-error friendly translation rather than the
-// generic "Couldn't resolve 1 URL." the batch summary would produce.
+// audioPlayOne handles the single-URL case (single track or playlist).
+// Per-error friendly translation, unlike the batch summary.
 func audioPlayOne(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, url string) error {
-	// Playlists can have hundreds of tracks; Lavalink loads them in a
-	// single REST call but parses each before returning. A 2-minute
-	// budget covers cold voice-connect retry + a large playlist load.
+	// 2 min covers cold voice-connect retry + a large playlist load.
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	result, err := cfg.Player.Play(ctx, i.GuildID, i.ChannelID, i.Member.User.ID, url)
 	if err != nil {
-		// Two cases by intent:
-		//   - User-facing errors (bad URL, not in voice, etc.) → just
-		//     edit the deferred response with a friendly message and
-		//     return nil so wrap() doesn't push them into the error
-		//     channel as a "bot bug" notification.
-		//   - Everything else → ReturnUserErrorDeferred surfaces the
-		//     friendly text to the user AND returns the wrapped err, so
-		//     wrap() logs the stack to the error channel. Both routes
-		//     run once each; no double-message to the user.
+		// User-facing errors: edit-and-return-nil so wrap() doesn't log as a bug.
+		// Other errors: ReturnUserErrorDeferred surfaces the message AND returns
+		// the wrapped err for the error channel.
 		if voice_chat.IsUserFacingError(err) {
 			return audioEditMessage(s, i, voice_chat.FriendlyPlayError(err))
 		}
@@ -108,19 +99,12 @@ func audioPlayOne(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *con
 	return audioEditMessage(s, i, voice_chat.FormatPlayResult(result, "/audio resume-queue"))
 }
 
-// audioPlayBatch loops Play across multiple URLs sequentially. The
-// first call may set up voice if nothing's playing; subsequent calls
-// hit the "already in session" branch and queue. Bails out on errors
-// that would affect every remaining URL (no voice channel, voice
-// timeout, queue full); skips past per-URL errors (unresolvable links,
-// broken tracks) and reports the count in the summary. Playlist URLs
-// inside a batch are accumulated separately and summarized per playlist
-// rather than enumerated track-by-track (the playlist could have hundreds
-// of tracks the user never typed individual titles for).
+// audioPlayBatch calls Play across multiple URLs sequentially. Fatal
+// errors (no voice, voice timeout, queue full) abort the batch; per-URL
+// errors (bad link, broken track) are counted and reported in the summary.
+// Playlists inside a batch are summarized as one line, not enumerated.
 func audioPlayBatch(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, urls []string) error {
-	// Two minutes covers the worst case: a cold voice-connect retry
-	// on the first URL plus per-URL Lavalink playlist-resolves for the
-	// rest. Discord's edit window is 15 min so there's no UI deadline.
+	// 2 min covers the worst case: cold voice-connect retry + N playlist resolves.
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -130,10 +114,10 @@ func audioPlayBatch(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *c
 	}
 	type playlistEntry struct {
 		name     string
-		added    int  // tracks added to the queue (excludes the started one, if any)
-		total    int  // total tracks the playlist had
-		firstPos int  // queue position of the first added track (only valid when !started)
-		started  bool // true if the first track is now playing
+		added    int
+		total    int
+		firstPos int // queue position of the first added track; valid only when !started
+		started  bool
 	}
 
 	var (
@@ -141,7 +125,7 @@ func audioPlayBatch(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *c
 		queued       []queuedItem
 		playlists    []playlistEntry
 		failures     int
-		fatalMsg     string // set if a bail-out error stopped the batch
+		fatalMsg     string
 		whileStopped bool
 	)
 
@@ -176,18 +160,15 @@ func audioPlayBatch(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *c
 			continue
 		}
 
-		// Errors that would also fail every remaining URL — stop here
-		// and surface a single message rather than spamming.
+		// Fatal errors fail every remaining URL — surface one message.
 		if errors.Is(err, voice_chat.ErrNotInVoice) ||
 			errors.Is(err, voice_chat.ErrVoiceTimeout) ||
 			errors.Is(err, voice_chat.ErrQueueFull) {
 			fatalMsg = voice_chat.FriendlyPlayError(err)
 			break
 		}
-
-		// Per-URL failure (ErrNoTrackFound, ErrTrackFailed) — skip it,
-		// keep processing the rest. ErrTrackFailed already announced
-		// detail to the channel via Player.OnTrackException.
+		// Per-URL failure — skip and keep going. ErrTrackFailed details
+		// were already announced via OnTrackException.
 		failures++
 	}
 
@@ -220,7 +201,7 @@ func audioPlayBatch(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *c
 		msg.WriteString("Added to queue:\n")
 		for idx, item := range queued {
 			line := fmt.Sprintf("  %d. %s\n", item.position, item.title)
-			// Discord caps messages at 2000 chars; leave room for the overflow line.
+			// Discord 2000-char cap; leave room for the overflow line.
 			if msg.Len()+len(line) > 1900 {
 				fmt.Fprintf(&msg, "  …and %d more\n", len(queued)-idx)
 				break
@@ -268,8 +249,7 @@ func audioStop(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config
 }
 
 func audioResumeQueue(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	// Same window as audioPlay — rejoining voice involves the full
-	// voice-connect retry loop.
+	// Rejoin runs the full voice-connect retry loop.
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -313,8 +293,7 @@ func audioQueue(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *confi
 		msg.WriteString("Up next:\n")
 		for idx, t := range snap.Upcoming {
 			line := fmt.Sprintf("  %d. %s\n", idx+1, t.Info.Title)
-			// Discord caps messages at 2000 chars; leave room for a
-			// "…and N more" line.
+			// Discord 2000-char cap; leave room for the "…and N more" line.
 			if msg.Len()+len(line) > 1900 {
 				fmt.Fprintf(&msg, "  …and %d more\n", len(snap.Upcoming)-idx)
 				break
@@ -364,10 +343,6 @@ func audioClear(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *confi
 	return audioEditMessage(s, i, msg)
 }
 
-// audioEditMessage edits the previously-deferred interaction response
-// with the given content. Centralized so each subcommand handler can
-// just build its message and return — keeps the WebhookEdit boilerplate
-// and the error-wrap text consistent across all subcommands.
 func audioEditMessage(s *discordgo.Session, i *discordgo.InteractionCreate, content string) error {
 	if _, err := s.InteractionResponseEdit(
 		i.Interaction, &discordgo.WebhookEdit{
@@ -387,7 +362,7 @@ func audioSpec() *discordgo.ApplicationCommand {
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,
 				Name:        "play",
-				Description: "Play a YouTube URL (or queue it if something is already playing)",
+				Description: "Play an audio URL (or queue it if something is already playing)",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
 						Type:        discordgo.ApplicationCommandOptionString,

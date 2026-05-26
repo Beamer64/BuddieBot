@@ -1,9 +1,11 @@
 package slash
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
@@ -16,8 +18,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// xkcdLimiter: the only /get subcommand hitting an external service.
+var xkcdLimiter = helper.NewRateLimiter(5 * time.Second)
+
 func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	// Flat options: `type` (required choice), `user` (optional), `text` (optional).
 	optMap := map[string]*discordgo.ApplicationCommandInteractionDataOption{}
 	for _, opt := range i.ApplicationCommandData().Options {
 		optMap[opt.Name] = opt
@@ -25,7 +29,13 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	cmdType := optMap["type"].StringValue()
 	errRespMsg := "Unable to make call at this moment, please try later :("
 
-	// Defer the interaction response to avoid timeout
+	if cmdType == "xkcd" {
+		if ok, retry := xkcdLimiter.Allow(i.Member.User.ID); !ok {
+			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
+			return helper.ReturnUserError(s, i, msg, nil)
+		}
+	}
+
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -107,7 +117,6 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		Embeds:  &[]*discordgo.MessageEmbed{embed},
 	}
 
-	// Edit the interaction response with the generated data
 	if _, err = s.InteractionResponseEdit(
 		i.Interaction, webhookEdit,
 	); err != nil {
@@ -118,7 +127,13 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 }
 
 func getXkcdEmbed(cfg *config.Configs) (*discordgo.MessageEmbed, error) {
-	resp, err := http.Get(cfg.ApiURLs.XkcdAPI)
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	url, err := cfg.DB.GetApiURL(urlCtx, "xkcd")
+	urlCancel()
+	if err != nil {
+		return nil, fmt.Errorf("get xkcd url: %w", err)
+	}
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}

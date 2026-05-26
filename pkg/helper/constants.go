@@ -1,16 +1,13 @@
 package helper
 
 const (
-	// PollMessageContent is the message body posted by /pick poll. The reaction
-	// handler matches on this string to manage poll reactions.
+	// PollMessageContent — the reaction handler matches messages by this body.
 	PollMessageContent = "Poll Time!"
 
-	// LmgtfyEmojiName is the Discord emoji name (without colons) that triggers
-	// the "Let Me Google That For You" reaction handler.
+	// LmgtfyEmojiName triggers the "Let Me Google That For You" reaction handler.
 	LmgtfyEmojiName = "grey_question"
 
-	// ErrorReaction used helper.LogAndReact to react to messages that caused an error when the bot tries to DM the user about the error.
-	// This is a fallback to at least notify the user that their command failed.
+	// ErrorReaction — fallback when LogAndReact can't DM the user.
 	ErrorReaction = "⚠️"
 
 	CistercianMin = -9999

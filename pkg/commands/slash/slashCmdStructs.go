@@ -76,7 +76,6 @@ type katz struct {
 	Name              string  `json:"name"`
 }
 
-// region FakePerson Structs
 type fakePerson struct {
 	Results []fakePersonResults `json:"results"`
 	Info    fakePersonInfo      `json:"info"`
@@ -153,5 +152,3 @@ type fakePersonInfo struct {
 	Page    int    `json:"page"`
 	Version string `json:"version"`
 }
-
-// endregion

@@ -1,13 +1,9 @@
-// Package lavalink_runner spawns a local Lavalink Java service as a child
-// process for development. Production deployments run Lavalink as a
-// separately-managed systemd unit (or similar) and skip this package
-// entirely.
+// Package lavalink_runner spawns Lavalink as a child process for dev.
+// Production uses a separately-managed systemd unit and skips this package.
 //
-// On graceful shutdown the runner kills the Java child via Stop(). For
-// hard kills (force-quit, panic, SIGKILL), per-platform OS hooks ensure
-// the Java child dies with the bot: Pdeathsig on Linux, Job Objects on
-// Windows. macOS has no equivalent built-in mechanism — graceful stop
-// works there but a hard-killed bot can leave Java orphaned.
+// Per-platform reapers (Pdeathsig on Linux, Job Objects on Windows) ensure
+// the child dies with the bot even on hard kill. macOS has no equivalent —
+// a hard-killed bot can orphan Java there.
 package lavalink_runner
 
 import (
@@ -21,16 +17,13 @@ import (
 	"time"
 )
 
-// Runner manages a child Java process running Lavalink.
 type Runner struct {
 	cmd *exec.Cmd
 }
 
-// Start spawns `java -Xmx512M -jar <jarPath>` from workDir, then polls
-// readyURL (sending password as the Authorization header — Lavalink v4
-// requires it) until it returns 200 OK or timeout elapses. On failure
-// the child is killed. Paths are normalized to absolute so the spawned
-// Java process sees them correctly regardless of caller cwd.
+// Start spawns `java -Xmx512M -jar <jarPath>` from workDir and polls
+// readyURL until 200 OK or timeout. Sends password as Authorization
+// (required by Lavalink v4). On failure the child is killed.
 func Start(jarPath, workDir, readyURL, password string, timeout time.Duration) (*Runner, error) {
 	absJar, err := filepath.Abs(jarPath)
 	if err != nil {

@@ -5,19 +5,20 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Beamer64/BuddieBot/pkg/database"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/Beamer64/BuddieBot/pkg/voice_chat"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
-// Configs is the top-level config bundle. The yaml-loaded settings are
-// embedded so callers can write `cfg.Keys.X` directly. Cmd holds the
-// loaded cmd.yaml message strings; Player is wired up at bot init.
+// Configs is the top-level bundle. *configuration is embedded so callers
+// can write `cfg.Keys.X` directly. Player and DB are wired up at bot init.
 type Configs struct {
 	*configuration
 	Cmd    *command
 	Player *voice_chat.Player
+	DB     *database.DB
 }
 
 type configuration struct {
@@ -27,17 +28,6 @@ type configuration struct {
 		NinjaAPIKey  string `yaml:"ninjaAPIKey"`
 		DoggoAPIkey  string `yaml:"doggoAPIkey"`
 	} `yaml:"keys"`
-
-	ApiURLs struct {
-		SteamAPI       string `yaml:"steamAPI"`
-		AffirmationAPI string `yaml:"affirmationAPI"`
-		AdviceAPI      string `yaml:"adviceAPI"`
-		DoggoAPI       string `yaml:"doggoAPI"`
-		NinjaKatzAPI   string `yaml:"ninjaKatzAPI"`
-		FakePersonAPI  string `yaml:"fakePersonAPI"`
-		XkcdAPI        string `yaml:"xkcdAPI"`
-		LandsatAPI     string `yaml:"landsatAPI"`
-	} `yaml:"apiURLs"`
 
 	DiscordIDs struct {
 		MasterGuildID       string `yaml:"masterGuildID"`
@@ -59,12 +49,20 @@ type configuration struct {
 		TestPort     string `yaml:"testPort"`
 		TestPassword string `yaml:"testPassword"`
 
-		// Resolved at load time based on isLaunchedByDebugger(). The rest of
-		// the code reads these — never the Prod/Test fields directly.
+		// Resolved at load based on IsLaunchedByDebugger; the rest of the
+		// code reads these, never the Prod/Test fields directly.
 		Host     string `yaml:"-"`
 		Port     string `yaml:"-"`
 		Password string `yaml:"-"`
 	} `yaml:"lavalink"`
+
+	Database struct {
+		ProdPath string `yaml:"prodPath"`
+		DevPath  string `yaml:"devPath"`
+
+		// Resolved at load based on IsLaunchedByDebugger.
+		Path string `yaml:"-"`
+	} `yaml:"database"`
 }
 
 type command struct {
@@ -85,27 +83,22 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 			return nil, errors.New(cp + " is not a valid path, needs to end with '/'")
 		}
 
-		// attempt to open dir
 		files, err := os.ReadDir(cp)
 		if err != nil {
 			log.Printf("Couldn't find file in dir %s\n", cp)
 			continue
 		}
 
-		// build a map of necessary Config files
 		requiredConfigFiles := map[string]bool{
 			"config.yaml": false,
 			"cmd.yaml":    false,
 		}
-
-		// loops through all files in dir, check if any of them are required
 		for _, f := range files {
 			if _, ok := requiredConfigFiles[f.Name()]; ok {
 				requiredConfigFiles[f.Name()] = true
 			}
 		}
 
-		// check if all values are set to true, meaning that all files were found
 		allConfigsFound := true
 		for _, v := range requiredConfigFiles {
 			if !v {
@@ -147,10 +140,15 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 		cfg.Lavalink.Host = cfg.Lavalink.TestHost
 		cfg.Lavalink.Port = cfg.Lavalink.TestPort
 		cfg.Lavalink.Password = cfg.Lavalink.TestPassword
+		cfg.Database.Path = cfg.Database.DevPath
 	} else {
 		cfg.Lavalink.Host = cfg.Lavalink.ProdHost
 		cfg.Lavalink.Port = cfg.Lavalink.ProdPort
 		cfg.Lavalink.Password = cfg.Lavalink.ProdPassword
+		cfg.Database.Path = cfg.Database.ProdPath
+	}
+	if cfg.Database.Path == "" {
+		return nil, errors.New("database path not configured (set database.prodPath / database.devPath)")
 	}
 
 	err = yaml.Unmarshal(commandFile, cmd)

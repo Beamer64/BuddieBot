@@ -7,8 +7,6 @@ import (
 	"net/url"
 )
 
-// functions here should be used for the events handled
-
 func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message) error {
 	strEnc := url.QueryEscape(m.Content)
 	lmgtfyURL := fmt.Sprintf("http://lmgtfy.com/?q=%s", strEnc)

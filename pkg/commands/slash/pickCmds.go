@@ -1,12 +1,14 @@
 package slash
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
@@ -14,7 +16,19 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// pickSteamLimiter: Steam Web API has documented per-key rate limits.
+var pickSteamLimiter = helper.NewRateLimiter(5 * time.Second)
+
 func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
+	option := strings.ToLower(i.ApplicationCommandData().Options[0].Name)
+
+	if option == "steam" {
+		if ok, retry := pickSteamLimiter.Allow(i.Member.User.ID); !ok {
+			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
+			return helper.ReturnUserError(s, i, msg, nil)
+		}
+	}
+
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -22,8 +36,6 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	); err != nil {
 		return fmt.Errorf("failed to defer interaction: %w", err)
 	}
-
-	option := strings.ToLower(i.ApplicationCommandData().Options[0].Name)
 
 	var data *discordgo.InteractionResponseData
 	var err error
@@ -98,7 +110,7 @@ func sendChoicesPickResponse(i *discordgo.InteractionCreate) *discordgo.Interact
 	return data
 }
 
-// Called from sendPickResponse, which already defers the interaction.
+// sendPollResponse expects the interaction to already be deferred (by sendPickResponse).
 func sendPollResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	question := i.ApplicationCommandData().Options[0].Options[0]
 	var fields []*discordgo.MessageEmbedField
@@ -141,7 +153,13 @@ func sendPollResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 }
 
 func getSteamGame(cfg *config.Configs) (string, error) {
-	res, err := http.Get(cfg.ApiURLs.SteamAPI)
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	url, err := cfg.DB.GetApiURL(urlCtx, "steam")
+	urlCancel()
+	if err != nil {
+		return "", fmt.Errorf("get steam url: %w", err)
+	}
+	res, err := http.Get(url)
 	if err != nil {
 		return "", err
 	}
@@ -164,7 +182,6 @@ func getSteamGame(cfg *config.Configs) (string, error) {
 	for steamObj.Applist.Apps[randomIndex].Name == "" {
 		randomIndex = rand.Intn(len(steamObj.Applist.Apps))
 	}
-	// gameURL := fmt.Sprintf("steam://openurl/https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Appid)
 	gameURL := fmt.Sprintf("https://store.steampowered.com/app/%v", steamObj.Applist.Apps[randomIndex].Appid)
 
 	return gameURL, nil

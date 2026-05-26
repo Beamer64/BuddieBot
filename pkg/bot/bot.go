@@ -16,6 +16,7 @@ import (
 	"github.com/Beamer64/BuddieBot/pkg/commands/prefix"
 	"github.com/Beamer64/BuddieBot/pkg/commands/slash"
 	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/database"
 	"github.com/Beamer64/BuddieBot/pkg/events"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/Beamer64/BuddieBot/pkg/lavalink_runner"
@@ -30,6 +31,7 @@ var (
 	botSession *discordgo.Session
 	linkClient disgolink.Client
 	devRunner  *lavalink_runner.Runner
+	db         *database.DB
 )
 
 func Init(cfg *config.Configs) error {
@@ -43,15 +45,43 @@ func Init(cfg *config.Configs) error {
 		botENV = "BuddieBot is ready for commands!"
 	}
 
+	// Open DB before any process spawn — a bad path should fail fast.
+	log.Printf("opening database at %s", cfg.Database.Path)
+	dbConn, err := database.Open(cfg.Database.Path)
+	if err != nil {
+		return fmt.Errorf("open database: %w", err)
+	}
+	db = dbConn
+	cfg.DB = dbConn
+
+	// Seed audio-enabled rows for the master and test guilds. Idempotent —
+	// EnsureGuildExists doesn't touch existing rows, so admin disables
+	// via /admin audio survive restarts. Backwards compat for the old
+	// hardcoded IsAudioGuild check.
+	seedCtx, seedCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	for _, gid := range []string{cfg.DiscordIDs.MasterGuildID, cfg.DiscordIDs.TestGuildID} {
+		if gid == "" {
+			continue
+		}
+		if err := dbConn.EnsureGuildExists(seedCtx, gid, true); err != nil {
+			seedCancel()
+			closeDB()
+			return fmt.Errorf("seed guild %s: %w", gid, err)
+		}
+	}
+	seedCancel()
+
 	if helper.IsLaunchedByDebugger() {
 		log.Println("spawning Lavalink (dev)…")
 		lavalinkDir, ok := findLavalinkDir()
 		if !ok {
+			closeDB()
 			return fmt.Errorf("Lavalink.jar not found in ./lavalink/, ../lavalink/, or ../../lavalink/ — see README dev setup")
 		}
 		readyURL := fmt.Sprintf("http://%s:%s/version", cfg.Lavalink.Host, cfg.Lavalink.Port)
 		runner, err := lavalink_runner.Start(filepath.Join(lavalinkDir, "Lavalink.jar"), lavalinkDir, readyURL, cfg.Lavalink.Password, 90*time.Second)
 		if err != nil {
+			closeDB()
 			return fmt.Errorf("dev lavalink: %w", err)
 		}
 		devRunner = runner
@@ -63,24 +93,28 @@ func Init(cfg *config.Configs) error {
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
 		stopDevRunner()
+		closeDB()
 		return fmt.Errorf("failed to create Discord session: %w", err)
 	}
 	botSession = session
 
 	if err := bb_data.Load(); err != nil {
 		stopDevRunner()
+		closeDB()
 		return fmt.Errorf("failed to load bb_data datasets: %w", err)
 	}
 
 	user, err := fetchSelfUserWithRetry(session)
 	if err != nil {
 		stopDevRunner()
+		closeDB()
 		return fmt.Errorf("failed to grab Discord session User: %w", err)
 	}
 
 	botUserID, err := snowflake.Parse(user.ID)
 	if err != nil {
 		stopDevRunner()
+		closeDB()
 		return fmt.Errorf("parse bot user id: %w", err)
 	}
 
@@ -96,6 +130,7 @@ func Init(cfg *config.Configs) error {
 		},
 	); err != nil {
 		stopDevRunner()
+		closeDB()
 		return fmt.Errorf("connect to lavalink node: %w", err)
 	}
 
@@ -112,6 +147,7 @@ func Init(cfg *config.Configs) error {
 	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
 	if err = session.Open(); err != nil {
 		stopDevRunner()
+		closeDB()
 		return fmt.Errorf("failed to open Discord session: %w", err)
 	}
 
@@ -123,8 +159,8 @@ func Init(cfg *config.Configs) error {
 	return nil
 }
 
-// Shutdown closes the Discord session, the Lavalink client, and (in dev)
-// the Lavalink Java child process. Safe to call once at process exit.
+// Shutdown closes the session, the disgolink client, the database, and
+// (in dev) the Lavalink child process. Safe to call once at process exit.
 func Shutdown() {
 	if botSession != nil {
 		_ = botSession.Close()
@@ -133,6 +169,7 @@ func Shutdown() {
 		linkClient.Close()
 	}
 	stopDevRunner()
+	closeDB()
 }
 
 func stopDevRunner() {
@@ -142,10 +179,15 @@ func stopDevRunner() {
 	}
 }
 
-// findLavalinkDir locates the dev Lavalink directory regardless of the
-// process's working directory. Mirrors the config loader's multi-path
-// approach since the cwd differs between `go run`, IDE debug launches,
-// and built binaries.
+func closeDB() {
+	if db != nil {
+		_ = db.Close()
+		db = nil
+	}
+}
+
+// findLavalinkDir searches the three candidate paths because cwd differs
+// between `go run`, IDE debug launches, and built binaries.
 func findLavalinkDir() (string, bool) {
 	for _, dir := range []string{"./lavalink", "../lavalink", "../../lavalink"} {
 		if _, err := os.Stat(filepath.Join(dir, "Lavalink.jar")); err == nil {
@@ -155,12 +197,9 @@ func findLavalinkDir() (string, bool) {
 	return "", false
 }
 
-// fetchSelfUserWithRetry calls User("@me") with bounded retries. Discord's
-// REST endpoint occasionally returns 503 (Cloudflare "no healthy upstream")
-// transiently, and 429s (rate limit) are common after restart loops —
-// without a retry a single blip kills bot startup. The retry honors the
-// Retry-After header when Discord supplies one and bails fast on auth
-// errors that won't get better.
+// fetchSelfUserWithRetry retries User("@me") through Cloudflare 503s and
+// post-restart 429s that would otherwise kill startup. Honors Retry-After
+// when present; bails fast on 4xx auth errors.
 func fetchSelfUserWithRetry(s *discordgo.Session) (*discordgo.User, error) {
 	const maxAttempts = 3
 	const maxWait = 30 * time.Second
@@ -194,9 +233,7 @@ func fetchSelfUserWithRetry(s *discordgo.Session) (*discordgo.User, error) {
 	return nil, lastErr
 }
 
-// shouldRetrySelfUser reports whether a User("@me") error is worth retrying.
-// 4xx auth/path errors won't get better with retries; everything else
-// (network errors, 5xx, 429) might.
+// shouldRetrySelfUser — 4xx auth/path errors won't improve; 5xx/429/network might.
 func shouldRetrySelfUser(err error) bool {
 	var restErr *discordgo.RESTError
 	if !errors.As(err, &restErr) || restErr.Response == nil {
@@ -209,10 +246,8 @@ func shouldRetrySelfUser(err error) bool {
 	return true
 }
 
-// retryAfter extracts an integer-seconds Retry-After header from a Discord
-// REST error, returning 0 if absent or unparseable. HTTP-date Retry-After
-// values aren't parsed — they're rare from Discord/Cloudflare for this
-// endpoint.
+// retryAfter parses integer-seconds Retry-After; HTTP-date form is rare
+// here and not supported.
 func retryAfter(err error) time.Duration {
 	var restErr *discordgo.RESTError
 	if !errors.As(err, &restErr) || restErr.Response == nil {
@@ -233,9 +268,8 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 	// Session
 	s.AddHandler(events.NewReadyHandler(cfg).ReadyHandler)
 
-	// Gateway state observability — brackets any heartbeat-error spam with
-	// clear "disconnected" / "resumed" markers so we can tell at a glance
-	// whether the reconnect actually happened.
+	// Gateway state markers around any heartbeat-error spam — lets us see
+	// at a glance whether a reconnect actually happened.
 	s.AddHandler(
 		func(_ *discordgo.Session, _ *discordgo.Connect) {
 			log.Println("discordgo: gateway connected")
@@ -267,11 +301,9 @@ func registerEvents(s *discordgo.Session, cfg *config.Configs, u *discordgo.User
 	s.AddHandler(events.NewCommandHandler(cfg).CommandHandler)
 }
 
-// filteredDiscordLogger mirrors discordgo's default logger format but drops
-// the "websocket: close sent" line that the heartbeat goroutine emits ~1×/s
-// after a TCP-level connection abort. The original abort error still logs,
-// and the Disconnect/Resumed handlers bracket the recovery window — the
-// repeating close-sent line adds no signal.
+// filteredDiscordLogger drops discordgo's "websocket: close sent" spam
+// (~1×/s after a TCP abort) — the original error and the Disconnect/Resumed
+// markers already cover the recovery window.
 func filteredDiscordLogger(msgL, caller int, format string, a ...interface{}) {
 	msg := fmt.Sprintf(format, a...)
 	if strings.Contains(msg, "websocket: close sent") {
@@ -288,9 +320,8 @@ func filteredDiscordLogger(msgL, caller int, format string, a ...interface{}) {
 	log.Printf("[DG%d] %s:%d:%s() %s\n", msgL, file, line, name, msg)
 }
 
-// registerVoiceForwarders bridges discordgo's voice gateway events to the
-// disgolink client. Lavalink uses these to open and maintain its own
-// voice WebSocket (DAVE-capable) — the bot itself never opens one.
+// registerVoiceForwarders pipes discordgo voice gateway events to disgolink,
+// which uses them to drive its own (DAVE-capable) voice WebSocket.
 func registerVoiceForwarders(s *discordgo.Session, link disgolink.Client) {
 	s.AddHandler(
 		func(_ *discordgo.Session, e *discordgo.VoiceServerUpdate) {
@@ -338,8 +369,7 @@ func registerVoiceForwarders(s *discordgo.Session, link disgolink.Client) {
 func registerCommands(s *discordgo.Session) error {
 	log.Println("Updating commands")
 
-	// added sleep timer to allow time for
-	// ApplicationCommandBulkOverwrite after creating bot session
+	// Bot session needs to settle before BulkOverwrite accepts the call.
 	time.Sleep(3 * time.Second)
 	commandsRegistered, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, "", slash.Commands)
 	if err != nil {
@@ -363,9 +393,8 @@ func registerCommands(s *discordgo.Session) error {
 	return nil
 }
 
-// countSubCommands recursively counts SubCommand leaves, descending into
-// SubCommandGroups so nested entries (e.g. effects under /image filter)
-// are included.
+// countSubCommands recurses into SubCommandGroups so nested leaves
+// (e.g. effects under /image filter) are counted.
 func countSubCommands(opts []*discordgo.ApplicationCommandOption) int {
 	count := 0
 	for _, opt := range opts {
@@ -379,9 +408,8 @@ func countSubCommands(opts []*discordgo.ApplicationCommandOption) int {
 	return count
 }
 
-// countCommandChoices counts choices on `type`-named string options.
-// These act as command dispatchers (/get type:joke, /daily type:horoscope)
-// and are distinct from parameter-only choices (/image meme pride flag:gay).
+// countCommandChoices counts choices on `type`-named options — those act
+// as dispatchers (/get type:joke), distinct from parameter-only choices.
 func countCommandChoices(opts []*discordgo.ApplicationCommandOption) int {
 	count := 0
 	for _, opt := range opts {

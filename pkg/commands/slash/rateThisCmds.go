@@ -20,7 +20,6 @@ func sendRateThisResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		return fmt.Errorf("failed to defer interaction: %w", err)
 	}
 
-	// Flat options: `type` (required choice), `user` (optional).
 	optMap := map[string]*discordgo.ApplicationCommandInteractionDataOption{}
 	for _, opt := range i.ApplicationCommandData().Options {
 		optMap[opt.Name] = opt

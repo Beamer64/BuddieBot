@@ -22,8 +22,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// Per-user cooldown for /image commands. Prevents one account from
-// queueing many heavy GIF generations back-to-back.
+// imgCmdLimiter caps back-to-back heavy GIF generations per user.
 var imgCmdLimiter = helper.NewRateLimiter(5 * time.Second)
 
 func fetchImage(url string) (image.Image, error) {
@@ -40,16 +39,14 @@ func fetchImage(url string) (image.Image, error) {
 }
 
 func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	// Rate-limit check BEFORE deferring: ReturnUserError needs the
-	// initial response slot, which a defer would consume.
+	// Rate-limit BEFORE deferring — ReturnUserError uses the initial response slot.
 	if ok, retry := imgCmdLimiter.Allow(i.Member.User.ID); !ok {
 		msg := fmt.Sprintf("Slow down! Try again in `%.1fs`.", retry.Seconds())
 		return helper.ReturnUserError(s, i, msg, nil)
 	}
 
-	// Defer immediately so heavy filters (Stringify, Triggered, etc.) get
-	// Discord's 15-minute window instead of the 3-second initial-response
-	// deadline that fires "Unknown interaction" 404s.
+	// Defer immediately — heavy filters (Stringify, Triggered, etc.) need
+	// the 15-min window instead of the 3s initial-response deadline.
 	if err := s.InteractionRespond(
 		i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -58,8 +55,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		return fmt.Errorf("failed to defer interaction: %w", err)
 	}
 
-	// .Options[0].Options[0] is the SubCommandGroup ("filter" | "distort" | "meme" | "template");
-	// the actual effect subcommand and its args live one level deeper.
+	// [0][0] is the SubCommandGroup; the effect subcommand lives one level deeper.
 	options := i.ApplicationCommandData().Options[0].Options[0]
 	errRespMsg := "Unable to edit image at this moment, please try later :("
 
@@ -73,7 +69,6 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user %s: %w", i.Member.User.ID, err))
 	}
 
-	// Get the user param if there is one
 	for _, opt := range options.Options {
 		if opt.Type == discordgo.ApplicationCommandOptionUser {
 			if u := opt.UserValue(s); u != nil {
@@ -870,8 +865,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		footerTxt = "Taking Discord Kitten applications"
 
 	case "retro-meme":
-		// Both text args are optional now, so iterate by option name
-		// instead of by position.
+		// Both text args optional → iterate by name, not position.
 		var topText, bottomText string
 		for _, opt := range options.Options {
 			switch opt.Name {
@@ -994,9 +988,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 	}
 
-	// Wrap the generated image in an embed. The attachment:// scheme tells
-	// Discord to substitute the upload below — same single HTTP call as a
-	// bare-file response, no third-party hosting needed.
+	// attachment:// references the file uploaded below — single HTTP call, no host needed.
 	embeds := []*discordgo.MessageEmbed{
 		{
 			Color: helper.RandomDiscordColor(),

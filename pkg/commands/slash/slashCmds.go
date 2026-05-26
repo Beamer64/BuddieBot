@@ -4,12 +4,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// Commands assembles every registered slash command. Each command's spec
-// (a *discordgo.ApplicationCommand) lives next to its handler in the same
-// per-feature file (e.g. animalsSpec is in animalCmds.go).
-//
-// All commands and options must have a description — Discord rejects the
-// registration otherwise.
+// Commands assembles every registered slash command. Specs live next to
+// their handlers (animalsSpec in animalCmds.go, etc.). All commands and
+// options must have a description — Discord rejects registration otherwise.
 var Commands = []*discordgo.ApplicationCommand{
 	animalsSpec(),
 	rateThisSpec(),
