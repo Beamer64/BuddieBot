@@ -252,7 +252,8 @@ func sendWYRrerollResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 func gameSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "game",
-		Description: "Play some games! *More coming soon",
+		Description: "Play some games! *More coming soon, probably",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,

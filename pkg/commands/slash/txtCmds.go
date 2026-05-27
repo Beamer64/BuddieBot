@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Beamer64/BuddieBot/pkg/config"
+	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/Beamer64/bb_data/textfonts"
 	"github.com/bwmarrin/discordgo"
 )
@@ -72,6 +73,7 @@ func txtSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "txt",
 		Description: "Funky Texts",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,

@@ -20,9 +20,9 @@ import (
 var pickSteamLimiter = helper.NewRateLimiter(5 * time.Second)
 
 func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	option := strings.ToLower(i.ApplicationCommandData().Options[0].Name)
+	cmdType := i.ApplicationCommandData().Options[0].Name
 
-	if option == "steam" {
+	if cmdType == "steam" {
 		if ok, retry := pickSteamLimiter.Allow(i.Member.User.ID); !ok {
 			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
 			return helper.ReturnUserError(s, i, msg, nil)
@@ -40,7 +40,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	var data *discordgo.InteractionResponseData
 	var err error
 
-	switch option {
+	switch cmdType {
 	case "steam":
 		data, err = sendSteamPickResponse(cfg)
 	case "choices":
@@ -48,7 +48,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	case "poll":
 		return sendPollResponse(s, i, cfg)
 	default:
-		return helper.ReturnUserErrorDeferred(s, i, "Unknown pick option.", fmt.Errorf("unknown option: %s", option))
+		return helper.ReturnUserErrorDeferred(s, i, "Unknown pick option.", fmt.Errorf("unknown option: %s", cmdType))
 	}
 	if err != nil {
 		return helper.ReturnUserErrorDeferred(s, i, "Unable to pick atm, try again later.", err)
@@ -60,7 +60,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			Embeds:  &data.Embeds,
 		},
 	); err != nil {
-		return fmt.Errorf("send /pick %s response: %w", option, err)
+		return fmt.Errorf("send /pick %s response: %w", cmdType, err)
 	}
 	return nil
 }
@@ -210,6 +210,7 @@ func pickSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "pick",
 		Description: "I'll pick stuff for you. I'll also pick a steam game with the 1st choice of 'steam'",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,

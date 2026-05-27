@@ -46,9 +46,12 @@ func wrapWithDeps(h slashHandler, logErr errorLogger, notifyUser userNotifier) f
 
 // ComponentHandlers — keys are matched by prefix by the event handler.
 var ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
-	"horo-select": wrap(sendHoroscopeCompResponse),
-	"wyr-reroll":  wrap(sendWYRrerollResp),
-	"wyr-votes":   wrap(sendWYRvotesResp),
+	"horo-select":       wrap(sendHoroscopeCompResponse),
+	"wyr-reroll":        wrap(sendWYRrerollResp),
+	"wyr-votes":         wrap(sendWYRvotesResp),
+	"forget-me-confirm": wrap(forgetMeConfirm),
+	"forget-me-cancel":  wrap(forgetMeCancel),
+	"tuuck-page":        wrap(sendTuuckPageResponse),
 }
 
 var CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){
@@ -63,4 +66,6 @@ var CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interac
 	"game":      wrap(sendGameResponse),
 	"generate":  wrap(sendGenerateResponse),
 	"audio":     wrap(sendAudioResponse),
+	"user":      wrap(sendUserResponse),
+	"admin":     wrap(sendAdminResponse),
 }

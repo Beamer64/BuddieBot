@@ -180,6 +180,7 @@ func getSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "get",
 		Description: "Get a text based response like a joke or pickup line",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,

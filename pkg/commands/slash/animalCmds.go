@@ -123,7 +123,7 @@ func retryDoggoFetch(cfg *config.Configs) (doggo, error) {
 }
 
 func callDoggoAPI(cfg *config.Configs, id int) (doggo, error) {
-	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	base, err := cfg.DB.GetApiURL(urlCtx, "doggo")
 	urlCancel()
 	if err != nil {
@@ -255,14 +255,15 @@ func createNinjaAPIrequest(cfg *config.Configs, url string) (*http.Request, erro
 func animalsSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "animals",
-		Description: "So CUTE",
+		Description: "Who wouldn't want to look at animals on the computer?",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
-			/*{
+			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,
 				Name:        "doggo",
 				Description: "🐕",
 				Required:    false,
-			},*/
+			},
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,
 				Name:        "katz",

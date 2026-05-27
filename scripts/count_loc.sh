@@ -5,7 +5,7 @@
 # at-a-glance sense of project size, not for measuring meaningful "logic
 # lines."
 #
-# Includes:  *.go, *.sh
+# Includes:  *.go
 # Skips:
 #   - vendor/                          (third-party Go modules)
 #   - any directory starting with "."  (.git, .github, .claude, etc.)

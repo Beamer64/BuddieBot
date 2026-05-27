@@ -75,6 +75,7 @@ var standardRatings = map[string]struct{ Title, ScoreLabel string }{
 	"smarts":     {"Rate These Smarts", "Smarts"},
 	"nerd":       {"Rate This Nerd", "Nerd"},
 	"geek":       {"Rate This Geek", "Geek"},
+	"bot":        {"Rate This Discord Bot", "Bot"},
 }
 
 func getRateTitleAndDesc(ratingName string, user string, score string) (string, string) {
@@ -94,7 +95,8 @@ func getRateTitleAndDesc(ratingName string, user string, score string) (string, 
 func rateThisSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "rate-this",
-		Description: "Rate this ...",
+		Description: "I give free ratings!",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
@@ -109,6 +111,7 @@ func rateThisSpec() *discordgo.ApplicationCommand {
 					{Name: "looks", Value: "looks"},
 					{Name: "neckbeard", Value: "neckbeard"},
 					{Name: "nerd", Value: "nerd"},
+					{Name: "npc", Value: "npc"},
 					{Name: "pickme", Value: "pickme"},
 					{Name: "schmeat", Value: "schmeat"},
 					{Name: "simp", Value: "simp"},

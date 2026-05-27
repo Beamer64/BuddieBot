@@ -51,3 +51,44 @@ func (db *DB) CreateUser(ctx context.Context, discordUserID string, guildID int6
 	}
 	return &u, nil
 }
+
+// EnsureUser guarantees a (guild, user) row exists and returns it. It creates
+// the Guild row first when needed (the FK requires it), defaulting new guilds
+// to audio-disabled. Both inserts are idempotent, so repeat calls are cheap
+// no-ops that never overwrite existing Dosh / IsDayOne values.
+func (db *DB) EnsureUser(ctx context.Context, discordGuildID, discordUserID string) (*User, error) {
+	if err := db.EnsureGuildExists(ctx, discordGuildID, false); err != nil {
+		return nil, fmt.Errorf("ensure guild for user: %w", err)
+	}
+	guild, err := db.GuildByDiscordID(ctx, discordGuildID)
+	if err != nil {
+		return nil, err
+	}
+	if guild == nil {
+		return nil, fmt.Errorf("guild %s missing immediately after ensure", discordGuildID)
+	}
+
+	if _, err := db.ExecContext(ctx,
+		`INSERT OR IGNORE INTO User (Discord_UserID, GuildID) VALUES (?, ?)`,
+		discordUserID, guild.ID,
+	); err != nil {
+		return nil, fmt.Errorf("ensure user %s in guild %d: %w", discordUserID, guild.ID, err)
+	}
+
+	return db.GetUserByDiscordID(ctx, discordUserID, guild.ID)
+}
+
+// ForgetUser hard-deletes every row for this Discord user across all guilds
+// — the privacy "right to be forgotten" path. Returns the number of rows
+// removed (0 if the user had no stored data).
+func (db *DB) ForgetUser(ctx context.Context, discordUserID string) (int64, error) {
+	res, err := db.ExecContext(ctx,
+		`DELETE FROM User WHERE Discord_UserID = ?`,
+		discordUserID,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("forget user %s: %w", discordUserID, err)
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
+}

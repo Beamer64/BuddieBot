@@ -16,7 +16,6 @@ import (
 // can write `cfg.Keys.X` directly. Player and DB are wired up at bot init.
 type Configs struct {
 	*configuration
-	Cmd    *command
 	Player *voice_chat.Player
 	DB     *database.DB
 }
@@ -37,7 +36,6 @@ type configuration struct {
 	} `yaml:"discordIDs"`
 
 	Settings struct {
-		BotPrefix    string `yaml:"botPrefix"`
 		BotAdminRole string `yaml:"botAdminRole"`
 	} `yaml:"settings"`
 
@@ -65,13 +63,6 @@ type configuration struct {
 	} `yaml:"database"`
 }
 
-type command struct {
-	Msg struct {
-		Invalid     string `yaml:"invalid"`
-		NotBotAdmin string `yaml:"notBotAdmin"`
-	} `yaml:"message"`
-}
-
 func ReadConfig() (*Configs, error) {
 	return marshalConfigs("config_files/", "../config_files/", "../../config_files/")
 }
@@ -91,7 +82,6 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 
 		requiredConfigFiles := map[string]bool{
 			"config.yaml": false,
-			"cmd.yaml":    false,
 		}
 		for _, f := range files {
 			if _, ok := requiredConfigFiles[f.Name()]; ok {
@@ -122,14 +112,7 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 		return nil, err
 	}
 
-	log.Println("Reading from cmd file...")
-	commandFile, err := os.ReadFile(configDir + "cmd.yaml")
-	if err != nil {
-		return nil, err
-	}
-
 	cfg := &configuration{}
-	cmd := &command{}
 
 	err = yaml.Unmarshal(configFile, cfg)
 	if err != nil {
@@ -151,13 +134,7 @@ func marshalConfigs(possibleConfigPaths ...string) (*Configs, error) {
 		return nil, errors.New("database path not configured (set database.prodPath / database.devPath)")
 	}
 
-	err = yaml.Unmarshal(commandFile, cmd)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Configs{
 		configuration: cfg,
-		Cmd:           cmd,
 	}, nil
 }

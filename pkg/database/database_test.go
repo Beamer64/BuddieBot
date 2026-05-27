@@ -136,10 +136,137 @@ func TestEnsureGuildExistsInsertsThenSkips(t *testing.T) {
 	}
 }
 
+func TestMarkGuildJoinedCreatesAndClearsLeftAt(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	// First call creates the row, LeftAt NULL.
+	if err := db.MarkGuildJoined(ctx, "g"); err != nil {
+		t.Fatalf("first join: %v", err)
+	}
+	g, _ := db.GuildByDiscordID(ctx, "g")
+	if g == nil {
+		t.Fatal("expected row created")
+	}
+	if g.LeftAt.Valid {
+		t.Errorf("expected LeftAt NULL on fresh join, got %q", g.LeftAt.String)
+	}
+
+	// Simulate a departure, then rejoin — LeftAt should clear.
+	if err := db.MarkGuildLeft(ctx, "g"); err != nil {
+		t.Fatalf("leave: %v", err)
+	}
+	left, _ := db.GuildByDiscordID(ctx, "g")
+	if !left.LeftAt.Valid {
+		t.Errorf("expected LeftAt set after leave")
+	}
+	if err := db.MarkGuildJoined(ctx, "g"); err != nil {
+		t.Fatalf("rejoin: %v", err)
+	}
+	rejoined, _ := db.GuildByDiscordID(ctx, "g")
+	if rejoined.LeftAt.Valid {
+		t.Errorf("expected LeftAt cleared on rejoin, got %q", rejoined.LeftAt.String)
+	}
+}
+
+func TestMarkGuildLeftPreservesUsers(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	g, _ := db.CreateGuild(ctx, "g")
+	if _, err := db.CreateUser(ctx, "u", g.ID); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+
+	if err := db.MarkGuildLeft(ctx, "g"); err != nil {
+		t.Fatalf("mark left: %v", err)
+	}
+
+	// Marking left must NOT cascade-delete the user (unlike a hard delete).
+	if u, _ := db.GetUserByDiscordID(ctx, "u", g.ID); u == nil {
+		t.Errorf("user was wrongly removed when guild marked left")
+	}
+}
+
+func TestGuildPrefixDefaultOverrideReset(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	// No row → default.
+	if p, err := db.GetGuildPrefixOverride(ctx, "noguild"); err != nil || p != "$" {
+		t.Fatalf("missing guild: expected $/nil, got %q/%v", p, err)
+	}
+
+	// Row with NULL prefix → default.
+	if _, err := db.CreateGuild(ctx, "g"); err != nil {
+		t.Fatalf("create guild: %v", err)
+	}
+	if p, err := db.GetGuildPrefixOverride(ctx, "g"); err != nil || p != "$" {
+		t.Errorf("NULL prefix: expected $/nil, got %q/%v", p, err)
+	}
+
+	// Set an override.
+	if err := db.SetGuildPrefixOverride(ctx, "g", "!"); err != nil {
+		t.Fatalf("set: %v", err)
+	}
+	if p, _ := db.GetGuildPrefixOverride(ctx, "g"); p != "!" {
+		t.Errorf("after set: expected !, got %q", p)
+	}
+
+	// Reset (empty) → back to default.
+	if err := db.SetGuildPrefixOverride(ctx, "g", ""); err != nil {
+		t.Fatalf("reset: %v", err)
+	}
+	if p, _ := db.GetGuildPrefixOverride(ctx, "g"); p != "$" {
+		t.Errorf("after reset: expected $, got %q", p)
+	}
+}
+
+func TestGuildPrefixCacheReflectsSet(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+	if _, err := db.CreateGuild(ctx, "g"); err != nil {
+		t.Fatalf("create guild: %v", err)
+	}
+
+	// Prime the cache with the default, then change via the setter.
+	if p, _ := db.GetGuildPrefixOverride(ctx, "g"); p != "$" {
+		t.Fatalf("prime: expected $, got %q", p)
+	}
+	if err := db.SetGuildPrefixOverride(ctx, "g", "?"); err != nil {
+		t.Fatalf("set: %v", err)
+	}
+	// The read should reflect the new value (cache kept in sync by the setter).
+	if p, _ := db.GetGuildPrefixOverride(ctx, "g"); p != "?" {
+		t.Errorf("cache not updated after set: got %q", p)
+	}
+}
+
+func TestCachedGuildPrefix(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+	if _, err := db.CreateGuild(ctx, "g"); err != nil {
+		t.Fatalf("create guild: %v", err)
+	}
+
+	// Nothing loaded yet → miss (no DB touched).
+	if _, ok := db.CachedGuildPrefix("g"); ok {
+		t.Errorf("expected cache miss before any load")
+	}
+
+	// A full lookup populates the cache.
+	if _, err := db.GetGuildPrefixOverride(ctx, "g"); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if p, ok := db.CachedGuildPrefix("g"); !ok || p != "$" {
+		t.Errorf("expected cache hit with default, got %q/%v", p, ok)
+	}
+}
+
 func TestGuildAudioEnabledMissingRow(t *testing.T) {
 	db := newTestDB(t)
 
-	enabled, err := db.GuildAudioEnabled(context.Background(), "never-seen")
+	enabled, err := db.IsGuildAudioEnabled(context.Background(), "never-seen")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -214,6 +341,152 @@ func TestUserCreateFailsWithoutGuild(t *testing.T) {
 	// GuildID=999 doesn't exist; FK constraint should reject.
 	if _, err := db.CreateUser(context.Background(), "orphan", 999); err == nil {
 		t.Errorf("expected FK violation for non-existent guild")
+	}
+}
+
+func TestEnsureUserCreatesGuildAndUser(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	// Neither the guild nor the user exists yet.
+	u, err := db.EnsureUser(ctx, "fresh-guild", "fresh-user")
+	if err != nil {
+		t.Fatalf("ensure user: %v", err)
+	}
+	if u == nil {
+		t.Fatal("expected user, got nil")
+	}
+	if u.Dosh != 0 || u.IsDayOne {
+		t.Errorf("expected defaults (Dosh=0, IsDayOne=false), got %+v", u)
+	}
+
+	// The guild should have been auto-created, audio-disabled.
+	g, _ := db.GuildByDiscordID(ctx, "fresh-guild")
+	if g == nil {
+		t.Fatal("expected guild auto-created by EnsureUser")
+	}
+	if g.AudioEnabled {
+		t.Errorf("expected new guild audio-disabled by default")
+	}
+}
+
+func TestEnsureUserIsIdempotent(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	u1, err := db.EnsureUser(ctx, "g", "u")
+	if err != nil {
+		t.Fatalf("first ensure: %v", err)
+	}
+	u2, err := db.EnsureUser(ctx, "g", "u")
+	if err != nil {
+		t.Fatalf("second ensure: %v", err)
+	}
+	if u1.ID != u2.ID {
+		t.Errorf("expected same row both times, got %d then %d", u1.ID, u2.ID)
+	}
+}
+
+func TestForgetUserDeletesAllGuilds(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	// Same Discord user across two guilds, plus an unrelated user.
+	g1, _ := db.CreateGuild(ctx, "g1")
+	g2, _ := db.CreateGuild(ctx, "g2")
+	if _, err := db.CreateUser(ctx, "victim", g1.ID); err != nil {
+		t.Fatalf("seed victim g1: %v", err)
+	}
+	if _, err := db.CreateUser(ctx, "victim", g2.ID); err != nil {
+		t.Fatalf("seed victim g2: %v", err)
+	}
+	if _, err := db.CreateUser(ctx, "bystander", g1.ID); err != nil {
+		t.Fatalf("seed bystander: %v", err)
+	}
+
+	n, err := db.ForgetUser(ctx, "victim")
+	if err != nil {
+		t.Fatalf("forget user: %v", err)
+	}
+	if n != 2 {
+		t.Errorf("expected 2 rows deleted (both guilds), got %d", n)
+	}
+
+	// Victim gone from both guilds.
+	if u, _ := db.GetUserByDiscordID(ctx, "victim", g1.ID); u != nil {
+		t.Errorf("victim still present in g1")
+	}
+	if u, _ := db.GetUserByDiscordID(ctx, "victim", g2.ID); u != nil {
+		t.Errorf("victim still present in g2")
+	}
+	// Bystander untouched.
+	if u, _ := db.GetUserByDiscordID(ctx, "bystander", g1.ID); u == nil {
+		t.Errorf("bystander was wrongly deleted")
+	}
+}
+
+func TestIncrementCommandUsage(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	// Unseen command starts at 0.
+	if c, _ := db.CommandUsageCount(ctx, "image"); c != 0 {
+		t.Errorf("expected 0 for unseen command, got %d", c)
+	}
+
+	// Three increments → 3; an unrelated command stays independent.
+	for range 3 {
+		if err := db.IncrementCommandUsage(ctx, "image"); err != nil {
+			t.Fatalf("increment: %v", err)
+		}
+	}
+	if err := db.IncrementCommandUsage(ctx, "audio"); err != nil {
+		t.Fatalf("increment audio: %v", err)
+	}
+
+	if c, _ := db.CommandUsageCount(ctx, "image"); c != 3 {
+		t.Errorf("expected image=3, got %d", c)
+	}
+	if c, _ := db.CommandUsageCount(ctx, "audio"); c != 1 {
+		t.Errorf("expected audio=1, got %d", c)
+	}
+}
+
+func TestForgetUserNoRows(t *testing.T) {
+	db := newTestDB(t)
+
+	n, err := db.ForgetUser(context.Background(), "never-existed")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if n != 0 {
+		t.Errorf("expected 0 rows deleted, got %d", n)
+	}
+}
+
+func TestEnsureUserDoesNotClobberData(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	u, err := db.EnsureUser(ctx, "g", "u")
+	if err != nil {
+		t.Fatalf("ensure: %v", err)
+	}
+	// Simulate accumulated economy state.
+	if _, err := db.ExecContext(ctx, `UPDATE User SET Dosh = 500, IsDayOne = 1 WHERE ID = ?`, u.ID); err != nil {
+		t.Fatalf("seed data: %v", err)
+	}
+
+	// Re-ensuring must not reset Dosh / IsDayOne.
+	u2, err := db.EnsureUser(ctx, "g", "u")
+	if err != nil {
+		t.Fatalf("re-ensure: %v", err)
+	}
+	if u2.Dosh != 500 {
+		t.Errorf("EnsureUser clobbered Dosh: expected 500, got %d", u2.Dosh)
+	}
+	if !u2.IsDayOne {
+		t.Errorf("EnsureUser clobbered IsDayOne: expected true")
 	}
 }
 

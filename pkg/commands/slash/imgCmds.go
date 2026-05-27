@@ -1019,7 +1019,8 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 func imageSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "image",
-		Description: "Image manipulation commands",
+		Description: "make some cool graphics",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,

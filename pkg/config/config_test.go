@@ -19,8 +19,4 @@ func TestReadConfig(t *testing.T) {
 	if reflect.DeepEqual(cfg.configuration, &configuration{}) {
 		t.Fatal("cfg.configuration is empty")
 	}
-
-	if reflect.DeepEqual(cfg.Cmd, &command{}) {
-		t.Fatal("cfg.CommandMessages is empty")
-	}
 }

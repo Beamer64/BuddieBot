@@ -5,6 +5,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/Beamer64/BuddieBot/pkg/database/migrations"
 	"github.com/jmoiron/sqlx"
@@ -16,6 +17,32 @@ import (
 // while keeping the embedded *sql.DB methods (Exec, QueryRow, Begin) available.
 type DB struct {
 	*sqlx.DB
+	prefixCache *prefixCache
+}
+
+// prefixCache memoizes per-guild command prefixes. ParsePrefixCmds runs on
+// every message, so this turns that hot path into a map read instead of a DB
+// query. Writes go through SetGuildPrefixOverride, which keeps it in sync.
+type prefixCache struct {
+	mu sync.RWMutex
+	m  map[string]string
+}
+
+func newPrefixCache() *prefixCache {
+	return &prefixCache{m: make(map[string]string)}
+}
+
+func (c *prefixCache) get(guildID string) (string, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	p, ok := c.m[guildID]
+	return p, ok
+}
+
+func (c *prefixCache) set(guildID, prefix string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.m[guildID] = prefix
 }
 
 // Open dials the SQLite file at path (":memory:" for tests), applies the
@@ -52,7 +79,7 @@ func Open(path string) (*DB, error) {
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
 
-	return &DB{DB: sqlxDB}, nil
+	return &DB{DB: sqlxDB, prefixCache: newPrefixCache()}, nil
 }
 
 func runMigrations(sqlxDB *sqlx.DB) error {

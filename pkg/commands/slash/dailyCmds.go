@@ -348,6 +348,7 @@ func dailySpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "daily",
 		Description: "Receive daily quotes, horoscopes, affirmations, etc.",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,

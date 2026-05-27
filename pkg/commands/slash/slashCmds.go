@@ -19,4 +19,6 @@ var Commands = []*discordgo.ApplicationCommand{
 	tuuckSpec(),
 	generateSpec(),
 	audioSpec(),
+	userSpec(),
+	adminSpec(),
 }

@@ -15,14 +15,16 @@ import (
 
 func sendAudioResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	gateCtx, gateCancel := context.WithTimeout(context.Background(), 2*time.Second)
-	enabled, err := cfg.DB.GuildAudioEnabled(gateCtx, i.GuildID)
+	enabled, err := cfg.DB.IsGuildAudioEnabled(gateCtx, i.GuildID)
 	gateCancel()
 	if err != nil {
 		return helper.ReturnUserError(s, i, "Audio check failed, try again.", fmt.Errorf("guild audio enabled lookup: %w", err))
 	}
+
 	if !enabled {
 		return helper.ReturnUserError(s, i, "Audio commands aren't enabled in this server. Ask a bot admin for access.", nil)
 	}
+
 	if cfg.Player == nil {
 		return helper.ReturnUserError(s, i, "Audio is not available right now.", nil)
 	}
@@ -358,6 +360,7 @@ func audioSpec() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "audio",
 		Description: "Audio playback controls",
+		Contexts:    helper.GuildOnly,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,

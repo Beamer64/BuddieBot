@@ -1,10 +1,12 @@
 package events
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/Beamer64/BuddieBot/pkg/commands/prefix"
 	"github.com/Beamer64/BuddieBot/pkg/commands/slash"
@@ -12,6 +14,49 @@ import (
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/bwmarrin/discordgo"
 )
+
+// commandUsageKey builds a space-joined usage key down to the invoked
+// subcommand, so per-feature counts are distinguishable (e.g. "image filter
+// blur", "daily horoscope") rather than just the top-level command. Handles
+// both dispatch styles this bot uses: SubCommand(Group) options and the
+// `type` string-choice dispatcher. Non-dispatching options (e.g. /tuuck's
+// `command` arg) are ignored so they don't fragment the key.
+func commandUsageKey(data discordgo.ApplicationCommandInteractionData) string {
+	parts := []string{data.Name}
+	opts := data.Options
+	for len(opts) > 0 {
+		opt := opts[0]
+		switch opt.Type {
+		case discordgo.ApplicationCommandOptionSubCommandGroup:
+			parts = append(parts, opt.Name)
+			opts = opt.Options // descend into the group's subcommand
+		case discordgo.ApplicationCommandOptionSubCommand:
+			parts = append(parts, opt.Name)
+			opts = nil // remaining options are parameters, not subcommands
+		default:
+			if opt.Name == "type" {
+				if v := opt.StringValue(); v != "" {
+					parts = append(parts, v)
+				}
+			}
+			opts = nil
+		}
+	}
+	return strings.Join(parts, " ")
+}
+
+// recordCommandUsage bumps the aggregate count for a dispatched command.
+// Best-effort: a DB hiccup is logged, never blocks the command.
+func recordCommandUsage(cfg *config.Configs, usageKey string) {
+	if cfg.DB == nil || usageKey == "" {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := cfg.DB.IncrementCommandUsage(ctx, usageKey); err != nil {
+		log.Printf("record command usage %q: %v", usageKey, err)
+	}
+}
 
 // recoverPanic — defer at the top of each event handler so one bad event
 // can't crash the bot. Logs panic + stack to the error channel.
@@ -69,7 +114,9 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 	defer recoverPanic(s, c.cfg, i.GuildID)
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
-		if h, ok := slash.CommandHandlers[i.ApplicationCommandData().Name]; ok {
+		data := i.ApplicationCommandData()
+		if h, ok := slash.CommandHandlers[data.Name]; ok {
+			recordCommandUsage(c.cfg, commandUsageKey(data))
 			h(s, i, c.cfg)
 		}
 	case discordgo.InteractionMessageComponent:
@@ -163,6 +210,16 @@ func (g *GuildHandler) GuildLeaveHandler(s *discordgo.Session, m *discordgo.Guil
 
 func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.GuildCreate) {
 	defer recoverPanic(s, g.cfg, e.ID)
+
+	// Ensure a Guild row exists and is marked present. GuildCreate fires for
+	// every guild on connect (backfill) and on each new join. Runs in dev too
+	// — only the owner notification below is gated behind the debugger check.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := g.cfg.DB.MarkGuildJoined(ctx, e.ID); err != nil {
+		log.Printf("guild create: mark joined %s: %v", e.ID, err)
+	}
+	cancel()
+
 	if helper.IsLaunchedByDebugger() {
 		return
 	}
@@ -207,9 +264,6 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 
 func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.GuildDelete) {
 	defer recoverPanic(s, g.cfg, e.ID)
-	if helper.IsLaunchedByDebugger() {
-		return
-	}
 
 	guildID := ""
 	guildName := "Unknown"
@@ -223,6 +277,20 @@ func (g *GuildHandler) GuildDeleteHandler(s *discordgo.Session, e *discordgo.Gui
 	}
 	if guildName == "Unknown" && e.BeforeDelete != nil && e.BeforeDelete.Name != "" {
 		guildName = e.BeforeDelete.Name
+	}
+
+	// Unavailable=true is a transient Discord outage, not a real removal —
+	// only stamp LeftAt on a genuine leave. Preserves per-guild data either way.
+	if guildID != "" && !unavailable {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		if err := g.cfg.DB.MarkGuildLeft(ctx, guildID); err != nil {
+			log.Printf("guild delete: mark left %s: %v", guildID, err)
+		}
+		cancel()
+	}
+
+	if helper.IsLaunchedByDebugger() {
+		return
 	}
 
 	embed := &discordgo.MessageEmbed{

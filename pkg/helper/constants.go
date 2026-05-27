@@ -1,5 +1,9 @@
 package helper
 
+import (
+	"github.com/bwmarrin/discordgo"
+)
+
 const (
 	// PollMessageContent — the reaction handler matches messages by this body.
 	PollMessageContent = "Poll Time!"
@@ -13,6 +17,29 @@ const (
 	CistercianMin = -9999
 	CistercianMax = 9999
 )
+
+// GuildOnly restricts a command to the guild context, keeping it out of DMs
+var GuildOnly = &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild}
+
+// CommandExamples holds a representative usage example per top-level command,
+// keyed by command name. /tuuck shows it when present; a missing entry simply
+// omits the example. The command list itself comes from the live specs, so
+// this is the only manually-curated piece (and forgetting an entry is harmless).
+var CommandExamples = map[string]string{
+	"animals":   "/animals doggo",
+	"audio":     "/audio play url-1:https://youtu.be/dQw4w9WgXcQ",
+	"daily":     "/daily type:horoscope",
+	"game":      "/game wyr",
+	"generate":  "/generate type:fake-person",
+	"get":       "/get type:joke",
+	"image":     "/image filter blur user:@friend",
+	"pick":      "/pick choices 1st:pizza 2nd:tacos",
+	"rate-this": "/rate-this type:simp user:@friend",
+	"txt":       "/txt type:bubble text:hello",
+	"tuuck":     "/tuuck cmd-help command:audio",
+	"user":      "/user profile",
+	"admin":     "/admin set-prefix new-prefix:!",
+}
 
 var CistOnes = map[string]struct {
 	X1 int
