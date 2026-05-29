@@ -52,6 +52,7 @@ var ComponentHandlers = map[string]func(s *discordgo.Session, i *discordgo.Inter
 	"forget-me-confirm": wrap(forgetMeConfirm),
 	"forget-me-cancel":  wrap(forgetMeCancel),
 	"tuuck-page":        wrap(sendTuuckPageResponse),
+	"profile-page":      wrap(sendProfilePageResponse),
 }
 
 var CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs){

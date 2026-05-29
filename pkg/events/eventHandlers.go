@@ -45,16 +45,29 @@ func commandUsageKey(data discordgo.ApplicationCommandInteractionData) string {
 	return strings.Join(parts, " ")
 }
 
-// recordCommandUsage bumps the aggregate count for a dispatched command.
-// Best-effort: a DB hiccup is logged, never blocks the command.
-func recordCommandUsage(cfg *config.Configs, usageKey string) {
+// recordCommandUsage bumps both the bot-wide aggregate counter and the
+// per-user counter for a dispatched command. The per-user upsert is a single
+// no-op-if-missing statement, so users who haven't been materialized into the
+// DB yet (no row from /user profile, /rate-this, etc.) silently stay
+// un-tracked. Best-effort throughout: DB hiccups are logged, never block.
+//
+// discordGuildID / discordUserID may be empty (DM context, missing Member);
+// in that case only the aggregate fires.
+func recordCommandUsage(cfg *config.Configs, usageKey, discordGuildID, discordUserID string) {
 	if cfg.DB == nil || usageKey == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+
 	if err := cfg.DB.IncrementCommandUsage(ctx, usageKey); err != nil {
 		log.Printf("record command usage %q: %v", usageKey, err)
+	}
+
+	if discordGuildID != "" && discordUserID != "" {
+		if err := cfg.DB.IncrementUserCommandUsage(ctx, discordGuildID, discordUserID, usageKey); err != nil {
+			log.Printf("record per-user command usage %q: %v", usageKey, err)
+		}
 	}
 }
 
@@ -116,8 +129,16 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 	case discordgo.InteractionApplicationCommand:
 		data := i.ApplicationCommandData()
 		if h, ok := slash.CommandHandlers[data.Name]; ok {
-			recordCommandUsage(c.cfg, commandUsageKey(data))
+			// Record AFTER the handler runs so commands that materialize the
+			// user row (/user profile, /rate-this, etc.) get their very first
+			// invocation counted. wrap() recovers panics inside h, so we
+			// always reach the recording call.
 			h(s, i, c.cfg)
+			invokerID := ""
+			if i.Member != nil && i.Member.User != nil {
+				invokerID = i.Member.User.ID
+			}
+			recordCommandUsage(c.cfg, commandUsageKey(data), i.GuildID, invokerID)
 		}
 	case discordgo.InteractionMessageComponent:
 		customID := i.MessageComponentData().CustomID
@@ -170,8 +191,8 @@ func (r *ReactionHandler) ReactHandlerAdd(s *discordgo.Session, mr *discordgo.Me
 				}
 			}
 		}
-	} else if mr.MessageReaction.Emoji.Name == helper.LmgtfyEmojiName {
-		if err := r.sendLmgtfy(s, msg); err != nil {
+	} else if mr.MessageReaction.Emoji.Name == helper.LmgtfyMsgEmoji {
+		if err = r.sendLmgtfy(s, msg); err != nil {
 			helper.LogErrorsToErrorChannel(s, r.cfg.DiscordIDs.ErrorLogChannelID, err, mr.GuildID)
 		}
 	}

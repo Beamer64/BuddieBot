@@ -2,21 +2,48 @@ package events
 
 import (
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/subosito/shorturl"
 	"net/url"
+
+	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/bwmarrin/discordgo"
 )
 
 func (r *ReactionHandler) sendLmgtfy(s *discordgo.Session, m *discordgo.Message) error {
-	strEnc := url.QueryEscape(m.Content)
-	lmgtfyURL := fmt.Sprintf("http://lmgtfy.com/?q=%s", strEnc)
-
-	lmgtfyShortURL, err := shorturl.Shorten(lmgtfyURL, "tinyurl")
-	if err != nil {
-		return err
+	if m.Author.Bot {
+		return nil
 	}
 
-	_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("\"%s\"\n%s", m.Content, string(lmgtfyShortURL)))
+	strEnc := url.QueryEscape(m.Content)
+	lmgtfyURL := fmt.Sprintf("http://lmgtfy2.com/?q=%s", strEnc)
+
+	msgContent := fmt.Sprintf("\"%s\"\n\n%s", m.Content, lmgtfyURL)
+	embed := &discordgo.MessageEmbed{
+		Color:       helper.RandomDiscordColor(),
+		Title:       "Let me Google that for you..",
+		Description: msgContent,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "LMGTFY",
+		},
+	}
+
+	msg, err := s.ChannelMessageSendComplex(
+		m.ChannelID, &discordgo.MessageSend{
+			Content: fmt.Sprintf("<@!%s>", m.Author.ID),
+			Embeds:  []*discordgo.MessageEmbed{embed},
+		},
+	)
+
+	/*msg, err := s.ChannelMessageSend(m.ChannelID, msgContent)
+	if err != nil {
+		return err
+	}*/
+
+	emojiID := helper.ProdLmgtfyEmojiID
+	if helper.IsLaunchedByDebugger() {
+		emojiID = helper.TestLmgtfyEmojiID
+	}
+
+	err = s.MessageReactionAdd(m.ChannelID, msg.ID, emojiID)
 	if err != nil {
 		return err
 	}

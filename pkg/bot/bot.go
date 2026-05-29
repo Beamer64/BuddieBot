@@ -376,6 +376,14 @@ func registerCommands(s *discordgo.Session) error {
 		return err
 	}
 
+	// Hand the freshly-assigned IDs to the mention registry so clickable
+	// command links (e.g. in the $release embed) resolve correctly.
+	ids := make(map[string]string, len(commandsRegistered))
+	for _, cmd := range commandsRegistered {
+		ids[cmd.Name] = cmd.ID
+	}
+	helper.SetCommandIDs(ids)
+
 	topLevel := len(commandsRegistered)
 	subCmds := 0
 	cmdChoices := 0

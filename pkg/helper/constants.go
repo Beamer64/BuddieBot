@@ -8,8 +8,10 @@ const (
 	// PollMessageContent — the reaction handler matches messages by this body.
 	PollMessageContent = "Poll Time!"
 
-	// LmgtfyEmojiName triggers the "Let Me Google That For You" reaction handler.
-	LmgtfyEmojiName = "grey_question"
+	// LmgtfyMsgEmoji triggers the "Let Me Google That For You" reaction handler.
+	LmgtfyMsgEmoji    = "🔎"
+	TestLmgtfyEmojiID = "lmgtfy:1509929622412984420"
+	ProdLmgtfyEmojiID = "lmgtfy:1509929740180520972"
 
 	// ErrorReaction — fallback when LogAndReact can't DM the user.
 	ErrorReaction = "⚠️"

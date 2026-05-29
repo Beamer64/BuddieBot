@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   deploy:
+    environment: production
     name: Build and deploy
     runs-on: [self-hosted, buddiebot-prod]
     timeout-minutes: 10

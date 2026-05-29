@@ -11,7 +11,7 @@ import (
 )
 
 func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
-	embed := releaseNotesEmbed
+	embed := buildReleaseNotesEmbed()
 
 	embed.Author.Name = m.Author.Username
 	embed.Author.IconURL = m.Author.AvatarURL("")
@@ -21,6 +21,7 @@ func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 		Embed:   embed,
 	}
 
+	// only send to test channel if just testing
 	if helper.IsLaunchedByDebugger() {
 		if _, err := s.ChannelMessageSendComplex(m.ChannelID, msg); err != nil {
 			return fmt.Errorf("send release notes to channel %s: %w", m.ChannelID, err)
