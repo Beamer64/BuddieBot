@@ -1,0 +1,30 @@
+[Unit]
+Description=BuddieBot manual pull-deploy
+Documentation=https://github.com/Beamer64/BuddieBot/tree/master/scripts/pull-deploy
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=buddiebot
+Group=buddiebot
+WorkingDirectory=/opt/buddiebot
+ExecStart=/opt/buddiebot/bin/pull-deploy
+
+# pull-deploy shells out to `sudo systemctl restart buddiebot` for the one
+# privileged step. That sudo invocation is gated through
+# /etc/sudoers.d/buddiebot-runner (same scoped rule the existing deploy.sh
+# already relies on). NoNewPrivileges has to stay disabled for sudo to work.
+NoNewPrivileges=false
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/buddiebot
+
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=180
+
+# Deliberately no [Install] section and no companion timer. This unit is
+# triggered manually via `sudo systemctl start buddiebot-deploy.service`
+# (or by running /opt/buddiebot/bin/pull-deploy directly). It never auto-runs.

@@ -1,0 +1,107 @@
+name: Build and publish release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Required so `gh release create` can publish.
+permissions:
+  contents: write
+
+# Only one release-build in flight at a time. Re-runs queue rather than cancel
+# — a half-built release is worse than a slightly-delayed one.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build + publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # BuddieBot's go.mod has `replace` directives pointing at ../bb_data and
+      # ../bb_images. Check all three into the same workspace at matching
+      # relative paths before `go build` will resolve them.
+      - name: Checkout BuddieBot
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          path: BuddieBot
+
+      - name: Checkout bb_data
+        uses: actions/checkout@v4
+        with:
+          repository: Beamer64/bb_data
+          fetch-depth: 1
+          path: bb_data
+          # If bb_data is/becomes private, add:
+          #   token: ${{ secrets.SIBLING_REPO_PAT }}
+
+      - name: Checkout bb_images
+        uses: actions/checkout@v4
+        with:
+          repository: Beamer64/bb_images
+          fetch-depth: 1
+          path: bb_images
+          # If bb_images is/becomes private, add:
+          #   token: ${{ secrets.SIBLING_REPO_PAT }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: BuddieBot/go.mod
+          cache: true
+          cache-dependency-path: BuddieBot/go.sum
+
+      - name: Build binary
+        working-directory: BuddieBot
+        env:
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          set -euo pipefail
+          mkdir -p ../dist
+          go build -trimpath -ldflags="-s -w" \
+            -o ../dist/buddiebot ./cmd/discord-bot
+          ( cd ../dist && sha256sum buddiebot > buddiebot.sha256 )
+          ls -l ../dist
+
+      - name: Determine tag
+        id: tag
+        run: |
+          set -euo pipefail
+          short_sha="${GITHUB_SHA:0:7}"
+          echo "tag=release-${short_sha}" >> "$GITHUB_OUTPUT"
+          echo "Tagged as release-${short_sha}"
+
+      # Re-runs of the same commit (e.g. via workflow_dispatch) would otherwise
+      # collide with the existing release. Delete-and-recreate refreshes the
+      # artifacts deterministically; --cleanup-tag drops the underlying git tag
+      # so the next `release create` can reuse it.
+      - name: Replace existing release if present
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${{ steps.tag.outputs.tag }}"
+          if gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release $tag exists; deleting to refresh artifacts."
+            gh release delete "$tag" --repo "${{ github.repository }}" --yes --cleanup-tag
+          fi
+
+      - name: Create release
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "BuddieBot ${{ steps.tag.outputs.tag }}" \
+            --notes "Auto-built from ${{ github.sha }}." \
+            buddiebot buddiebot.sha256
