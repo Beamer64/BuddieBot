@@ -246,8 +246,8 @@ BuddieBot is in a continuous state of development. New features/updates may come
 
 - [X]  Games
 - [ ]  Be Funnier
-- [ ]  Skip songs
-- [ ]  Multiple Music Sources
+- [X]  Skip songs
+- [X]  Multiple Music Sources
 - [X]  Rename Repo
 - [X]  DM Your Mother
 - [X]  Custom tag/reaction system
