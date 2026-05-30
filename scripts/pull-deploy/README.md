@@ -33,21 +33,36 @@ sudo cp ~/buddiebot-src/scripts/systemd/buddiebot-deploy.service /etc/systemd/sy
 sudo systemctl daemon-reload
 
 # 3. Make sure /opt/buddiebot/config.yaml exists and is readable by the buddiebot user.
-#    (This is the same shared config scripts/deploy.sh already relies on.)
+#    (This is the same shared config the bot already relies on.)
 sudo install -m 600 -o buddiebot -g buddiebot /path/to/your/config.yaml /opt/buddiebot/config.yaml
 
-# 4. (Optional but recommended) seed current-version so the first run doesn't
+# 4. Grant the buddiebot user read access to the system journal (see "Journal
+#    access requirement" below). Without this, pull-deploy's health-check
+#    can't see the bot's "Logged in as" log line.
+sudo usermod -aG systemd-journal buddiebot
+
+# 5. (Optional but recommended) seed current-version so the first run doesn't
 #    re-pull the version that's already deployed. Use whatever tag is currently live.
 echo "release-XXXXXXX" | sudo -u buddiebot tee /opt/buddiebot/current-version
 ```
 
 ### Sudoers requirement
 
-pull-deploy invokes `sudo systemctl restart buddiebot` for the one privileged step. The `buddiebot` user already has a narrowly-scoped sudoers entry for this (the existing `scripts/deploy.sh` uses the same call). If you're setting up a clean box, `/etc/sudoers.d/buddiebot-runner` should contain:
+pull-deploy invokes `sudo systemctl restart buddiebot` for the one privileged step. The `buddiebot` user already has a narrowly-scoped sudoers entry for this. If you're setting up a clean box, `/etc/sudoers.d/buddiebot-runner` should contain:
 
 ```
 buddiebot ALL=(root) NOPASSWD: /bin/systemctl restart buddiebot
 ```
+
+### Journal access requirement
+
+pull-deploy reads `journalctl -u buddiebot` to detect the bot's `"Logged in as"` line after restart — that's the health check. By default a service user like `buddiebot` can't read the system journal; permission requires `systemd-journal` group membership:
+
+```sh
+sudo usermod -aG systemd-journal buddiebot
+```
+
+If you skip this step, pull-deploy fails fast on the first poll with a clear error message pointing back here, rather than silently timing out. Group membership only applies to *new* processes, so the next `sudo systemctl start buddiebot-deploy.service` picks it up automatically.
 
 ## Run
 
@@ -65,6 +80,43 @@ sudo -u buddiebot /opt/buddiebot/bin/pull-deploy --force
 # Rehearse without touching the live symlink or the service:
 sudo -u buddiebot /opt/buddiebot/bin/pull-deploy --dry-run
 ```
+
+## Sample output
+
+A successful deploy of a new release:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ pull-deploy · 2026-05-29 22:18:46 UTC · pid 121604
+ build-root=/opt/buddiebot  force=false  dry-run=false
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+==> latest release: release-5bfe4cc (2 assets)
+==> current version: release-0a126f4 → upgrading to release-5bfe4cc
+==> staging release-5bfe4cc → /opt/buddiebot/builds/20260529231846-5bfe4cc
+    downloaded binary (12.3 MiB)
+    checksum verified: b969fe7a84b940cd…
+==> swapped 'current' symlink → builds/20260529231846-5bfe4cc
+==> restarting buddiebot.service
+==> waiting for ready marker "Logged in as" (deadline 30s)
+    observed at t+1.2s
+==> updated current-version → release-5bfe4cc
+==> pruned 1 old build(s) (kept 3 newest)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ pull-deploy · OK · 4.1s
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+A no-op (already at the latest release):
+
+```
+━━━…opening banner…━━━
+==> latest release: release-5bfe4cc (2 assets)
+==> current version: release-5bfe4cc
+    nothing to do (use --force to redeploy)
+━━━ pull-deploy · OK · 0.4s ━━━
+```
+
+The heavy bars on either end make consecutive runs in the journal easy to tell apart at a glance.
 
 ## Flags
 

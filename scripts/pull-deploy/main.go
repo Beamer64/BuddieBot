@@ -6,8 +6,8 @@
 // no inbound ports, no runner registration, no code from pull requests ever
 // running on this box.
 //
-// Layout produced matches scripts/deploy.sh exactly, so the existing systemd
-// unit + config file setup keep working without change:
+// Layout produced matches scripts/deploy.sh's historical layout exactly, so
+// the existing systemd unit + config file setup keep working without change:
 //
 //	/opt/buddiebot/
 //	├── current -> builds/<utc-ts>-<short-sha>/
@@ -23,6 +23,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -45,6 +46,10 @@ const (
 	repoName  = "BuddieBot"
 	apiBase   = "https://api.github.com"
 	userAgent = "buddiebot-pull-deploy/1"
+
+	// bannerBar is the heavy box-drawing rule used to bracket each run's
+	// output. Makes consecutive deploys easy to tell apart in the journal.
+	bannerBar = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 )
 
 type config struct {
@@ -71,9 +76,20 @@ type asset struct {
 }
 
 func main() {
+	// systemd already timestamps every line it captures from us; emitting Go's
+	// LstdFlags on top would double up the time prefix. Plain lines look clean
+	// in journalctl output.
+	log.SetFlags(0)
+
 	cfg := parseFlags()
-	if err := run(cfg); err != nil {
-		log.Fatalf("pull-deploy: %v", err)
+	started := time.Now()
+	openingBanner(cfg, started)
+
+	err := run(cfg)
+	closingBanner(err, time.Since(started))
+
+	if err != nil {
+		os.Exit(1)
 	}
 }
 
@@ -92,21 +108,66 @@ func parseFlags() config {
 	return c
 }
 
-func run(cfg config) error {
-	log.Printf("starting (build-root=%s, dry-run=%v, force=%v)", cfg.buildRoot, cfg.dryRun, cfg.force)
+// openingBanner / closingBanner / banner / step / note are the visual layer
+// for the journal output. All consecutive runs land in the same journal, so a
+// heavy rule between them is the difference between "this is clearly a fresh
+// deploy" and "wait, where did the previous one end?".
 
+func openingBanner(cfg config, t time.Time) {
+	banner(
+		fmt.Sprintf("pull-deploy · %s · pid %d", t.UTC().Format("2006-01-02 15:04:05 UTC"), os.Getpid()),
+		fmt.Sprintf("build-root=%s  force=%v  dry-run=%v", cfg.buildRoot, cfg.force, cfg.dryRun),
+	)
+}
+
+func closingBanner(err error, dur time.Duration) {
+	status := "OK"
+	if err != nil {
+		log.Printf("\nERROR: %v", err)
+		status = "FAILED"
+	}
+	banner(fmt.Sprintf("pull-deploy · %s · %s", status, dur.Round(time.Millisecond)))
+}
+
+func banner(lines ...string) {
+	log.Println(bannerBar)
+	for _, l := range lines {
+		log.Println(" " + l)
+	}
+	log.Println(bannerBar)
+}
+
+// step prints a top-level action ("==> staging release-XXX ...").
+func step(format string, args ...any) {
+	log.Printf("==> "+format, args...)
+}
+
+// note prints a sub-step / detail line, indented under the preceding step.
+func note(format string, args ...any) {
+	log.Printf("    "+format, args...)
+}
+
+func run(cfg config) error {
 	rel, err := fetchLatestRelease()
 	if err != nil {
 		return fmt.Errorf("fetch latest release: %w", err)
 	}
-	log.Printf("latest release: %s (%d assets)", rel.TagName, len(rel.Assets))
+	step("latest release: %s (%d assets)", rel.TagName, len(rel.Assets))
 
 	current := readCurrentVersion(cfg.buildRoot)
 	if rel.TagName == current && !cfg.force {
-		log.Printf("already at %s; nothing to do (use --force to redeploy)", current)
+		step("current version: %s", current)
+		note("nothing to do (use --force to redeploy)")
 		return nil
 	}
-	log.Printf("deploying %s (current=%q)", rel.TagName, current)
+	switch {
+	case current == "":
+		step("current version: (none) → deploying %s", rel.TagName)
+	case cfg.force && current == rel.TagName:
+		step("current version: %s → forcing redeploy", current)
+	default:
+		step("current version: %s → upgrading to %s", current, rel.TagName)
+	}
 
 	binURL, shaURL, err := findAssets(rel, cfg.binAsset, cfg.sha256Asset)
 	if err != nil {
@@ -118,11 +179,14 @@ func run(cfg config) error {
 	if err := os.MkdirAll(filepath.Join(buildDir, "config_files"), 0o755); err != nil {
 		return fmt.Errorf("mkdir build dir: %w", err)
 	}
-	log.Printf("staging into %s", buildDir)
+	step("staging %s → %s", rel.TagName, buildDir)
 
 	binPath := filepath.Join(buildDir, "buddiebot")
 	if err := downloadTo(binURL, binPath); err != nil {
 		return fmt.Errorf("download binary: %w", err)
+	}
+	if info, err := os.Stat(binPath); err == nil {
+		note("downloaded binary (%s)", humanSize(info.Size()))
 	}
 
 	expected, err := fetchHash(shaURL)
@@ -136,15 +200,15 @@ func run(cfg config) error {
 	if !strings.EqualFold(actual, expected) {
 		return fmt.Errorf("checksum mismatch (expected %s, got %s) — refusing to deploy", expected, actual)
 	}
-	log.Printf("checksum verified (%s…)", actual[:16])
+	note("checksum verified: %s…", actual[:16])
 
 	if err := os.Chmod(binPath, 0o755); err != nil {
 		return fmt.Errorf("chmod binary: %w", err)
 	}
 
 	// Symlink the build's config_files/config.yaml to the shared, server-managed
-	// /opt/buddiebot/config.yaml — exactly what scripts/deploy.sh does, so the
-	// systemd unit (with WorkingDirectory=/opt/buddiebot/current) finds it.
+	// /opt/buddiebot/config.yaml — so the buddiebot.service unit (with
+	// WorkingDirectory=/opt/buddiebot/current) finds it in the expected spot.
 	configTarget := filepath.Join(cfg.buildRoot, "config.yaml")
 	if _, err := os.Stat(configTarget); err != nil {
 		return fmt.Errorf("server-managed %s missing; set it up once before deploy: %w", configTarget, err)
@@ -154,26 +218,29 @@ func run(cfg config) error {
 	}
 
 	if cfg.dryRun {
-		log.Printf("dry-run: staged at %s — not swapping 'current' or restarting %s", buildDir, cfg.service)
+		step("dry-run: skipped 'current' swap and service restart")
+		note("staged at %s", buildDir)
 		return nil
 	}
 
 	if err := atomicSwingSymlink(buildDir, filepath.Join(cfg.buildRoot, "current")); err != nil {
 		return fmt.Errorf("swing 'current' symlink: %w", err)
 	}
-	log.Printf("swung 'current' to %s", buildDir)
+	step("swapped 'current' symlink → builds/%s", buildID)
 
-	log.Printf("restarting %s.service", cfg.service)
+	step("restarting %s.service", cfg.service)
 	restartedAt := time.Now()
 	if err := restartService(cfg.service); err != nil {
 		return fmt.Errorf("restart service: %w", err)
 	}
 
-	if err := waitForReady(cfg.service, cfg.readyMarker, restartedAt, cfg.healthDeadline); err != nil {
+	step("waiting for ready marker %q (deadline %s)", cfg.readyMarker, cfg.healthDeadline)
+	waited, err := waitForReady(cfg.service, cfg.readyMarker, restartedAt, cfg.healthDeadline)
+	if err != nil {
 		return fmt.Errorf(`%w
 
 The new binary is staged at %s and 'current' points at it, but the readiness
-check did not see the marker. To roll back to the previous build:
+check did not pass. To roll back to the previous build:
 
     ls /opt/buddiebot/builds/      # pick the previous directory
     ln -sfn /opt/buddiebot/builds/<previous>/ /opt/buddiebot/current.new
@@ -181,17 +248,20 @@ check did not see the marker. To roll back to the previous build:
     sudo systemctl restart %s
     echo "<previous-tag>" | sudo tee /opt/buddiebot/current-version`, err, buildDir, cfg.service)
 	}
-	log.Printf("ready marker observed; deploy healthy")
+	note("observed at t+%s", waited.Round(time.Millisecond))
 
 	if err := os.WriteFile(filepath.Join(cfg.buildRoot, "current-version"), []byte(rel.TagName), 0o644); err != nil {
 		return fmt.Errorf("write current-version: %w", err)
 	}
+	step("updated current-version → %s", rel.TagName)
 
-	if err := pruneOldBuilds(filepath.Join(cfg.buildRoot, "builds"), cfg.keep); err != nil {
-		log.Printf("warning: prune failed: %v", err)
+	pruned, err := pruneOldBuilds(filepath.Join(cfg.buildRoot, "builds"), cfg.keep)
+	if err != nil {
+		note("warning: prune failed: %v", err)
+	} else if pruned > 0 {
+		step("pruned %d old build(s) (kept %d newest)", pruned, cfg.keep)
 	}
 
-	log.Printf("deploy %s complete", rel.TagName)
 	return nil
 }
 
@@ -368,24 +438,84 @@ func runQuiet(name string, args ...string) error {
 	return c.Run()
 }
 
+// runJournalctl runs the bot's journal scan, returning stdout, stderr, and
+// any process error separately. exec.Cmd.Output() throws stderr away, which
+// hid permission warnings ("No journal files were opened …") and silently
+// turned them into health-check timeouts — capturing both lets the caller
+// distinguish "log line not there yet" from "I literally can't read this
+// service's logs at all".
+func runJournalctl(service, since string) (stdout, stderr string, err error) {
+	var outBuf, errBuf bytes.Buffer
+	c := exec.Command("journalctl", "-u", service, "--since", since, "--no-pager", "-o", "cat")
+	c.Stdout = &outBuf
+	c.Stderr = &errBuf
+	err = c.Run()
+	return outBuf.String(), errBuf.String(), err
+}
+
+// detectJournalPermissionIssue returns (msg, true) when journalctl's stderr
+// indicates the running user lacks permission to read the system journal for
+// the requested service. The returned msg is the first non-empty stderr line,
+// for context in the error.
+func detectJournalPermissionIssue(stderr string) (string, bool) {
+	s := strings.ToLower(stderr)
+	for _, needle := range []string{
+		"no journal files were opened",
+		"insufficient permissions",
+		"you are currently not seeing messages from other users",
+	} {
+		if strings.Contains(s, needle) {
+			for _, line := range strings.Split(stderr, "\n") {
+				if trimmed := strings.TrimSpace(line); trimmed != "" {
+					return trimmed, true
+				}
+			}
+			return strings.TrimSpace(stderr), true
+		}
+	}
+	return "", false
+}
+
 // waitForReady polls journalctl every second until the bot logs `marker` (the
-// "Logged in as …" line from ReadyHandler) or the deadline expires. Bails out
-// early if the service crashes before reaching the marker, so we don't waste
-// the full deadline on a dead process.
-func waitForReady(service, marker string, restartedAt time.Time, deadline time.Duration) error {
-	deadlineAt := time.Now().Add(deadline)
+// "Logged in as …" line from ReadyHandler) or the deadline expires. Bails
+// early on three conditions:
+//
+//   - The service has dropped to inactive — there's nothing to wait for.
+//   - journalctl stderr indicates a permission issue (e.g. the running user
+//     isn't in systemd-journal) — fail with a clear, actionable error instead
+//     of timing out silently.
+//
+// Returns the wait duration so the caller can log "observed at t+1.2s".
+func waitForReady(service, marker string, restartedAt time.Time, deadline time.Duration) (time.Duration, error) {
+	startedWaiting := time.Now()
+	deadlineAt := startedWaiting.Add(deadline)
 	since := restartedAt.Add(-2 * time.Second).Format("2006-01-02 15:04:05")
+
 	for time.Now().Before(deadlineAt) {
-		out, err := exec.Command("journalctl", "-u", service, "--since", since, "--no-pager", "-o", "cat").Output()
-		if err == nil && strings.Contains(string(out), marker) {
-			return nil
+		stdout, stderr, _ := runJournalctl(service, since)
+
+		if msg, ok := detectJournalPermissionIssue(stderr); ok {
+			return time.Since(startedWaiting), fmt.Errorf(`cannot read %s logs from journalctl: %s
+
+This usually means the user running pull-deploy isn't in the
+'systemd-journal' group. Fix by adding the user (most likely
+'buddiebot') to that group:
+
+    sudo usermod -aG systemd-journal buddiebot
+
+…then re-run the deploy. Group membership takes effect on the next
+process spawn, so 'sudo systemctl start buddiebot-deploy.service'
+picks it up automatically`, service, msg)
+		}
+		if strings.Contains(stdout, marker) {
+			return time.Since(startedWaiting), nil
 		}
 		if !isServiceActive(service) {
-			return fmt.Errorf("service %s is not active after restart", service)
+			return time.Since(startedWaiting), fmt.Errorf("service %s is not active after restart", service)
 		}
 		time.Sleep(1 * time.Second)
 	}
-	return fmt.Errorf("did not observe ready marker %q within %s", marker, deadline)
+	return time.Since(startedWaiting), fmt.Errorf("did not observe ready marker %q within %s", marker, deadline)
 }
 
 func isServiceActive(name string) bool {
@@ -394,13 +524,13 @@ func isServiceActive(name string) bool {
 	return state == "active" || state == "activating"
 }
 
-// pruneOldBuilds keeps the `keep` newest directories under buildsDir (sorted by
-// name — the YYYYMMDDHHMMSS- prefix makes that chronological) and removes the
-// rest. Matches scripts/deploy.sh's pruning behaviour.
-func pruneOldBuilds(buildsDir string, keep int) error {
+// pruneOldBuilds keeps the `keep` newest directories under buildsDir (sorted
+// by name — the YYYYMMDDHHMMSS- prefix makes that chronological) and removes
+// the rest. Returns the number of directories actually pruned.
+func pruneOldBuilds(buildsDir string, keep int) (int, error) {
 	entries, err := os.ReadDir(buildsDir)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	var names []string
 	for _, e := range entries {
@@ -409,14 +539,30 @@ func pruneOldBuilds(buildsDir string, keep int) error {
 		}
 	}
 	if len(names) <= keep {
-		return nil
+		return 0, nil
 	}
 	sort.Sort(sort.Reverse(sort.StringSlice(names)))
+	pruned := 0
 	for _, old := range names[keep:] {
-		log.Printf("pruning %s", old)
 		if err := os.RemoveAll(filepath.Join(buildsDir, old)); err != nil {
-			return err
+			return pruned, err
 		}
+		pruned++
 	}
-	return nil
+	return pruned, nil
+}
+
+// humanSize formats a byte count in binary-prefixed units (KiB/MiB/…). Used
+// only for the "downloaded binary (12.3 MiB)" note — never for arithmetic.
+func humanSize(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }

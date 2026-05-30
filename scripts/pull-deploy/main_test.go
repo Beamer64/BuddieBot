@@ -59,6 +59,74 @@ func TestFindAssets(t *testing.T) {
 	}
 }
 
+func TestDetectJournalPermissionIssue(t *testing.T) {
+	cases := []struct {
+		name      string
+		stderr    string
+		wantFound bool
+	}{
+		{
+			name:      "ubuntu-style permissions warning",
+			stderr:    "No journal files were opened due to insufficient permissions.",
+			wantFound: true,
+		},
+		{
+			name:      "hint variant some distros emit",
+			stderr:    "Hint: You are currently not seeing messages from other users and the system.\n      Users in groups 'adm', 'systemd-journal', 'wheel' can see all messages.",
+			wantFound: true,
+		},
+		{
+			name:      "case insensitive match",
+			stderr:    "INSUFFICIENT PERMISSIONS to read journal.",
+			wantFound: true,
+		},
+		{
+			name:      "unrelated journalctl error is not a permissions issue",
+			stderr:    "Failed to seek to head: Invalid argument",
+			wantFound: false,
+		},
+		{name: "clean stderr", stderr: "", wantFound: false},
+		{name: "noise only", stderr: "\n   \n", wantFound: false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			msg, ok := detectJournalPermissionIssue(c.stderr)
+			if ok != c.wantFound {
+				t.Errorf("detectJournalPermissionIssue(%q) ok=%v, want %v", c.stderr, ok, c.wantFound)
+			}
+			if c.wantFound && strings.TrimSpace(msg) == "" {
+				t.Errorf("flagged but returned empty msg (input %q)", c.stderr)
+			}
+			if !c.wantFound && msg != "" {
+				t.Errorf("not flagged but msg=%q", msg)
+			}
+		})
+	}
+}
+
+func TestHumanSize(t *testing.T) {
+	cases := []struct {
+		in   int64
+		want string
+	}{
+		{0, "0 B"},
+		{1, "1 B"},
+		{1023, "1023 B"},
+		{1024, "1.0 KiB"},
+		{1536, "1.5 KiB"}, // fractional formatting
+		{1024 * 1024, "1.0 MiB"},
+		{13 * 1024 * 1024, "13.0 MiB"},
+		{1024 * 1024 * 1024, "1.0 GiB"},
+		{2 * 1024 * 1024 * 1024 * 1024, "2.0 TiB"},
+	}
+	for _, c := range cases {
+		got := humanSize(c.in)
+		if got != c.want {
+			t.Errorf("humanSize(%d) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
 func TestBuildIDFor(t *testing.T) {
 	now := time.Date(2026, 5, 29, 14, 30, 0, 0, time.UTC)
 	got := buildIDFor("release-abc1234", now)
