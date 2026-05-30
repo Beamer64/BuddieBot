@@ -109,13 +109,11 @@ keys:
   testBotToken:   ""
   webHookToken:   ""
   botPublicKey:   ""
-  tenorAPIkey:    ""
   steamAPI:       "http://api.steampowered.com/ISteamApps/GetAppList/v0002/?key=STEAMKEY&format=json"
   affirmationAPI: "https://www.affirmations.dev/"
   kanyeAPI:       "https://api.kanye.rest/"
   adviceAPI:      "https://api.adviceslip.com/advice"
   doggoAPI:       "https://api.thedogapi.com/v1/images/search"
-  albumPickerAPI: "http://recommended-album-api-dev.us-east-1.elasticbeanstalk.com/prediction/"
   wyrAPI:         "https://would-you-rather-api.abaanshanid.repl.co/"
 
 # IDs relating to Discord or Bot
@@ -133,15 +131,6 @@ discordIDs:
 settings:
   botPrefix:     ""
   botAdminRole:  ""
-  # Used for email sending
-  email:         ""
-  emailPassword: ""
-
-database:
-  tableName: ""
-  region:    ""
-  accessKey: ""
-  secretKey: ""
 ```
 
 *Sections like "database" and various "IDs" are used for specfic functions or features. This can be omitted if unused. That part of the bot just wont work until supplied.*
