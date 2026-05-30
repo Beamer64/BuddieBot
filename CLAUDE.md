@@ -1,6 +1,6 @@
 # BuddieBot — project context
 
-Discord bot in Go: music (Lavalink), image manipulation, games, utilities. Hosted on a Linux Mint home server; CI/CD via GitHub Actions self-hosted runner. Dev on Windows.
+Discord bot in Go: music (Lavalink), image manipulation, games, utilities. Hosted on a Linux Mint home server. CI builds on GitHub-hosted Actions and publishes a GitHub Release; the server pulls the release artifact on demand via the `pull-deploy` tool. No self-hosted runner. Dev on Windows.
 
 ## Sibling repos
 
@@ -8,7 +8,7 @@ Discord bot in Go: music (Lavalink), image manipulation, games, utilities. Hoste
 - `../bb_images` — image processing library
 - `../bb_data` — static data files (jokes, roasts, etc.) embedded via `go:embed`
 
-Keep them as on-disk siblings. The deploy workflow checks all three out side-by-side. **Any code or data you add to bb_data or bb_images needs to be committed AND pushed to that sibling repo** — the vendored copy in BuddieBot covers the build, but CI re-clones the siblings from GitHub.
+Keep them as on-disk siblings. The release workflow checks all three out side-by-side. **Any code or data you add to bb_data or bb_images needs to be committed AND pushed to that sibling repo** — the vendored copy in BuddieBot covers the build, but CI re-clones the siblings from GitHub.
 
 ## Config
 
@@ -213,11 +213,15 @@ go test ./...
 # LOC count
 ./scripts/count_loc.sh
 
-# Deploy: push to master, self-hosted runner picks it up
+# Deploy: pushing to master triggers .github/workflows/release.yml on a
+# GitHub-hosted runner, which publishes a GitHub Release with the binary +
+# SHA-256. The server pulls it on demand:
+#   sudo systemctl start buddiebot-deploy.service
+# See scripts/pull-deploy/README.md for the deploy tool, install, and rollback.
 git push origin master
 ```
 
-Production config (`/opt/buddiebot/config.yaml` on the Mint server) is written from the `BOT_CONFIG_YAML` GitHub secret on every deploy. Don't hand-edit on the server — next deploy clobbers it.
+Production config (`/opt/buddiebot/config.yaml` on the Mint server) is **server-managed** — edit in place via SSH and `sudo systemctl restart buddiebot`. Pull-deploy only swaps the binary; it never touches config. (Earlier setups wrote config from a `BOT_CONFIG_YAML` GitHub secret on every deploy — that path is gone with the self-hosted runner.)
 
 ## Gotchas
 
@@ -225,7 +229,7 @@ Production config (`/opt/buddiebot/config.yaml` on the Mint server) is written f
 - **dagpi is gone.** Don't reintroduce `client.X(...)` calls or the `Configs.Clients` field. Every image command uses bb_images now.
 - **`static-ɢʟɨȶƈɦ`** is intentional — Unicode lookalike letters in the command name. Not a typo.
 - **Avatar fetch** uses the `fetchImage(URL)` helper in `imgCmds.go`, not bare `http.Get`.
-- **`replace` directives matter for CI** — the deploy workflow already checks out bb_images and bb_data as siblings. Don't "fix" them with v0.0.0 pseudo-versions.
+- **`replace` directives matter for CI** — the release workflow already checks out bb_images and bb_data as siblings. Don't "fix" them with v0.0.0 pseudo-versions.
 - **bb_data / bb_images changes need pushing** — re-vendoring in BuddieBot only helps the local build. CI clones the sibling repos fresh from GitHub; uncommitted changes there cause "no required module provides package …" failures.
 
 ## Style

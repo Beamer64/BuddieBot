@@ -94,9 +94,9 @@ echo "<previous-tag>" | sudo -u buddiebot tee /opt/buddiebot/current-version
 
 The current-version file lives outside the swap target, so updating it last keeps state consistent if you have to abort mid-rollback.
 
-## Coexistence with the runner
+## How releases get published
 
-`.github/workflows/release.yml` publishes a GitHub Release on every push to master (built on a GitHub-hosted runner, so it doesn't touch the home server). `.github/workflows/deploy.yml` continues to deploy via the self-hosted runner as before — both run on the same push without interfering. The pull-deploy flow can be exercised in parallel without breaking anything; once it's proven across a few real deploys, `deploy.yml` and the self-hosted runner can be retired.
+`.github/workflows/release.yml` runs on every push to `master` on a **GitHub-hosted** runner (no self-hosted runner anywhere in the loop). It builds the bot for `linux/amd64`, computes the SHA-256, and publishes both as a GitHub Release tagged `release-<short-sha>`. Pull-deploy on the server reads from that release.
 
 ## Update the deploy tool itself
 
