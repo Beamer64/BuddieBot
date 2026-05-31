@@ -32,7 +32,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	if cmdType == "xkcd" {
 		if ok, retry := xkcdLimiter.Allow(i.Member.User.ID); !ok {
 			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
-			return helper.ReturnUserError(s, i, msg, nil)
+			return helper.SendEphemeralMsgPreDeferred(s, i, msg)
 		}
 	}
 
@@ -109,7 +109,7 @@ func sendGetResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		return fmt.Errorf("unknown option: %s", cmdType)
 	}
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendGetResponse %s: %w", cmdType, err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("sendGetResponse %s: %w", cmdType, err))
 	}
 
 	webhookEdit := &discordgo.WebhookEdit{

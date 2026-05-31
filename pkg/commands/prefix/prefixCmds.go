@@ -11,13 +11,19 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// Names is consumed by the startup counter. Drift vs the ParsePrefixCmds
-// switch is caught by TestPrefixNamesMatchSwitch.
-var Names = []string{
+// NoShowCmds is consumed by the startup counter. Drift vs the ParsePrefixCmds
+// switch is caught by TestPrefCmdsListMatchesSwitch; typos here vs
+// PrefCmdsList by TestNoShowCmdsAreKnown.
+var NoShowCmds = []string{
 	"release",
 	"weast",
-	"palindrome",
-	"romans",
+}
+var PrefCmdsList = map[string]string{
+	"release":    "Used to send out release notes to all servers. Admin only, test guild only.",
+	"weast":      "A secret Easter egg command.",
+	"palindrome": "Determines if the string is palindrome. Made for a coding challenge.",
+	"romans":     "Converts numbers into the roman numeral equivalent.",
+	"goodboy":    "The bestest boy I have ever known 🐶",
 }
 
 func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *config.Configs) {
@@ -35,16 +41,9 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 		}
 	}
 
-	if !strings.HasPrefix(m.Content, prefix) {
+	command, param, ok := splitPrefixCommand(m.Content, prefix)
+	if !ok {
 		return
-	}
-
-	messageSlices := strings.SplitAfterN(m.Content, " ", 2)
-	command := strings.TrimSpace(strings.TrimPrefix(messageSlices[0], prefix))
-
-	param := ""
-	if len(messageSlices) > 1 {
-		param = messageSlices[1]
 	}
 
 	switch strings.ToLower(command) {
@@ -62,6 +61,9 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 	case "weast":
 		helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, sendWeasterEgg(s, m))
 
+	case "goodboy":
+		helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, sendGoodBoy(s, m))
+
 	case "palindrome":
 		helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, checkPalindrome(s, m, param))
 
@@ -74,4 +76,35 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 			helper.LogErrorsToErrorChannel(s, cfg.DiscordIDs.ErrorLogChannelID, sendErr, m.GuildID)
 		}
 	}
+}
+
+// splitPrefixCommand parses a raw message body into (command, param) given
+// the guild's current prefix. Matching is STRICT — the prefix is consumed
+// literally, and any extra whitespace between the prefix and the command
+// word means the user didn't intend a prefix invocation. ok=false when the
+// content doesn't match, the bot stays silent.
+//
+//	prefix "$"   + content "$roman 5"      → "roman", "5"   ✓
+//	prefix "$"   + content "$ roman 5"     → ok=false       ✗ (stray space)
+//	prefix "plz "+ content "plz roman 5"   → "roman", "5"   ✓
+//	prefix "plz "+ content "plzroman 5"    → ok=false       ✗ (no space)
+//	prefix "plz "+ content "plz  roman 5"  → ok=false       ✗ (double space)
+//	either       + content == prefix       → ok=false       ✗ (empty command)
+//
+// param keeps its original whitespace so commands like palindrome see the
+// user's exact input.
+func splitPrefixCommand(content, prefix string) (command, param string, ok bool) {
+	if !strings.HasPrefix(content, prefix) {
+		return "", "", false
+	}
+	afterPrefix := content[len(prefix):]
+	if afterPrefix == "" || afterPrefix[0] == ' ' {
+		return "", "", false
+	}
+	parts := strings.SplitN(afterPrefix, " ", 2)
+	command = parts[0]
+	if len(parts) > 1 {
+		param = parts[1]
+	}
+	return command, param, true
 }

@@ -18,6 +18,8 @@ const (
 
 	CistercianMin = -9999
 	CistercianMax = 9999
+
+	ErrRespMsg = "There was a problem making the request, please try again later (ಥ﹏ಥ)"
 )
 
 // GuildOnly restricts a command to the guild context, keeping it out of DMs
@@ -29,7 +31,7 @@ var GuildOnly = &[]discordgo.InteractionContextType{discordgo.InteractionContext
 // this is the only manually-curated piece (and forgetting an entry is harmless).
 var CommandExamples = map[string]string{
 	"animals":   "/animals doggo",
-	"audio":     "/audio play url-1:https://youtu.be/dQw4w9WgXcQ",
+	"audio":     "/audio play url-1:https://www.youtube.com/watch?v=jzmz6K8K4L0",
 	"daily":     "/daily type:horoscope",
 	"game":      "/game wyr",
 	"generate":  "/generate type:fake-person",

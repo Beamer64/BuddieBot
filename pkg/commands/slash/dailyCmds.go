@@ -35,11 +35,11 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	cmdType := i.ApplicationCommandData().Options[0].StringValue()
 	errRespMsg := "Unable to make call at this moment, please try later :("
 
-	// Rate-limit BEFORE deferring — ReturnUserError uses the initial response slot.
+	// Rate-limit BEFORE deferring — SendEphemeralMsg uses the initial response slot.
 	if limiter := dailyLimiters[cmdType]; limiter != nil {
 		if ok, retry := limiter.Allow(i.Member.User.ID); !ok {
 			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
-			return helper.ReturnUserError(s, i, msg, nil)
+			return helper.SendEphemeralMsgPreDeferred(s, i, msg)
 		}
 	}
 
@@ -82,7 +82,7 @@ func sendDailyResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 		return fmt.Errorf("unknown option: %s", cmdType)
 	}
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendDailyResponse %s: %w", cmdType, err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("sendDailyResponse %s: %w", cmdType, err))
 	}
 
 	if _, err = s.InteractionResponseEdit(
@@ -126,10 +126,10 @@ func getHoroscopeWebHookEdit() *discordgo.WebhookEdit {
 }
 
 func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCreate, _ *config.Configs) error {
-	// Rate-limit BEFORE deferring — ReturnUserError uses the initial response slot.
+	// Rate-limit BEFORE deferring — SendEphemeralMsg uses the initial response slot.
 	if ok, retry := horoCompLimiter.Allow(i.Member.User.ID); !ok {
 		msg := fmt.Sprintf("Slow down — the stars need a moment. Try again in `%.0fs`.", retry.Seconds())
-		return helper.ReturnUserError(s, i, msg, nil)
+		return helper.SendEphemeralMsgPreDeferred(s, i, msg)
 	}
 
 	sign := i.MessageComponentData().Values[0]
@@ -144,7 +144,7 @@ func sendHoroscopeCompResponse(s *discordgo.Session, i *discordgo.InteractionCre
 
 	embed, err := getHoroscopeEmbed(sign)
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, "Unable to fetch Horoscope atm, try again later.", fmt.Errorf("get horoscope embed for %s: %w", sign, err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Unable to fetch Horoscope atm, try again later.", fmt.Errorf("get horoscope embed for %s: %w", sign, err))
 	}
 
 	_, err = s.ChannelMessageEditComplex(

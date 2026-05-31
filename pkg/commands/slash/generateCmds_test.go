@@ -1,8 +1,69 @@
 package slash
 
 import (
+	"encoding/json"
 	"testing"
 )
+
+func TestFlexStringUnmarshal(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"string with leading zero (US ZIP)", `"01234"`, "01234"},
+		{"alphanumeric (UK postcode)", `"SW1A 1AA"`, "SW1A 1AA"},
+		{"bare number", `12345`, "12345"},
+		{"large number preserved as literal", `99999999999999999`, "99999999999999999"},
+		{"null becomes empty", `null`, ""},
+		{"empty string stays empty", `""`, ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var got flexString
+			if err := json.Unmarshal([]byte(c.in), &got); err != nil {
+				t.Fatalf("unmarshal %s: %v", c.in, err)
+			}
+			if string(got) != c.want {
+				t.Errorf("unmarshal %s = %q, want %q", c.in, got, c.want)
+			}
+		})
+	}
+
+	// Non-string, non-number JSON types must fail rather than be coerced to
+	// "true" / "false" / "[...]" via best-effort.
+	for _, in := range []string{`true`, `false`, `[1,2,3]`, `{"a":1}`} {
+		var got flexString
+		if err := json.Unmarshal([]byte(in), &got); err == nil {
+			t.Errorf("expected error unmarshalling %s, got nil (value=%q)", in, got)
+		}
+	}
+}
+
+// TestFakePersonLocationFlexPostcode confirms the field actually accepts both
+// JSON shapes when nested in its real struct — guards against forgetting to
+// switch the field type to flexString later.
+func TestFakePersonLocationFlexPostcode(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"numeric postcode", `{"postcode": 90210}`, "90210"},
+		{"string postcode", `{"postcode": "SW1A 1AA"}`, "SW1A 1AA"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var loc fakePersonLocation
+			if err := json.Unmarshal([]byte(c.in), &loc); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			if string(loc.Postcode) != c.want {
+				t.Errorf("Postcode = %q, want %q", loc.Postcode, c.want)
+			}
+		})
+	}
+}
 
 func TestDrawCistLines_Dimensions(t *testing.T) {
 	img := drawCistLines(false, "1685")

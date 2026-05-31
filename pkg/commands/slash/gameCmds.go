@@ -39,11 +39,11 @@ func sendGameResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 
 		channel, dmErr := s.UserChannelCreate(i.Member.User.ID)
 		if dmErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("create DM channel for user %s: %w", i.Member.User.ID, dmErr))
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("create DM channel for user %s: %w", i.Member.User.ID, dmErr))
 		}
 
 		if _, sendErr := s.ChannelMessageSendEmbed(channel.ID, embed); sendErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("send just-lost DM to user %s: %w", i.Member.User.ID, sendErr))
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("send just-lost DM to user %s: %w", i.Member.User.ID, sendErr))
 		}
 
 		embed = &discordgo.MessageEmbed{
@@ -61,7 +61,7 @@ func sendGameResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	}
 
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendGameResponse %s: %w", commandName, err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("sendGameResponse %s: %w", commandName, err))
 	}
 
 	if _, err = s.InteractionResponseEdit(
@@ -199,7 +199,7 @@ func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 
 	webhookEdit, err := getWYRvotesWebhook(cfg, customID)
 	if err != nil {
-		_ = helper.SendEphemeralError(s, i, errRespMsg)
+		_ = helper.SendEphemeralMsgPreDeferred(s, i, errRespMsg)
 		return fmt.Errorf("build WYR votes webhook: %w", err)
 	}
 
@@ -211,7 +211,7 @@ func sendWYRvotesResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 			Components: webhookEdit.Components,
 		},
 	); err != nil {
-		_ = helper.SendEphemeralError(s, i, errRespMsg)
+		_ = helper.SendEphemeralMsgPreDeferred(s, i, errRespMsg)
 		return fmt.Errorf("edit WYR votes message %s: %w", i.Message.ID, err)
 	}
 
@@ -237,7 +237,7 @@ func sendWYRrerollResp(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 
 	webhookEdit, err := getWYRwebhook(cfg)
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, "Unable to fetch WYR atm, try again later.", fmt.Errorf("getWYRwebhook: %w", err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Unable to fetch WYR atm, try again later.", fmt.Errorf("getWYRwebhook: %w", err))
 	}
 
 	if _, err = s.InteractionResponseEdit(

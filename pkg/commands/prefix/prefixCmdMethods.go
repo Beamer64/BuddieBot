@@ -1,12 +1,15 @@
 package prefix
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/Beamer64/BuddieBot/pkg/helper"
+	"github.com/Beamer64/bb_data/buddie"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -39,6 +42,50 @@ func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 		}
 	}
 	return nil
+}
+
+func sendGoodBoy(s *discordgo.Session, m *discordgo.MessageCreate) error {
+	pic := buddie.Random()
+	if pic.Filename == "" {
+		return errors.New("buddie: no image available (bb_data.Load not called?)")
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       "Buddie Baxter!",
+		Color:       helper.RandomDiscordColor(),
+		Description: "For those who don't know, BuddieBot was named after this guy!",
+		Image:       &discordgo.MessageEmbedImage{URL: "attachment://" + pic.Filename},
+	}
+	msg := &discordgo.MessageSend{
+		Embed: embed,
+		Files: []*discordgo.File{
+			{
+				Name:        pic.Filename,
+				ContentType: contentTypeFor(pic.Filename),
+				Reader:      bytes.NewReader(pic.Data),
+			},
+		},
+	}
+	if _, sendErr := s.ChannelMessageSendComplex(m.ChannelID, msg); sendErr != nil {
+		return fmt.Errorf("send goodboy: %w", sendErr)
+	}
+	return nil
+}
+
+// contentTypeFor maps a filename's extension to a Discord-friendly MIME.
+// The buddie/ set is JPEG today (.jpg + .jpeg both present); the switch
+// covers .png and .gif too so future additions don't need a code change.
+func contentTypeFor(name string) string {
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	default:
+		return "application/octet-stream"
+	}
 }
 
 func sendWeasterEgg(s *discordgo.Session, m *discordgo.MessageCreate) error {

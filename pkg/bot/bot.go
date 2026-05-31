@@ -391,7 +391,7 @@ func registerCommands(s *discordgo.Session) error {
 		subCmds += countSubCommands(cmd.Options)
 		cmdChoices += countCommandChoices(cmd.Options)
 	}
-	prefixCmds := len(prefix.Names)
+	prefixCmds := len(prefix.PrefCmdsList)
 
 	log.Printf("%d Top-level commands\n", topLevel)
 	log.Printf("%d Command-option choices (e.g. /get type:joke)\n", cmdChoices)

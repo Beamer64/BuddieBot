@@ -115,7 +115,7 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	case "fake-person":
 		personData, err := callFakePersonAPI(cfg)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("fake-person API: %w", err))
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("fake-person API: %w", err))
 		}
 
 		embed = getFakePersonEmbed(personData)
@@ -124,7 +124,7 @@ func sendGenerateResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		return fmt.Errorf("unknown option: %s", cmdType)
 	}
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendGenerateResponse %s: %w", cmdType, err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("sendGenerateResponse %s: %w", cmdType, err))
 	}
 
 	pingedUser := fmt.Sprintf("<@!%s>", i.Member.User.ID)
@@ -265,7 +265,7 @@ func getFakePersonEmbed(fakePersonObj fakePerson) *discordgo.MessageEmbed {
 func validateCistercian(s *discordgo.Session, i *discordgo.InteractionCreate, opts generateOpts) bool {
 	text := ""
 	if opts[inputName] == nil || opts[inputName].StringValue() == "" {
-		_ = helper.ReturnUserError(s, i, fmt.Sprintf("`%s` is required for /generate %s:Cistercian", inputName, typeName), nil)
+		_ = helper.SendEphemeralMsgPreDeferred(s, i, fmt.Sprintf("`%s` is required for /generate %s:Cistercian", inputName, typeName))
 		return false
 	}
 
@@ -274,7 +274,7 @@ func validateCistercian(s *discordgo.Session, i *discordgo.InteractionCreate, op
 	}
 	n, err := strconv.Atoi(text)
 	if err != nil || n < helper.CistercianMin || n > helper.CistercianMax {
-		_ = helper.ReturnUserError(s, i, fmt.Sprintf("Please enter a whole number from -9999 to 9999 for /generate %s:cistercian.", typeName), nil)
+		_ = helper.SendEphemeralMsgPreDeferred(s, i, fmt.Sprintf("Please enter a whole number from -9999 to 9999 for /generate %s:cistercian.", typeName))
 		return false
 	}
 	return true
@@ -364,16 +364,16 @@ func drawCistLines(negative bool, digits string) *image.RGBA {
 
 func validateLandsat(s *discordgo.Session, i *discordgo.InteractionCreate, opts generateOpts) bool {
 	if opts[inputName] == nil || opts[inputName].StringValue() == "" {
-		_ = helper.ReturnUserError(s, i, fmt.Sprintf("`%s` is required for /generate %s:landsat", inputName, typeName), nil)
+		_ = helper.SendEphemeralMsgPreDeferred(s, i, fmt.Sprintf("`%s` is required for /generate %s:landsat", inputName, typeName))
 		return false
 	}
 	if len(opts[inputName].StringValue()) > 20 {
-		_ = helper.ReturnUserError(s, i, fmt.Sprintf("`%s` limit is 20 for /generate %s:landsat", inputName, typeName), nil)
+		_ = helper.SendEphemeralMsgPreDeferred(s, i, fmt.Sprintf("`%s` limit is 20 for /generate %s:landsat", inputName, typeName))
 		return false
 	}
 	if ok, retry := landsatLimiter.Allow(i.Member.User.ID); !ok {
 		msg := fmt.Sprintf("Landsat is heavy — try again in `%.0fs`.", retry.Seconds())
-		_ = helper.ReturnUserError(s, i, msg, nil)
+		_ = helper.SendEphemeralMsgPreDeferred(s, i, msg)
 		return false
 	}
 	return true
@@ -391,7 +391,7 @@ var fakePersonLimiter = helper.NewRateLimiter(10 * time.Second)
 func validateFakePerson(s *discordgo.Session, i *discordgo.InteractionCreate, _ generateOpts) bool {
 	if ok, retry := fakePersonLimiter.Allow(i.Member.User.ID); !ok {
 		msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
-		_ = helper.ReturnUserError(s, i, msg, nil)
+		_ = helper.SendEphemeralMsgPreDeferred(s, i, msg)
 		return false
 	}
 	return true

@@ -18,15 +18,15 @@ func sendAudioResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	enabled, err := cfg.DB.IsGuildAudioEnabled(gateCtx, i.GuildID)
 	gateCancel()
 	if err != nil {
-		return helper.ReturnUserError(s, i, "Audio check failed, try again.", fmt.Errorf("guild audio enabled lookup: %w", err))
+		return helper.LogSendEphemeralMsgPreDeferred(s, i, "Audio check failed, try again.", fmt.Errorf("guild audio enabled lookup: %w", err))
 	}
 
 	if !enabled {
-		return helper.ReturnUserError(s, i, "Audio commands aren't enabled in this server. Ask a bot admin for access.", nil)
+		return helper.SendEphemeralMsgPreDeferred(s, i, "Audio commands aren't enabled in this server. Ask a bot admin for access.")
 	}
 
 	if cfg.Player == nil {
-		return helper.ReturnUserError(s, i, "Audio is not available right now.", nil)
+		return helper.SendEphemeralMsgPreDeferred(s, i, "Audio is not available right now.")
 	}
 
 	sub := i.ApplicationCommandData().Options[0]
@@ -54,7 +54,7 @@ func sendAudioResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	case "clear":
 		return audioClear(s, i, cfg)
 	default:
-		return helper.ReturnUserErrorDeferred(s, i, "Unknown audio subcommand.", fmt.Errorf("unknown audio subcommand: %s", sub.Name))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Unknown audio subcommand.", fmt.Errorf("unknown audio subcommand: %s", sub.Name))
 	}
 }
 
@@ -91,12 +91,12 @@ func audioPlayOne(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *con
 	result, err := cfg.Player.Play(ctx, i.GuildID, i.ChannelID, i.Member.User.ID, url)
 	if err != nil {
 		// User-facing errors: edit-and-return-nil so wrap() doesn't log as a bug.
-		// Other errors: ReturnUserErrorDeferred surfaces the message AND returns
+		// Other errors: LogSendEphemeralFollowUpPostDeferred surfaces the message AND returns
 		// the wrapped err for the error channel.
 		if voice_chat.IsUserFacingError(err) {
 			return audioEditMessage(s, i, voice_chat.FriendlyPlayError(err))
 		}
-		return helper.ReturnUserErrorDeferred(s, i, voice_chat.FriendlyPlayError(err), fmt.Errorf("audio play: %w", err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, voice_chat.FriendlyPlayError(err), fmt.Errorf("audio play: %w", err))
 	}
 	return audioEditMessage(s, i, voice_chat.FormatPlayResult(result, "/audio resume-queue"))
 }
@@ -240,7 +240,7 @@ func audioStop(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config
 		if errors.Is(err, voice_chat.ErrNothingPlaying) {
 			return audioEditMessage(s, i, "Nothing is playing.")
 		}
-		return helper.ReturnUserErrorDeferred(s, i, "Failed to stop playback.", fmt.Errorf("audio stop: %w", err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Failed to stop playback.", fmt.Errorf("audio stop: %w", err))
 	}
 
 	msg := "Stopped. Use /audio resume-queue to pick up where you left off."
@@ -265,7 +265,7 @@ func audioResumeQueue(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 		case voice_chat.IsUserFacingError(err):
 			return audioEditMessage(s, i, voice_chat.FriendlyPlayError(err))
 		}
-		return helper.ReturnUserErrorDeferred(s, i, "Failed to resume playback.", fmt.Errorf("audio resume-queue: %w", err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Failed to resume playback.", fmt.Errorf("audio resume-queue: %w", err))
 	}
 	return audioEditMessage(s, i, "Resumed: "+track.Info.Title)
 }
@@ -273,7 +273,7 @@ func audioResumeQueue(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 func audioQueue(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	snap, err := cfg.Player.Queue(i.GuildID)
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, "Failed to fetch queue.", fmt.Errorf("audio queue: %w", err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Failed to fetch queue.", fmt.Errorf("audio queue: %w", err))
 	}
 
 	if snap.Current == nil && snap.Paused == nil && len(snap.Upcoming) == 0 {
@@ -315,7 +315,7 @@ func audioSkip(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config
 		if errors.Is(err, voice_chat.ErrNothingPlaying) {
 			return audioEditMessage(s, i, "Nothing is playing.")
 		}
-		return helper.ReturnUserErrorDeferred(s, i, "Failed to skip track.", fmt.Errorf("audio skip: %w", err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Failed to skip track.", fmt.Errorf("audio skip: %w", err))
 	}
 
 	var msg string
@@ -330,7 +330,7 @@ func audioSkip(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config
 func audioClear(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	count, err := cfg.Player.ClearQueue(i.GuildID)
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, "Failed to clear queue.", fmt.Errorf("audio clear: %w", err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Failed to clear queue.", fmt.Errorf("audio clear: %w", err))
 	}
 
 	var msg string

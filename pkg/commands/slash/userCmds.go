@@ -43,7 +43,7 @@ func sendUserResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	case "forget-me":
 		return userForgetMePrompt(s, i)
 	default:
-		return helper.ReturnUserError(s, i, "Unknown user subcommand.", fmt.Errorf("unknown user subcommand: %s", sub.Name))
+		return helper.LogSendEphemeralMsgPreDeferred(s, i, "Unknown user subcommand.", fmt.Errorf("unknown user subcommand: %s", sub.Name))
 	}
 }
 
@@ -74,7 +74,7 @@ func sendProfileResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 
 	embed, components, err := profilePage(ctx, cfg.DB, i.GuildID, target, i.Member.User.ID, 0)
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, "Couldn't load that profile.", err)
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Couldn't load that profile.", err)
 	}
 
 	embeds := []*discordgo.MessageEmbed{embed}
@@ -109,7 +109,7 @@ func sendProfilePageResponse(s *discordgo.Session, i *discordgo.InteractionCreat
 
 	// Ownership: only the user who invoked /user profile can flip pages.
 	if i.Member == nil || i.Member.User.ID != invokerID {
-		return helper.SendEphemeralError(s, i, "That isn't your profile to flip.")
+		return helper.SendEphemeralMsgPreDeferred(s, i, "That isn't your profile to flip.")
 	}
 
 	// s.User caches when possible; if Discord refuses (rare), fall back to a
@@ -138,7 +138,7 @@ func sendProfilePageResponse(s *discordgo.Session, i *discordgo.InteractionCreat
 
 	embed, components, err := profilePage(ctx, cfg.DB, i.GuildID, target, invokerID, page)
 	if err != nil {
-		return helper.SendEphemeralError(s, i, "Couldn't reload that profile page.")
+		return helper.SendEphemeralMsgPreDeferred(s, i, "Couldn't reload that profile page.")
 	}
 
 	return s.InteractionRespond(
@@ -379,14 +379,14 @@ func forgetMeConfirm(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	wantID := strings.TrimPrefix(i.MessageComponentData().CustomID, "forget-me-confirm:")
 	// Ephemeral already scopes the buttons to the invoker; this is belt-and-suspenders.
 	if i.Member == nil || i.Member.User.ID != wantID {
-		return helper.SendEphemeralError(s, i, "That confirmation isn't yours.")
+		return helper.SendEphemeralMsgPreDeferred(s, i, "That confirmation isn't yours.")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	n, err := cfg.DB.ForgetUser(ctx, wantID)
 	if err != nil {
-		return helper.ReturnUserError(s, i, "Couldn't delete your data — try again.", fmt.Errorf("forget user: %w", err))
+		return helper.LogSendEphemeralMsgPreDeferred(s, i, "Couldn't delete your data — try again.", fmt.Errorf("forget user: %w", err))
 	}
 
 	msg := "Your BuddieBot data has been deleted. You'll be added fresh next time you use a command."

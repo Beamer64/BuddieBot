@@ -25,7 +25,7 @@ func defaultErrorLogger(s *discordgo.Session, cfg *config.Configs, err error, gu
 // wrap adapts a slashHandler to discordgo's dispatcher signature, logs
 // returned errors to the error channel, and recovers from panics.
 func wrap(h slashHandler) func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {
-	return wrapWithDeps(h, defaultErrorLogger, helper.SendEphemeralError)
+	return wrapWithDeps(h, defaultErrorLogger, helper.SendEphemeralMsgPreDeferred)
 }
 
 func wrapWithDeps(h slashHandler, logErr errorLogger, notifyUser userNotifier) func(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) {

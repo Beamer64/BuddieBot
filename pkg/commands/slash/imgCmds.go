@@ -39,10 +39,10 @@ func fetchImage(url string) (image.Image, error) {
 }
 
 func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
-	// Rate-limit BEFORE deferring — ReturnUserError uses the initial response slot.
+	// Rate-limit BEFORE deferring — SendEphemeralMsg uses the initial response slot.
 	if ok, retry := imgCmdLimiter.Allow(i.Member.User.ID); !ok {
 		msg := fmt.Sprintf("Slow down! Try again in `%.1fs`.", retry.Seconds())
-		return helper.ReturnUserError(s, i, msg, nil)
+		return helper.SendEphemeralMsgPreDeferred(s, i, msg)
 	}
 
 	// Defer immediately — heavy filters (Stringify, Triggered, etc.) need
@@ -66,7 +66,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 	user, err := s.User(i.Member.User.ID)
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user %s: %w", i.Member.User.ID, err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user %s: %w", i.Member.User.ID, err))
 	}
 
 	for _, opt := range options.Options {
@@ -82,11 +82,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "pixelate":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Pixelate(img, 8)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Pixelate.png"
@@ -95,11 +95,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "mirror":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Mirror(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Mirror.png"
@@ -108,11 +108,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "flip-image":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Flip(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "FlipImage.png"
@@ -121,11 +121,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "colors":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Colors(img, 5)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Colors.png"
@@ -134,11 +134,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "murica":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = overlays.America(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "america.gif"
@@ -147,11 +147,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "communism":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = overlays.Communism(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "communism.gif"
@@ -160,11 +160,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "triggered":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = animated.Triggered(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Triggered.gif"
@@ -173,11 +173,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "expand":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = animated.Expand(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "ExpandImage.gif"
@@ -186,11 +186,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "wasted":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = overlays.Wasted(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Wasted.png"
@@ -199,11 +199,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "sketch":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = edges.Sketch(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Sketch.png"
@@ -212,11 +212,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "spin":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = animated.Spin(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "SpinImage.gif"
@@ -225,12 +225,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "bomb":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = overlays.Bomb(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "bomb.gif"
@@ -239,11 +239,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "shake":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = animated.Shake(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Shake.gif"
@@ -252,11 +252,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "invert":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Invert(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Invert.png"
@@ -265,11 +265,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "sobel":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = edges.Sobel(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Sobel.png"
@@ -278,11 +278,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "hog":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = edges.Hog(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Hog.png"
@@ -291,11 +291,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "triangle":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Triangle(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Triangle.png"
@@ -304,11 +304,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "blur":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Blur(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Blur.png"
@@ -317,11 +317,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "rgb":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = special.RGB(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "RGB.png"
@@ -332,12 +332,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		memeImg, fetchErr := fetchImage(memeURL)
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.DeleteMeme(memeImg)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "delete-meme.png"
@@ -346,12 +346,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "fedora":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.Fedora(avatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "fedora.png"
@@ -360,12 +360,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "worse-than-hitler":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.WorseThanHitler(avatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "worse-than-hitler.png"
@@ -374,12 +374,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "bad":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.Bad(avatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "bad.png"
@@ -388,12 +388,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "math":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = overlays.Math(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "math.gif"
@@ -402,12 +402,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "lego":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = special.Lego(avatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "lego.png"
@@ -416,12 +416,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "wanted":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.Wanted(avatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "wanted.png"
@@ -430,11 +430,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "stringify":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Stringify(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Stringify.png"
@@ -443,11 +443,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "burn":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = special.Burn(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Burn.png"
@@ -456,11 +456,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "earth":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Earth(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Earth.png"
@@ -469,11 +469,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "freeze":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Freeze(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Freeze.png"
@@ -482,11 +482,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "ground":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Ground(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Ground.png"
@@ -495,11 +495,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "mosaic":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Mosaic(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Mosaic.png"
@@ -511,16 +511,16 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		sithAvatar, fetchErr := fetchImage(sith.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		kermitAvatar, fetchErr := fetchImage(kermit.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.SithKermit(sithAvatar, kermitAvatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "sith-kermit.png"
@@ -529,11 +529,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "jail":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = overlays.Jail(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Jail.png"
@@ -542,12 +542,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "shatter":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = overlays.Shatter(avatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "shatter.png"
@@ -560,7 +560,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		case 1:
 			user, err = s.User(i.Member.User.ID)
 			if err != nil {
-				return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image pride: %w", err))
+				return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image pride: %w", err))
 			}
 
 		case 2:
@@ -569,12 +569,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = overlays.Pride(avatar, flag)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "pride.png"
@@ -583,12 +583,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "trash-opinion":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.TrashOpinion(avatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "trash-opinion.png"
@@ -597,11 +597,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "deepfry":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Deepfry(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "deepfry.png"
@@ -610,11 +610,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "ascii":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = special.Ascii(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Ascii.png"
@@ -623,11 +623,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "charcoal":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = edges.Charcoal(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Charcoal.png"
@@ -636,11 +636,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "posterize":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Posterize(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Posterize.png"
@@ -649,11 +649,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "sepia":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Sepia(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Sepia.png"
@@ -662,11 +662,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "swirl":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Swirl(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Swirl.png"
@@ -675,11 +675,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "paint":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = special.Paint(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Paint.png"
@@ -688,11 +688,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "night":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = color.Night(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "night.png"
@@ -701,11 +701,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "rainbow":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = animated.Rainbow(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Rainbow.gif"
@@ -714,11 +714,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "magik":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = spatial.Magik(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "Magik.png"
@@ -730,16 +730,16 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		guysAvatar, fetchErr := fetchImage(guys.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		girlAvatar, fetchErr := fetchImage(girl.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.FiveGuysOneGirl(guysAvatar, girlAvatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "5guys1girl.png"
@@ -751,16 +751,16 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		batmanAvatar, fetchErr := fetchImage(batman.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		robinAvatar, fetchErr := fetchImage(robin.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.BatmanSlap(batmanAvatar, robinAvatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "batman-slap.png"
@@ -769,12 +769,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "thanks-obama":
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.ThanksObama(avatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "thanks-obama.png"
@@ -787,7 +787,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		case 1:
 			user, err = s.User(i.Member.User.ID)
 			if err != nil {
-				return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image tweet: %w", err))
+				return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image tweet: %w", err))
 			}
 
 		case 2:
@@ -796,7 +796,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		displayName := user.GlobalName
 		if displayName == "" {
@@ -804,7 +804,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 		bufferImage, err = signs.Tweet(avatar, displayName, user.Username, tweet)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "tweet.png"
@@ -816,7 +816,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		case 1:
 			user, err = s.User(i.Member.User.ID)
 			if err != nil {
-				return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image youtube: %w", err))
+				return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image youtube: %w", err))
 			}
 
 		case 2:
@@ -825,11 +825,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = signs.YouTube(avatar, user.Username, comment)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "youtube.png"
@@ -841,7 +841,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		case 1:
 			user, err = s.User(i.Member.User.ID)
 			if err != nil {
-				return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image discord: %w", err))
+				return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fmt.Errorf("resolve invoking user for /image discord: %w", err))
 			}
 
 		case 2:
@@ -850,7 +850,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		displayName := user.GlobalName
 		if displayName == "" {
@@ -858,7 +858,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 		}
 		bufferImage, err = signs.Discord(avatar, displayName, msg)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "discord.png"
@@ -878,11 +878,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		avatar, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = signs.RetroMeme(avatar, topText, bottomText)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "retro-meme.png"
@@ -894,16 +894,16 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		intervieweeAvatar, fetchErr := fetchImage(interviewee.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		interviewerAvatar, fetchErr := fetchImage(interviewer.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = signs.WhyAreYouGay(intervieweeAvatar, interviewerAvatar)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "why_are_you_gay.png"
@@ -912,12 +912,12 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "elmo-burn":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 
 		bufferImage, err = overlays.ElmoBurn(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "elmo-burn.gif"
@@ -926,11 +926,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "tv-static":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = animated.TvStatic(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "static.gif"
@@ -939,11 +939,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "rain":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = overlays.Rain(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "rain.gif"
@@ -952,11 +952,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "glitch":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = animated.Glitch(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "glitch.gif"
@@ -965,11 +965,11 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 	case "static-ɢʟɨȶƈɦ":
 		img, fetchErr := fetchImage(user.AvatarURL("300"))
 		if fetchErr != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fetchErr)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, fetchErr)
 		}
 		bufferImage, err = animated.GlitchStatic(img)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "static.gif"
@@ -980,7 +980,7 @@ func sendImgResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *
 
 		bufferImage, err = signs.ChangeMyMind(text)
 		if err != nil {
-			return helper.ReturnUserErrorDeferred(s, i, errRespMsg, err)
+			return helper.LogSendEphemeralFollowUpPostDeferred(s, i, errRespMsg, err)
 		}
 
 		imgName = "ChangeMyMind.png"

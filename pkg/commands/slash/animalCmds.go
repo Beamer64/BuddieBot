@@ -23,13 +23,12 @@ var animalLimiters = map[string]*helper.RateLimiter{
 
 func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs) error {
 	commandName := i.ApplicationCommandData().Options[0].Name
-	errRespMsg := "Unable to make call at this moment, please try later :("
 
-	// Rate-limit BEFORE deferring — ReturnUserError uses the initial response slot.
+	// Rate-limit BEFORE deferring — SendEphemeralMsg uses the initial response slot.
 	if limiter := animalLimiters[commandName]; limiter != nil {
 		if ok, retry := limiter.Allow(i.Member.User.ID); !ok {
 			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
-			return helper.ReturnUserError(s, i, msg, nil)
+			return helper.SendEphemeralMsgPreDeferred(s, i, msg)
 		}
 	}
 
@@ -61,7 +60,7 @@ func sendAnimalsResponse(s *discordgo.Session, i *discordgo.InteractionCreate, c
 		return fmt.Errorf("unknown option: %s", commandName)
 	}
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, errRespMsg, fmt.Errorf("sendAnimalsResponse %s: %w", commandName, err))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, helper.ErrRespMsg, fmt.Errorf("sendAnimalsResponse %s: %w", commandName, err))
 	}
 
 	if _, err = s.InteractionResponseEdit(
@@ -211,7 +210,7 @@ func callKatzAPI(cfg *config.Configs) ([]katz, error) {
 	// Choose a random letter to search with
 	randomChar := string("abcdefghijklmnopqrstuvwxyz"[rand.Intn(26)])
 
-	urlCtx, urlCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	urlCtx, urlCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	base, err := cfg.DB.GetApiURL(urlCtx, "ninjaKatz")
 	urlCancel()
 	if err != nil {

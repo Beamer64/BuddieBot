@@ -25,7 +25,7 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	if cmdType == "steam" {
 		if ok, retry := pickSteamLimiter.Allow(i.Member.User.ID); !ok {
 			msg := fmt.Sprintf("Slow down! Try again in `%.0fs`.", retry.Seconds())
-			return helper.ReturnUserError(s, i, msg, nil)
+			return helper.SendEphemeralMsgPreDeferred(s, i, msg)
 		}
 	}
 
@@ -48,10 +48,10 @@ func sendPickResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg 
 	case "poll":
 		return sendPollResponse(s, i, cfg)
 	default:
-		return helper.ReturnUserErrorDeferred(s, i, "Unknown pick option.", fmt.Errorf("unknown option: %s", cmdType))
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Unknown pick option.", fmt.Errorf("unknown option: %s", cmdType))
 	}
 	if err != nil {
-		return helper.ReturnUserErrorDeferred(s, i, "Unable to pick atm, try again later.", err)
+		return helper.LogSendEphemeralFollowUpPostDeferred(s, i, "Unable to pick atm, try again later.", err)
 	}
 
 	if _, err = s.InteractionResponseEdit(

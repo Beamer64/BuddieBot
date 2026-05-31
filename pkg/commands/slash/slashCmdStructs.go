@@ -1,8 +1,43 @@
 package slash
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 )
+
+// flexString accepts a JSON value that may arrive as either a string or a
+// number, storing it as a string either way.
+// Null and empty-string inputs decode to "". Anything other than a JSON
+// string or number returns a clear error rather than silently storing the
+// literal text.
+type flexString string
+
+func (s *flexString) UnmarshalJSON(b []byte) error {
+	raw := strings.TrimSpace(string(b))
+	if raw == "" || raw == "null" {
+		*s = ""
+		return nil
+	}
+	if raw[0] == '"' {
+		var str string
+		if err := json.Unmarshal(b, &str); err != nil {
+			return err
+		}
+		*s = flexString(str)
+		return nil
+	}
+	// json.Number validates the input is a well-formed JSON number and
+	// preserves the literal so large values don't lose precision through a
+	// float64 round-trip.
+	var n json.Number
+	if err := json.Unmarshal(b, &n); err == nil {
+		*s = flexString(n.String())
+		return nil
+	}
+	return fmt.Errorf("flexString: expected JSON string or number, got %s", raw)
+}
 
 type steamGames struct {
 	Applist steamAppList `json:"applist"`
@@ -98,11 +133,12 @@ type fakePersonTimezone struct {
 	Description string `json:"description"`
 }
 type fakePersonLocation struct {
-	Street      fakePersonStreet      `json:"street"`
-	City        string                `json:"city"`
-	State       string                `json:"state"`
-	Country     string                `json:"country"`
-	Postcode    int                   `json:"postcode"`
+	Street   fakePersonStreet `json:"street"`
+	City     string           `json:"city"`
+	State    string           `json:"state"`
+	Country  string           `json:"country"`
+	Postcode flexString       `json:"postcode"` // string|number — see flexString
+
 	Coordinates fakePersonCoordinates `json:"coordinates"`
 	Timezone    fakePersonTimezone    `json:"timezone"`
 }
