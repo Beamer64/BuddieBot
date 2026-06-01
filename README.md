@@ -1,4 +1,4 @@
-<h1 align="center">
+<h1 style="text-align: center;">
   <br>
   <img src="https://github.com/Beamer64/BuddieBot/blob/master/res/repo_imgs/BuddieBot.png" width="500" height="700" alt="">
   <br>
@@ -6,9 +6,9 @@
   <br>
 </h1>
 
-<h3 align=center>A Homemade Discord Bot for Golang practice and development...also for funsies.</a></h3>
+<h3 style="text-align: center;">A Homemade Discord Bot for Golang practice and development...also for funsies.</h3>
 
-<div align="center">
+<div style="text-align: center;">
   <a href="http://www.harleyroper.com/" target="_blank">
     <img src="https://img.shields.io/badge/Check%20out-My%20Website!-brightgreen" alt="shield.png">
   </a>
@@ -20,15 +20,13 @@
   </a>
 </div>
 
-<div align="center">
-  <a target="_blank">
-    <img src="https://img.shields.io/badge/Total%20Lines-12873-maroon.svg" alt="shield.png">
-  </a>
+<div style="text-align: center;">
+  <img src="https://img.shields.io/badge/Total%20Lines-13987-maroon.svg" alt="shield.png">
 </div>
 
 ---
 
-<p align="center">
+<p style="text-align: center;">
   <a href="#about">About</a>
   •
   <a href="#features">Features</a>
@@ -46,7 +44,7 @@
   <a href="#credits">Credits</a>
 </p>
 
-<div align="center">
+<div style="text-align: center;">
 <img src="https://github.com/Beamer64/BuddieBot/blob/master/res/repo_imgs/under-construction-tape-png-program-under-construction-removebg-preview.png" width="770" height="250" alt="">
 </div>
 

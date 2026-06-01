@@ -27,7 +27,7 @@ Migrations applied in order:
 | 0001 | `Guild`, `User` — base tables, FK cascade User→Guild |
 | 0002 | `ApiURL` — bot-wide external-URL catalog with `IsActive` flag (editable in DBeaver without redeploy) |
 | 0003 | `Guild.LeftAt` — soft-delete marker on bot kick, cleared on rejoin |
-| 0004 | `CommandUsage` — global per-command-path counter (e.g. `image filter blur`) |
+| 0004 | `CommandUsage` — global per-command-path counter (e.g. `image filter blur`, `$goodboy`) |
 | 0005 | `UserRating` — per-(user, rating-type) value, FK cascade User |
 | 0006 | `UserCommandUsage` — per-(user, command-path) counter, FK cascade User |
 
@@ -35,14 +35,29 @@ Conventions: PascalCase columns, `ID INTEGER PRIMARY KEY` on every table, `Disco
 
 ### Privacy stance
 
-- **Opt-in.** A user gets a `User` row only when a data-touching command runs against them (`/user profile`, `/rate-this`, `/admin set-prefix`, etc.). Plain `/image`, `/get`, and so on never materialize a row.
+- **First-command materialization.** A user gets a `User` row on their first **slash OR prefix** command in a guild — both dispatchers funnel through `TrackCommandInvocation`, which calls `EnsureUser` before counting. Bots and DM-context invocations don't materialize (no guild to anchor the row to). Component clicks (buttons, selects) aren't tracked and don't materialize either.
 - **No message content logged.** The error channel logs stack traces, not message bodies.
 - **`/user forget-me` hard-deletes** the User row across every guild. FK `ON DELETE CASCADE` from `User.ID` removes the matching `UserRating` and `UserCommandUsage` rows automatically — no extra code path.
-- **Command-usage recording happens *after* the handler runs** (`events/eventHandlers.go: CommandHandler`). For commands whose handler creates the user row (`/user profile`, `/rate-this`), the very first invocation is counted. Commands that never trigger `EnsureUser` (e.g. `/image`) silently no-op on the per-user counter via a SELECT-driven `INSERT … FROM User WHERE …` — no row is created just from tracking.
+- **Command-usage recording happens *after* the handler runs.** The slash dispatcher (`events/eventHandlers.go: CommandHandler`) and the prefix dispatcher (`commands/prefix/prefixCmds.go: ParsePrefixCmds`) both call `cfg.DB.TrackCommandInvocation` post-handler. That helper bumps the aggregate `CommandUsage` row, ensures the (guild, user) row exists, then bumps the per-(user, command) counter — so `/user profile`'s Commands field is accurate from the very first invocation. The bare `IncrementUserCommandUsage` is still a SELECT-driven no-op when the row is missing, kept as defense-in-depth if upstream ever skips the ensure step.
+- **Prefix-command keys are canonicalized to `$`.** Prefix invocations store as `$goodboy`, `$romans`, etc. regardless of the guild's actual prefix override — keeping the aggregate counter unified across guilds with different prefix styles. The `/user profile` renderer (`formatCommandStats`) swaps the `$` sentinel for the guild's current prefix at render time, so a user on a `plz `-prefix guild sees `plz goodboy`, not `$goodboy`. New prefix commands added to the `ParsePrefixCmds` switch are tracked automatically — the tracking block lives after the switch, with `default` early-returning so unknown commands don't get counted as typos.
 
 ### Hot-path cache
 
 `prefixCache` (a `map[string]string` + `RWMutex`) memoizes per-guild prefix overrides so `ParsePrefixCmds` (runs on **every** message) doesn't build a context or hit the DB after the first lookup. `SetGuildPrefixOverride` writes through. `CachedGuildPrefix(guildID)` is the pure cache read; `GetGuildPrefixOverride(ctx, guildID)` is cache-first with DB fallback and returns the default `$` on error (so a temporary DB hiccup doesn't break message parsing).
+
+### Guild lifecycle & welcome message
+
+`GuildCreate` fires for every guild on bot startup (backfill) AND on each new join. To welcome new servers without re-spamming existing ones on every restart, the handler uses `Guild.LeftAt` as the state signal:
+
+| Pre-existing row state | Meaning | Welcome? |
+|---|---|---|
+| No row | First-ever sighting | ✓ |
+| Row exists, `LeftAt IS NOT NULL` | Was kicked, just re-added | ✓ |
+| Row exists, `LeftAt IS NULL` | Reconnect/backfill (already in guild) | ✗ |
+
+`db.WelcomeNeeded(ctx, discordGuildID)` reads the prior state and returns a bool. **Call order matters**: `WelcomeNeeded` must run BEFORE `MarkGuildJoined`, since the latter clears `LeftAt` and would destroy the rejoin signal. The handler does both inside a single 5-second context.
+
+The welcome embed lives in `pkg/events/welcome.go` — `welcomeEmbed(guildName, botUser)` builds it; `sendWelcomeMessage(s, e)` picks a channel via `pickWelcomeChannel` and posts. The channel picker prefers `Guild.SystemChannelID` (Discord's designated join/leave/boost channel), falls back to the first text channel the bot can write in, and returns `""` when nothing works (caller logs and skips rather than spamming random channels). Layout uses zero-width-space spacer fields to force a 3-rows-of-2 inline grid — Discord otherwise auto-fits 3 inline per row.
 
 ## Per-server settings
 
@@ -114,6 +129,7 @@ Common pattern for ownership: encode the invoker's Discord ID in the custom ID, 
 | `/animals doggo|katz` | `animalCmds.go` | dog/cat APIs |
 | `/audio play|stop|resume-queue|queue|skip|clear` | `audioCmds.go` | Lavalink playback. Gated by `helper.IsAudioGuild`. |
 | `/daily advice|kanye|affirmation|fact|tongue-twister|horoscope` | `dailyCmds.go` | One-shot daily content |
+| `/feedback` | `feedbackCmds.go` | User-submitted feature suggestions / bug reports / other. Posts directly to BuddieBotHQ channels (no DB storage). 1/hour per user; details field ≥30 chars. Routing in `feedbackChannelFor`; destination channel IDs in `cfg.DiscordIDs.BuddieBotHQSuggestionChannelID` / `BuddieBotHQBugChannelID`. |
 | `/game just-lost|wyr` | `gameCmds.go` | Mini-games. wyr has reroll/vote buttons. |
 | `/generate cistercian|landsat|fake-person` | `generateCmds.go` | Image/embed generators. Validators in `generateValidators`. |
 | `/get rekd|joke|8ball|yomomma|pickup-line|xkcd` | `getCmds.go` | Text-based responses (no image generation — those moved to `/generate`). |
@@ -316,6 +332,7 @@ Server prerequisites for pull-deploy (one-time):
 
 ## Gotchas
 
+- **Dev-vs-prod selector is `IsLaunchedByDebugger()` in `pkg/helper/debug.go`.** Returns true on either (a) Delve attached as the parent process, or (b) `BUDDIEBOT_FORCE_DEV` env var non-empty. False → prod config (prod token, prod Lavalink, prod DB path). The IDE's plain "Run" mode does NOT attach Delve, so without the env var it lands on prod and would (1) take over the production gateway connection from the server bot, (2) re-welcome every prod guild because the local DB is empty, (3) generally cause chaos. **`bot.Init` refuses to start with prod config on Windows** — the only sanctioned local-dev paths are IDE "Debug" mode (Delve attached) or setting `BUDDIEBOT_FORCE_DEV=1` in the IDE's Run configuration. The Windows guard is intentionally narrow: prod servers are Linux, so this never triggers in real production.
 - **Helper-name pairs.** `Log…` variants surface the err to `wrap()` so the error channel gets a stack; bare variants don't. Use `Log…` for system failures, bare for status messages / rate-limit notices / "not yours" component-check messages. Misusing them silently drops failures from the error channel.
 - **Status messages stay public, system failures go ephemeral.** Reach for `EditMsgPostDeferred` / `audioEditMessage` for "Nothing playing" / "Prefix must be ≤5 chars" type feedback; `LogSendEphemeralFollowUpPostDeferred` for "the API broke." The deferred-placeholder cleanup happens inside the followup helper — don't reproduce it inline.
 - **Trailing-space prefixes are first-class.** `splitPrefixCommand` in `prefixCmds.go` handles both `"$"` and `"plz "`. Adding a new prefix command means updating `PrefCmdsList` AND a case in the switch — `TestPrefCmdsListMatchesSwitch` catches drift.

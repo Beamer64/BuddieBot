@@ -188,7 +188,13 @@ func profilePage(
 		return nil, nil, fmt.Errorf("profile ensure user: %w", err)
 	}
 
-	embed, err := renderProfilePage(ctx, db, target, user, page)
+	// GetGuildPrefixOverride is cache-first and falls back to "$" on error, so
+	// the swap is always safe even mid-DB-hiccup. Threaded down to the
+	// command-stats renderer; only consumers that surface prefix commands
+	// actually read it.
+	guildPrefix, _ := db.GetGuildPrefixOverride(ctx, discordGuildID)
+
+	embed, err := renderProfilePage(ctx, db, target, user, guildPrefix, page)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -204,6 +210,7 @@ func renderProfilePage(
 	db *database.DB,
 	target *discordgo.User,
 	user *database.User,
+	guildPrefix string,
 	page int,
 ) (*discordgo.MessageEmbed, error) {
 	embed := &discordgo.MessageEmbed{
@@ -215,7 +222,7 @@ func renderProfilePage(
 
 	switch page {
 	case 0:
-		fields, err := profileBasicsFields(ctx, db, user)
+		fields, err := profileBasicsFields(ctx, db, user, guildPrefix)
 		if err != nil {
 			return nil, err
 		}
@@ -227,7 +234,7 @@ func renderProfilePage(
 // profileBasicsFields composes the Basics page: a top-of-profile inline block
 // of the user's most-recently-updated ratings, followed by Dosh, command-usage
 // stats, the Day-One badge when present, and BB User Since.
-func profileBasicsFields(ctx context.Context, db *database.DB, user *database.User) ([]*discordgo.MessageEmbedField, error) {
+func profileBasicsFields(ctx context.Context, db *database.DB, user *database.User, guildPrefix string) ([]*discordgo.MessageEmbedField, error) {
 	recent, err := db.GetRecentUserRatings(ctx, user.ID, recentRatingsShown)
 	if err != nil {
 		return nil, fmt.Errorf("recent ratings: %w", err)
@@ -246,7 +253,7 @@ func profileBasicsFields(ctx context.Context, db *database.DB, user *database.Us
 		{Name: "Recent Ratings", Value: formatRecentRatings(recent), Inline: true},
 		{Name: " ", Value: " ", Inline: true},
 		{Name: "Dosh", Value: fmt.Sprintf("`🪙 %d`", user.Dosh), Inline: true},
-		{Name: "Commands", Value: formatCommandStats(total, topName, topCount), Inline: false},
+		{Name: "Commands", Value: formatCommandStats(total, topName, topCount, guildPrefix), Inline: false},
 	}
 	if user.IsDayOne {
 		fields = append(
@@ -278,13 +285,19 @@ func formatRecentRatings(ratings []*database.UserRating) string {
 }
 
 // formatCommandStats renders the Commands field: a Total line and a
-// Most-used line. topName is the storage key (e.g. "image filter blur");
-// we prepend "/" so it reads as a command. Empty topName means the user
-// has nothing tracked yet — render an em-dash in that slot.
-func formatCommandStats(total int64, topName string, topCount int64) string {
+// Most-used line. topName is the storage key — slash paths like
+// "image filter blur" get a "/" prefix; prefix-command keys stored under the
+// canonical "$" sentinel ("$goodboy") get rendered with the guild's actual
+// prefix character. Empty topName means the user has nothing tracked yet —
+// render an em-dash in that slot.
+func formatCommandStats(total int64, topName string, topCount int64, guildPrefix string) string {
 	most := "—"
 	if topName != "" {
-		most = fmt.Sprintf("`/%s` (`%d×`)", topName, topCount)
+		display := "/" + topName
+		if strings.HasPrefix(topName, "$") {
+			display = guildPrefix + topName[1:]
+		}
+		most = fmt.Sprintf("`%s` (`%d×`)", display, topCount)
 	}
 	return fmt.Sprintf("**Total**: `%d`\n**Most used**: %s", total, most)
 }

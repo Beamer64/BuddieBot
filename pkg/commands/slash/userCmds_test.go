@@ -43,8 +43,8 @@ func TestFormatRecentRatings_EmptyAndJoin(t *testing.T) {
 }
 
 func TestFormatCommandStats(t *testing.T) {
-	// Happy path: total + top command both shown, command rendered as "/path".
-	got := formatCommandStats(42, "image filter blur", 15)
+	// Happy path: total + top slash command both shown, rendered as "/path".
+	got := formatCommandStats(42, "image filter blur", 15, "$")
 	if !strings.Contains(got, "**Total**: `42`") {
 		t.Errorf("missing total line, got %q", got)
 	}
@@ -56,12 +56,48 @@ func TestFormatCommandStats(t *testing.T) {
 	}
 
 	// Empty top → em-dash, total still rendered.
-	got = formatCommandStats(0, "", 0)
+	got = formatCommandStats(0, "", 0, "$")
 	if !strings.Contains(got, "**Total**: `0`") {
 		t.Errorf("missing zero-total line, got %q", got)
 	}
 	if !strings.Contains(got, "**Most used**: —") {
 		t.Errorf("expected em-dash placeholder, got %q", got)
+	}
+}
+
+// TestFormatCommandStats_PrefixSwap locks in the "$"-canonical → guild-prefix
+// swap. Prefix commands store as "$goodboy" regardless of the guild's actual
+// prefix; on render, the sentinel "$" is replaced by the guild's current
+// prefix character so a user on a "plz "-prefix guild sees "plz goodboy",
+// not "$goodboy" or "/$goodboy".
+func TestFormatCommandStats_PrefixSwap(t *testing.T) {
+	// Default prefix — stored "$goodboy" renders as "$goodboy".
+	got := formatCommandStats(7, "$goodboy", 7, "$")
+	if !strings.Contains(got, "`$goodboy`") {
+		t.Errorf("expected `$goodboy` rendering with default prefix, got %q", got)
+	}
+	if strings.Contains(got, "/$") {
+		t.Errorf("prefix command should NOT get a leading slash, got %q", got)
+	}
+
+	// Overridden prefix — stored "$goodboy" renders with the guild's prefix.
+	got = formatCommandStats(7, "$goodboy", 7, "plz ")
+	if !strings.Contains(got, "`plz goodboy`") {
+		t.Errorf("expected `plz goodboy` after swap, got %q", got)
+	}
+
+	// Single-char override (e.g. "!") swaps the "$" cleanly too.
+	got = formatCommandStats(3, "$romans", 3, "!")
+	if !strings.Contains(got, "`!romans`") {
+		t.Errorf("expected `!romans` after swap, got %q", got)
+	}
+
+	// A slash command happens to start with "$" in its name? Not possible —
+	// Discord rejects "$" in slash command names. But verify we don't strip
+	// "$" from a non-prefix-style topName like "user profile".
+	got = formatCommandStats(1, "user profile", 1, "plz ")
+	if !strings.Contains(got, "`/user profile`") {
+		t.Errorf("slash command should still get leading slash, got %q", got)
 	}
 }
 

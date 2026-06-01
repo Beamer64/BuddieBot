@@ -21,4 +21,5 @@ var Commands = []*discordgo.ApplicationCommand{
 	audioSpec(),
 	userSpec(),
 	adminSpec(),
+	feedbackSpec(),
 }

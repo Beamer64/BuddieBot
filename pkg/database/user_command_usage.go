@@ -7,9 +7,10 @@ import (
 	"fmt"
 )
 
-// UserCommandUsage is one (user, command) invocation counter. New rows are
-// only created for users who already have a User row — tracking never
-// materializes users on its own; it just records activity for tracked ones.
+// UserCommandUsage is one (user, command) invocation counter. The dispatcher
+// calls RecordUserCommandUsage, which ensures the User row exists before
+// bumping the counter — so every slash command from the user's first
+// invocation onward is counted accurately.
 type UserCommandUsage struct {
 	ID          int64  `db:"ID"`
 	UserID      int64  `db:"UserID"`
@@ -18,11 +19,22 @@ type UserCommandUsage struct {
 	LastUsedAt  string `db:"LastUsedAt"`
 }
 
-// IncrementUserCommandUsage bumps the per-(user, command) counter — but only
-// when the (Discord user, guild) pair already has a User row. The SELECT
-// drives the INSERT, so a missing user returns zero source rows and the
-// statement is a clean no-op. Preserves the opt-in privacy stance: no rows
-// get created just from tracking.
+// RecordUserCommandUsage materializes the (guild, user) row if it doesn't
+// exist yet, then bumps the per-(user, command) counter. Called for every
+// successful slash-command invocation so /user profile reflects accurate
+// counts from the user's first interaction onward.
+func (db *DB) RecordUserCommandUsage(ctx context.Context, discordGuildID, discordUserID, commandName string) error {
+	if _, err := db.EnsureUser(ctx, discordGuildID, discordUserID); err != nil {
+		return fmt.Errorf("record user command usage: ensure user: %w", err)
+	}
+	return db.IncrementUserCommandUsage(ctx, discordGuildID, discordUserID, commandName)
+}
+
+// IncrementUserCommandUsage bumps the per-(user, command) counter. The
+// SELECT-driven INSERT is defense-in-depth: callers should use
+// RecordUserCommandUsage (which ensures the User row first), but if EnsureUser
+// is ever skipped or fails silently upstream, a missing user still produces a
+// clean no-op rather than a constraint violation.
 func (db *DB) IncrementUserCommandUsage(ctx context.Context, discordGuildID, discordUserID, commandName string) error {
 	_, err := db.ExecContext(ctx, `
 		INSERT INTO UserCommandUsage (UserID, CommandName, UsageCount, LastUsedAt)

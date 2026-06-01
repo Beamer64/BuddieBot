@@ -69,4 +69,5 @@ var CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.Interac
 	"audio":     wrap(sendAudioResponse),
 	"user":      wrap(sendUserResponse),
 	"admin":     wrap(sendAdminResponse),
+	"feedback":  wrap(sendFeedbackResponse),
 }

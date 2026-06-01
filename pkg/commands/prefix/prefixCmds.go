@@ -15,11 +15,9 @@ import (
 // switch is caught by TestPrefCmdsListMatchesSwitch; typos here vs
 // PrefCmdsList by TestNoShowCmdsAreKnown.
 var NoShowCmds = []string{
-	"release",
 	"weast",
 }
 var PrefCmdsList = map[string]string{
-	"release":    "Used to send out release notes to all servers. Admin only, test guild only.",
 	"weast":      "A secret Easter egg command.",
 	"palindrome": "Determines if the string is palindrome. Made for a coding challenge.",
 	"romans":     "Converts numbers into the roman numeral equivalent.",
@@ -46,12 +44,23 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 		return
 	}
 
-	switch strings.ToLower(command) {
+	cmdLower := strings.ToLower(command)
+	switch cmdLower {
 	case "release":
 		// Test-guild only, admin-gated — sends release notes to every guild.
 		if m.GuildID == cfg.DiscordIDs.TestGuildID {
 			if helper.MemberHasRole(s, m.Member, m.GuildID, cfg.Settings.BotAdminRole) {
 				helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, sendReleaseNotes(s, m))
+			} else {
+				_, sendErr := s.ChannelMessageSend(m.ChannelID, "You dont have permission to use this command.")
+				helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, sendErr)
+			}
+		}
+	case "test":
+		// Test-guild only, admin-gated — sends release notes to every guild.
+		if m.GuildID == cfg.DiscordIDs.TestGuildID {
+			if helper.MemberHasRole(s, m.Member, m.GuildID, cfg.Settings.BotAdminRole) {
+				helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, testFeature(s, m, cfg))
 			} else {
 				_, sendErr := s.ChannelMessageSend(m.ChannelID, "You dont have permission to use this command.")
 				helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, sendErr)
@@ -75,6 +84,22 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 		if _, sendErr := s.ChannelMessageSend(m.ChannelID, "Invalid prefix command."); sendErr != nil {
 			helper.LogErrorsToErrorChannel(s, cfg.DiscordIDs.ErrorLogChannelID, sendErr, m.GuildID)
 		}
+		// Unknown command — don't count typos as invocations.
+		return
+	}
+
+	// Track AFTER dispatch — any case that fell through to here is a recognized
+	// command. Adding a new case above gets tracking for free. The "$" key is
+	// canonical regardless of the guild's actual prefix; /user profile swaps
+	// it for the guild's prefix at render time.
+	userID := ""
+	if m.Author != nil && !m.Author.Bot {
+		userID = m.Author.ID
+	}
+	trackCtx, trackCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer trackCancel()
+	if err := cfg.DB.TrackCommandInvocation(trackCtx, "$"+cmdLower, m.GuildID, userID); err != nil {
+		log.Printf("track prefix command %q: %v", cmdLower, err)
 	}
 }
 

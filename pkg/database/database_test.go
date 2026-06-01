@@ -169,6 +169,37 @@ func TestMarkGuildJoinedCreatesAndClearsLeftAt(t *testing.T) {
 	}
 }
 
+// TestWelcomeNeeded covers the three states the welcome decision branches on:
+// no row (first-ever join), row with LeftAt set (rejoin after kick), and row
+// with LeftAt NULL (reconnect/backfill). The first two return true; the last
+// returns false so a bot restart doesn't re-spam the welcome.
+func TestWelcomeNeeded(t *testing.T) {
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	// Case 1: no row → first-ever sighting → welcome.
+	if got, err := db.WelcomeNeeded(ctx, "g"); err != nil || !got {
+		t.Errorf("no row: got %v (err=%v), want true", got, err)
+	}
+
+	// Case 2: row exists, LeftAt NULL → reconnect/backfill → skip.
+	if err := db.MarkGuildJoined(ctx, "g"); err != nil {
+		t.Fatalf("seed join: %v", err)
+	}
+	if got, err := db.WelcomeNeeded(ctx, "g"); err != nil || got {
+		t.Errorf("reconnect: got %v (err=%v), want false", got, err)
+	}
+
+	// Case 3: kicked then re-add — LeftAt is set when WelcomeNeeded fires
+	// (the handler reads BEFORE MarkGuildJoined clears it).
+	if err := db.MarkGuildLeft(ctx, "g"); err != nil {
+		t.Fatalf("mark left: %v", err)
+	}
+	if got, err := db.WelcomeNeeded(ctx, "g"); err != nil || !got {
+		t.Errorf("rejoin: got %v (err=%v), want true", got, err)
+	}
+}
+
 func TestMarkGuildLeftPreservesUsers(t *testing.T) {
 	db := newTestDB(t)
 	ctx := context.Background()

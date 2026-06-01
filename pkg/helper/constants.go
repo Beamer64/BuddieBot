@@ -5,6 +5,10 @@ import (
 )
 
 const (
+	// ZWSP is a zero-width space used as the Name/Value of spacer fields. Discord
+	// rejects empty strings on either; ZWSP renders as nothing while still being
+	// a real, non-empty character. Keep for future use.
+	ZWSP = "​"
 	// PollMessageContent — the reaction handler matches messages by this body.
 	PollMessageContent = "Poll Time!"
 
@@ -43,6 +47,7 @@ var CommandExamples = map[string]string{
 	"tuuck":     "/tuuck cmd-help command:audio",
 	"user":      "/user profile",
 	"admin":     "/admin set-prefix new-prefix:!",
+	"feedback":  "/feedback category:Bug report details:[describe what went wrong]",
 }
 
 var CistOnes = map[string]struct {

@@ -80,6 +80,22 @@ func (db *DB) EnsureGuildExists(ctx context.Context, discordGuildID string, audi
 	return nil
 }
 
+// WelcomeNeeded reports whether GuildCreate should fire a welcome message
+// for this guild. Returns true on first-ever sighting (no row exists) and on
+// rejoin (row exists with LeftAt set); false on reconnect/backfill (row
+// exists, LeftAt is NULL). Must be called BEFORE MarkGuildJoined, which
+// clears LeftAt and would destroy the rejoin signal.
+func (db *DB) WelcomeNeeded(ctx context.Context, discordGuildID string) (bool, error) {
+	g, err := db.GuildByDiscordID(ctx, discordGuildID)
+	if err != nil {
+		return false, err
+	}
+	if g == nil {
+		return true, nil
+	}
+	return g.LeftAt.Valid, nil
+}
+
 // MarkGuildJoined records that the bot is present in the guild: it creates
 // the row if missing and clears LeftAt either way. Called from GuildCreate,
 // which fires for every guild on connect (backfill) and on each new join.

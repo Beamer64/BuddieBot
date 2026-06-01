@@ -16,7 +16,8 @@ func buildReleaseNotesEmbed() *discordgo.MessageEmbed {
 		URL:   "https://github.com/Beamer64/BuddieBot/blob/master/res/release.md",
 		Description: "BuddieBot's been hitting the gym. 🏋️ Here's what's new — under-the-hood " +
 			"glow-ups, a smarter help command, and the groundwork for some big stuff coming soon.\n\n" +
-			"Full notes live in the title link above.",
+			"Full notes live in the title link above. For the devs, its pretty exciting to note that BuddieBot " +
+			"has passed over 10,000 lines of code!",
 		Color:  11091696,
 		Author: &discordgo.MessageEmbedAuthor{},
 		Fields: []*discordgo.MessageEmbedField{

@@ -8,11 +8,24 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Beamer64/BuddieBot/pkg/config"
 	"github.com/Beamer64/BuddieBot/pkg/helper"
 	"github.com/Beamer64/bb_data/buddie"
 	"github.com/bwmarrin/discordgo"
 )
 
+// testFeature is used to test specific features or operations in BuddieBot
+// Used as needed, otherwise sits dead.
+func testFeature(s *discordgo.Session, m *discordgo.MessageCreate, _ *config.Configs) error {
+	/*embed := welcomeEmbed("TestGuild", m.Author)
+
+	_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+	if err != nil {
+		return fmt.Errorf("testing feature: %w", err)
+	}*/
+
+	return nil
+}
 func sendReleaseNotes(s *discordgo.Session, m *discordgo.MessageCreate) error {
 	embed := buildReleaseNotesEmbed()
 

@@ -14,6 +14,29 @@ type CommandUsage struct {
 	LastUsedAt  string `db:"LastUsedAt"`
 }
 
+// TrackCommandInvocation records one command invocation end-to-end: bumps
+// the bot-wide aggregate (CommandUsage), then materializes the (guild, user)
+// row and bumps their per-(user, command) counter (UserCommandUsage). Both
+// the slash dispatcher (events.CommandHandler) and the prefix dispatcher
+// (prefix.ParsePrefixCmds) call this so every invocation lands in both
+// counters with one call.
+//
+// Empty discordGuildID or discordUserID skips the per-user step (DM context
+// or bot invoker — the caller is expected to zero discordUserID for bots).
+// The aggregate always fires when usageKey is non-empty.
+func (db *DB) TrackCommandInvocation(ctx context.Context, usageKey, discordGuildID, discordUserID string) error {
+	if usageKey == "" {
+		return nil
+	}
+	if err := db.IncrementCommandUsage(ctx, usageKey); err != nil {
+		return err
+	}
+	if discordGuildID == "" || discordUserID == "" {
+		return nil
+	}
+	return db.RecordUserCommandUsage(ctx, discordGuildID, discordUserID, usageKey)
+}
+
 // IncrementCommandUsage bumps the count for commandName, creating the row on
 // first use. Atomic upsert — safe to call on every invocation.
 func (db *DB) IncrementCommandUsage(ctx context.Context, commandName string) error {

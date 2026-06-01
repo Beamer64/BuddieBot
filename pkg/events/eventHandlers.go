@@ -45,29 +45,22 @@ func commandUsageKey(data discordgo.ApplicationCommandInteractionData) string {
 	return strings.Join(parts, " ")
 }
 
-// recordCommandUsage bumps both the bot-wide aggregate counter and the
-// per-user counter for a dispatched command. The per-user upsert is a single
-// no-op-if-missing statement, so users who haven't been materialized into the
-// DB yet (no row from /user profile, /rate-this, etc.) silently stay
-// un-tracked. Best-effort throughout: DB hiccups are logged, never block.
-//
-// discordGuildID / discordUserID may be empty (DM context, missing Member);
-// in that case only the aggregate fires.
-func recordCommandUsage(cfg *config.Configs, usageKey, discordGuildID, discordUserID string) {
-	if cfg.DB == nil || usageKey == "" {
+// recordCommandUsage routes one slash-command invocation through the DB
+// tracker. Filters bot invokers (no per-user materialization) before
+// delegating to TrackCommandInvocation, which handles the aggregate + the
+// per-user upsert. Best-effort throughout: DB hiccups are logged, never block.
+func recordCommandUsage(cfg *config.Configs, usageKey, discordGuildID, discordUserID string, invokerIsBot bool) {
+	if cfg.DB == nil {
 		return
+	}
+	if invokerIsBot {
+		discordUserID = ""
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	if err := cfg.DB.IncrementCommandUsage(ctx, usageKey); err != nil {
+	if err := cfg.DB.TrackCommandInvocation(ctx, usageKey, discordGuildID, discordUserID); err != nil {
 		log.Printf("record command usage %q: %v", usageKey, err)
-	}
-
-	if discordGuildID != "" && discordUserID != "" {
-		if err := cfg.DB.IncrementUserCommandUsage(ctx, discordGuildID, discordUserID, usageKey); err != nil {
-			log.Printf("record per-user command usage %q: %v", usageKey, err)
-		}
 	}
 }
 
@@ -129,16 +122,18 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 	case discordgo.InteractionApplicationCommand:
 		data := i.ApplicationCommandData()
 		if h, ok := slash.CommandHandlers[data.Name]; ok {
-			// Record AFTER the handler runs so commands that materialize the
-			// user row (/user profile, /rate-this, etc.) get their very first
-			// invocation counted. wrap() recovers panics inside h, so we
-			// always reach the recording call.
+			// Record AFTER the handler runs — the recording path itself ensures
+			// the User row exists, so the very first invocation lands in the
+			// counters. wrap() recovers panics inside h, so we always reach
+			// the recording call.
 			h(s, i, c.cfg)
 			invokerID := ""
+			isBot := false
 			if i.Member != nil && i.Member.User != nil {
 				invokerID = i.Member.User.ID
+				isBot = i.Member.User.Bot
 			}
-			recordCommandUsage(c.cfg, commandUsageKey(data), i.GuildID, invokerID)
+			recordCommandUsage(c.cfg, commandUsageKey(data), i.GuildID, invokerID, isBot)
 		}
 	case discordgo.InteractionMessageComponent:
 		customID := i.MessageComponentData().CustomID
@@ -236,10 +231,25 @@ func (g *GuildHandler) GuildCreateHandler(s *discordgo.Session, e *discordgo.Gui
 	// every guild on connect (backfill) and on each new join. Runs in dev too
 	// — only the owner notification below is gated behind the debugger check.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// WelcomeNeeded MUST run before MarkGuildJoined — the latter clears LeftAt
+	// and would destroy the rejoin signal. True on first-ever sighting (no row)
+	// AND on rejoin (row with LeftAt set); false on reconnect/backfill.
+	shouldWelcome, welcomeErr := g.cfg.DB.WelcomeNeeded(ctx, e.ID)
+	if welcomeErr != nil {
+		log.Printf("guild create: welcome check %s: %v", e.ID, welcomeErr)
+	}
 	if err := g.cfg.DB.MarkGuildJoined(ctx, e.ID); err != nil {
 		log.Printf("guild create: mark joined %s: %v", e.ID, err)
 	}
 	cancel()
+
+	if shouldWelcome {
+		if err := sendWelcomeMessage(s, e); err != nil {
+			// Best-effort: log but don't error. A guild with no writable channel
+			// or a transient send failure isn't worth disrupting the join flow.
+			log.Printf("guild create: send welcome %s: %v", e.ID, err)
+		}
+	}
 
 	if helper.IsLaunchedByDebugger() {
 		return

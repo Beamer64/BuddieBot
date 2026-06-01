@@ -33,6 +33,14 @@ type configuration struct {
 		TestGuildID         string `yaml:"testGuildID"`
 		ErrorLogChannelID   string `yaml:"errorLogChannelID"`
 		EventNotifChannelID string `yaml:"eventNotifChannelID"`
+
+		// Channels in the BuddieBotHQ server that /feedback posts into,
+		// routed by the user's chosen category (feature/other → suggestion,
+		// bug → bug). Empty values disable the corresponding category — the
+		// handler surfaces a user-facing "feedback channel isn't configured"
+		// message rather than silently dropping the submission.
+		BuddieBotHQSuggestionChannelID string `yaml:"buddieBotHQSuggestionChannelID"`
+		BuddieBotHQBugChannelID        string `yaml:"buddieBotHQBugChannelID"`
 	} `yaml:"discordIDs"`
 
 	Settings struct {

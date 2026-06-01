@@ -35,6 +35,15 @@ var (
 )
 
 func Init(cfg *config.Configs) error {
+	// Safety guard: running with prod config from a dev machine is a footgun.
+	// A non-Delve launch on Windows would otherwise connect with the prod
+	// token, kick the production bot off the gateway, and welcome-spam every
+	// prod guild from a stale local DB. Refuse to start unless the dev signal
+	// is explicit: attach Delve (Debug mode) or set BUDDIEBOT_FORCE_DEV=1.
+	if !helper.IsLaunchedByDebugger() && runtime.GOOS == "windows" {
+		return errors.New("refusing to start with prod config on Windows — use Debug mode or set BUDDIEBOT_FORCE_DEV=1")
+	}
+
 	token := ""
 	botENV := ""
 	if helper.IsLaunchedByDebugger() {

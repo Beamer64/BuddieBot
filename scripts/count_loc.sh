@@ -48,6 +48,23 @@ echo "-----------------"
 printf '%8d  files\n' "$total_files"
 printf '%8d  total lines\n' "$total_lines"
 
+# Update the LOC badge in README.md (if present). The badge URL embeds the
+# count between "Total%20Lines-" and "-maroon.svg" — substitute in place.
+# Uses sed -i.bak for cross-platform safety (BSD sed on macOS rejects bare
+# -i; the .bak file is removed right after).
+readme="README.md"
+if [[ -f "$readme" ]]; then
+    if grep -q 'Total%20Lines-[0-9]\+-maroon\.svg' "$readme"; then
+        sed -i.bak -E "s|(Total%20Lines-)[0-9]+(-maroon\.svg)|\1${total_lines}\2|" "$readme"
+        rm -f "${readme}.bak"
+        echo
+        printf 'Updated %s badge: %d lines\n' "$readme" "$total_lines"
+    else
+        echo
+        printf 'Skipped %s badge update: no "Total%%20Lines-N-maroon.svg" pattern found\n' "$readme"
+    fi
+fi
+
 # If stdout is a real terminal (i.e. not piped/redirected), pause so the
 # window doesn't auto-close when launched by double-click on Windows or
 # similar. Piped invocations (`... | tail`) skip this branch.
