@@ -118,22 +118,53 @@ func NewReadyHandler(cfg *config.Configs) *ReadyHandler {
 
 func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	defer recoverPanic(s, c.cfg, i.GuildID)
+
+	// Identify the invoker once — reused by both the ban gate and the
+	// post-handler usage tracker. Falls back to i.User for DM contexts.
+	invokerID := ""
+	invokerIsBot := false
+	if i.Member != nil && i.Member.User != nil {
+		invokerID = i.Member.User.ID
+		invokerIsBot = i.Member.User.Bot
+	} else if i.User != nil {
+		invokerID = i.User.ID
+		invokerIsBot = i.User.Bot
+	}
+
+	// Ban gate — applies to BOTH slash commands and component clicks (a
+	// banned user shouldn't be able to flip pages or click buttons either).
+	// Failures are logged but don't fail-closed: if the DB is unreachable
+	// we'd rather serve a banned user than lock everyone out.
+	if invokerID != "" && c.cfg.DB != nil {
+		banCtx, banCancel := context.WithTimeout(context.Background(), 2*time.Second)
+		banned, err := c.cfg.DB.IsUserBanned(banCtx, invokerID)
+		banCancel()
+		if err != nil {
+			log.Printf("ban check for %s: %v", invokerID, err)
+		}
+		if banned {
+			_ = s.InteractionRespond(
+				i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Flags:   discordgo.MessageFlagsEphemeral,
+						Content: "Your access to BuddieBot has been revoked, 🫵 HaHa.",
+					},
+				},
+			)
+			return
+		}
+	}
+
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
 		data := i.ApplicationCommandData()
 		if h, ok := slash.CommandHandlers[data.Name]; ok {
 			// Record AFTER the handler runs — the recording path itself ensures
 			// the User row exists, so the very first invocation lands in the
-			// counters. wrap() recovers panics inside h, so we always reach
-			// the recording call.
+			// counters. wrap() recovers panics inside h, so we always reach the recording call.
 			h(s, i, c.cfg)
-			invokerID := ""
-			isBot := false
-			if i.Member != nil && i.Member.User != nil {
-				invokerID = i.Member.User.ID
-				isBot = i.Member.User.Bot
-			}
-			recordCommandUsage(c.cfg, commandUsageKey(data), i.GuildID, invokerID, isBot)
+			recordCommandUsage(c.cfg, commandUsageKey(data), i.GuildID, invokerID, invokerIsBot)
 		}
 	case discordgo.InteractionMessageComponent:
 		customID := i.MessageComponentData().CustomID

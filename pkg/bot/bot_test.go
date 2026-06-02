@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 	"testing"
 	"time"
-
-	"github.com/bwmarrin/discordgo"
 )
 
 func TestCoinFlip(t *testing.T) {
@@ -32,37 +29,6 @@ func TestCoinFlip(t *testing.T) {
 
 		} else {
 			fmt.Println("It landed tails")
-		}
-	}
-}
-
-func TestMemberHasRole(t *testing.T) {
-	if os.Getenv("INTEGRATION") != "true" {
-		t.Skip("skipping due to INTEGRATION env var not being set to 'true'")
-	}
-
-	/*cfg, err := config_files.ReadConfig()
-	if err != nil {
-		t.Fatal(err)
-	}*/
-
-	roleName := "test"
-	s := discordgo.NewState()
-
-	member, err := s.Member("", "289217573004902400")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// memberRoles := make([]string, len(member.Roles))
-
-	for _, role := range member.Roles {
-		if role == "@everyone" {
-			continue
-		}
-
-		if strings.ToLower(role) == roleName {
-			fmt.Println("Role not found")
 		}
 	}
 }

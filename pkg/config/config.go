@@ -34,6 +34,12 @@ type configuration struct {
 		ErrorLogChannelID   string `yaml:"errorLogChannelID"`
 		EventNotifChannelID string `yaml:"eventNotifChannelID"`
 
+		// BotOwnerIDs lists Discord user IDs empowered to run owner-only
+		// commands ($release broadcasts release notes to every guild; $test
+		// is the in-progress-feature sandbox). Empty list → nobody can run
+		// owner-only commands.
+		BotOwnerIDs []string `yaml:"botOwnerIDs"`
+
 		// Channels in the BuddieBotHQ server that /feedback posts into,
 		// routed by the user's chosen category (feature/other → suggestion,
 		// bug → bug). Empty values disable the corresponding category — the
@@ -41,10 +47,15 @@ type configuration struct {
 		// message rather than silently dropping the submission.
 		BuddieBotHQSuggestionChannelID string `yaml:"buddieBotHQSuggestionChannelID"`
 		BuddieBotHQBugChannelID        string `yaml:"buddieBotHQBugChannelID"`
+
+		// Channel that /admin ban and /admin unban post audit embeds into.
+		// Empty value disables auditing — bans still apply, the maintainer
+		// just doesn't get a passive notification.
+		BuddieBotHQBanChannelID string `yaml:"buddieBotHQBanChannelID"`
 	} `yaml:"discordIDs"`
 
 	Settings struct {
-		BotAdminRole string `yaml:"botAdminRole"`
+		// (reserved for future per-bot tuning knobs)
 	} `yaml:"settings"`
 
 	Lavalink struct {

@@ -21,7 +21,7 @@
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Total%20Lines-13987-maroon.svg" alt="shield.png">
+  <img src="https://img.shields.io/badge/Total%20Lines-14656-maroon.svg" alt="shield.png">
 </div>
 
 ---
@@ -124,11 +124,13 @@ discordIDs:
   webHookID:           ""
   errorLogChannelID:   ""
   eventNotifChannelID: ""
+  # Discord user IDs of bot maintainers — empowered to run owner-only
+  # commands like $release and $test. Add yourself before first run.
+  botOwnerIDs:
+    - ""
 
 # Custom Settings
-settings:
-  botPrefix:     ""
-  botAdminRole:  ""
+settings: {}
 ```
 
 *Sections like "database" and various "IDs" are used for specfic functions or features. This can be omitted if unused. That part of the bot just wont work until supplied.*
@@ -265,7 +267,7 @@ BuddieBot is in a continuous state of development. New features/updates may come
 - *webHookID* - Can be easily found in the Webhook URL.††
 - *errorLogChannelID* - The ID of the Channel you'd like the bot to update with any errors it encounters.†
 - *botPrefix* - The prefix given when the bot recognizes a command. For example, the one I use is '$'.
-- *botAdminRole* - The name of the Role you create to restrict users from certain commands or actions. E.g. Mine was 'Bot Admin Role'.
+- *botOwnerIDs* - Discord user IDs of bot maintainers. Members in this list can run owner-only commands ($release, $test). To grab your ID: enable Developer Mode in Discord, then right-click your name → Copy User ID.
 
 † **To get the ID's of things in Discord, you will need to [Enable Dev Mode](https://techswift.org/2020/09/17/how-to-enable-developer-mode-in-discord) in Discord.**
 

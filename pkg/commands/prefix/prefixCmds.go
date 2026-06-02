@@ -15,9 +15,13 @@ import (
 // switch is caught by TestPrefCmdsListMatchesSwitch; typos here vs
 // PrefCmdsList by TestNoShowCmdsAreKnown.
 var NoShowCmds = []string{
+	"release",
+	"test",
 	"weast",
 }
 var PrefCmdsList = map[string]string{
+	"release":    "Used to send out release notes to all servers. Admin only, test guild only.",
+	"test":       "Admin-only sandbox for in-progress features. Test guild only.",
 	"weast":      "A secret Easter egg command.",
 	"palindrome": "Determines if the string is palindrome. Made for a coding challenge.",
 	"romans":     "Converts numbers into the roman numeral equivalent.",
@@ -44,12 +48,27 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 		return
 	}
 
+	// Ban gate — silently ignore banned users on prefix commands. No
+	// ephemeral channel for text-channel responses, and reacting visibly
+	// (🚫) invites argument; the quiet drop is the lowest-friction option.
+	if m.Author != nil {
+		banCtx, banCancel := context.WithTimeout(context.Background(), 2*time.Second)
+		banned, err := cfg.DB.IsUserBanned(banCtx, m.Author.ID)
+		banCancel()
+		if err != nil {
+			log.Printf("ban check for %s: %v", m.Author.ID, err)
+		}
+		if banned {
+			return
+		}
+	}
+
 	cmdLower := strings.ToLower(command)
 	switch cmdLower {
 	case "release":
-		// Test-guild only, admin-gated — sends release notes to every guild.
+		// Test-guild only, bot-owner gated — broadcasts release notes to every guild.
 		if m.GuildID == cfg.DiscordIDs.TestGuildID {
-			if helper.MemberHasRole(s, m.Member, m.GuildID, cfg.Settings.BotAdminRole) {
+			if m.Author != nil && helper.IsBotOwner(m.Author.ID, cfg.DiscordIDs.BotOwnerIDs) {
 				helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, sendReleaseNotes(s, m))
 			} else {
 				_, sendErr := s.ChannelMessageSend(m.ChannelID, "You dont have permission to use this command.")
@@ -57,9 +76,9 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 			}
 		}
 	case "test":
-		// Test-guild only, admin-gated — sends release notes to every guild.
+		// Test-guild only, bot-owner gated — in-progress feature sandbox.
 		if m.GuildID == cfg.DiscordIDs.TestGuildID {
-			if helper.MemberHasRole(s, m.Member, m.GuildID, cfg.Settings.BotAdminRole) {
+			if m.Author != nil && helper.IsBotOwner(m.Author.ID, cfg.DiscordIDs.BotOwnerIDs) {
 				helper.LogAndReact(s, m, cfg.DiscordIDs.ErrorLogChannelID, testFeature(s, m, cfg))
 			} else {
 				_, sendErr := s.ChannelMessageSend(m.ChannelID, "You dont have permission to use this command.")

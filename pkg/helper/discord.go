@@ -239,22 +239,16 @@ func getErrorEmbed(err error, s *discordgo.Session, gID string) *discordgo.Messa
 // Misc
 // ─────────────────────────────────────────────────────────────────────
 
-// MemberHasRole reports whether m has a role named roleName (case-insensitive)
-// in the given guild. Falls back to m.GuildID when guildID is empty.
-func MemberHasRole(session *discordgo.Session, m *discordgo.Member, guildID string, roleName string) bool {
-	if guildID == "" {
-		guildID = m.GuildID
+// IsBotOwner reports whether userID is listed as a bot maintainer in the
+// supplied owner-ID slice. Empty slice → always false (nobody is owner —
+// the safe default if config is unpopulated). Used to gate owner-only
+// surfaces ($release, $test).
+func IsBotOwner(userID string, ownerIDs []string) bool {
+	if userID == "" {
+		return false
 	}
-	roleName = strings.ToLower(roleName)
-
-	for _, roleID := range m.Roles {
-		role, err := session.State.Role(guildID, roleID)
-		if err != nil {
-			log.Printf("MemberHasRole: resolve role %s in guild %s: %v", roleID, guildID, err)
-			continue
-		}
-
-		if strings.ToLower(role.Name) == roleName {
+	for _, id := range ownerIDs {
+		if id == userID {
 			return true
 		}
 	}

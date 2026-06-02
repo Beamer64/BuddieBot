@@ -111,10 +111,10 @@ func TestWelcomeEmbedShape(t *testing.T) {
 		}
 	}
 
-	// Layout: 6 inline feature fields + 3 inline spacers + 3 full-width =
-	// 12 total. Spacers force 2-per-row by occupying the 3rd slot.
-	if len(embed.Fields) != 12 {
-		t.Errorf("expected 12 fields (6 features + 3 spacers + 3 full-width), got %d", len(embed.Fields))
+	// Layout: 6 inline feature fields + 3 full-width = 9 total. Discord
+	// auto-arranges the inline ones (2 rows of 3 at typical viewport widths).
+	if len(embed.Fields) != 9 {
+		t.Errorf("expected 9 fields (6 features + 3 full-width), got %d", len(embed.Fields))
 	}
 
 	// The full-width fields must NOT be inline.

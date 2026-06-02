@@ -30,6 +30,7 @@ Migrations applied in order:
 | 0004 | `CommandUsage` — global per-command-path counter (e.g. `image filter blur`, `$goodboy`) |
 | 0005 | `UserRating` — per-(user, rating-type) value, FK cascade User |
 | 0006 | `UserCommandUsage` — per-(user, command-path) counter, FK cascade User |
+| 0007 | `BannedUser` — global ban list, `Discord_UserID` UNIQUE, no FK (bans outlive `/user forget-me` and can be pre-emptive) |
 
 Conventions: PascalCase columns, `ID INTEGER PRIMARY KEY` on every table, `Discord_` prefix for Discord snowflakes (e.g. `Discord_UserID`), FK column names match the referenced table (`GuildID` → `Guild.ID`), singular table names.
 
@@ -40,6 +41,7 @@ Conventions: PascalCase columns, `ID INTEGER PRIMARY KEY` on every table, `Disco
 - **`/user forget-me` hard-deletes** the User row across every guild. FK `ON DELETE CASCADE` from `User.ID` removes the matching `UserRating` and `UserCommandUsage` rows automatically — no extra code path.
 - **Command-usage recording happens *after* the handler runs.** The slash dispatcher (`events/eventHandlers.go: CommandHandler`) and the prefix dispatcher (`commands/prefix/prefixCmds.go: ParsePrefixCmds`) both call `cfg.DB.TrackCommandInvocation` post-handler. That helper bumps the aggregate `CommandUsage` row, ensures the (guild, user) row exists, then bumps the per-(user, command) counter — so `/user profile`'s Commands field is accurate from the very first invocation. The bare `IncrementUserCommandUsage` is still a SELECT-driven no-op when the row is missing, kept as defense-in-depth if upstream ever skips the ensure step.
 - **Prefix-command keys are canonicalized to `$`.** Prefix invocations store as `$goodboy`, `$romans`, etc. regardless of the guild's actual prefix override — keeping the aggregate counter unified across guilds with different prefix styles. The `/user profile` renderer (`formatCommandStats`) swaps the `$` sentinel for the guild's current prefix at render time, so a user on a `plz `-prefix guild sees `plz goodboy`, not `$goodboy`. New prefix commands added to the `ParsePrefixCmds` switch are tracked automatically — the tracking block lives after the switch, with `default` early-returning so unknown commands don't get counted as typos.
+- **Ban gate runs first.** Both dispatchers check `db.IsUserBanned(invokerID)` before anything else — slash/component clicks get an ephemeral "Your access to BuddieBot has been revoked." and bail; prefix commands silently ignore (no native ephemeral on text channels). Banned users never reach a handler, never get usage-tracked. Bans are GLOBAL (`BannedUser.Discord_UserID` is UNIQUE) but `/admin banned-list` filters per-guild via a JOIN on `User` so server admins only see entries relevant to their server. **Ban/unban preserve all user data** — profile, ratings, command counts — so an unban resumes where the user left off.
 
 ### Hot-path cache
 
@@ -125,11 +127,11 @@ Common pattern for ownership: encode the invoker's Discord ID in the custom ID, 
 
 | Group | Lives in | Notes |
 |---|---|---|
-| `/admin set-prefix` | `adminCmds.go` | Server-admin only (DefaultMemberPermissions=ManageGuild). Sets the per-server prefix, supports trailing-space prefixes. |
+| `/admin set-prefix|ban|unban|banned-list` | `adminCmds.go` | Server-admin only (DefaultMemberPermissions=ManageGuild). `set-prefix` sets the per-server prefix. `ban`/`unban` write to `BannedUser` (global scope; user data preserved); audit embed posts to `cfg.DiscordIDs.BuddieBotHQBanChannelID`. `banned-list` shows users banned globally who have history in *this* guild (DB JOIN on `User`). |
 | `/animals doggo|katz` | `animalCmds.go` | dog/cat APIs |
 | `/audio play|stop|resume-queue|queue|skip|clear` | `audioCmds.go` | Lavalink playback. Gated by `helper.IsAudioGuild`. |
 | `/daily advice|kanye|affirmation|fact|tongue-twister|horoscope` | `dailyCmds.go` | One-shot daily content |
-| `/feedback` | `feedbackCmds.go` | User-submitted feature suggestions / bug reports / other. Posts directly to BuddieBotHQ channels (no DB storage). 1/hour per user; details field ≥30 chars. Routing in `feedbackChannelFor`; destination channel IDs in `cfg.DiscordIDs.BuddieBotHQSuggestionChannelID` / `BuddieBotHQBugChannelID`. |
+| `/feedback` | `utilityCmds.go` | User-submitted feature suggestions / bug reports / other. Posts directly to BuddieBotHQ channels (no DB storage). 1 per (user, category) per 30 min — so the same user can fire off one of each category back-to-back. Details field ≥30 chars. Routing in `feedbackChannelFor`; destination channel IDs in `cfg.DiscordIDs.BuddieBotHQSuggestionChannelID` / `BuddieBotHQBugChannelID`. |
 | `/game just-lost|wyr` | `gameCmds.go` | Mini-games. wyr has reroll/vote buttons. |
 | `/generate cistercian|landsat|fake-person` | `generateCmds.go` | Image/embed generators. Validators in `generateValidators`. |
 | `/get rekd|joke|8ball|yomomma|pickup-line|xkcd` | `getCmds.go` | Text-based responses (no image generation — those moved to `/generate`). |

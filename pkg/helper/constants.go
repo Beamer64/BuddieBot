@@ -46,7 +46,7 @@ var CommandExamples = map[string]string{
 	"txt":       "/txt type:bubble text:hello",
 	"tuuck":     "/tuuck cmd-help command:audio",
 	"user":      "/user profile",
-	"admin":     "/admin set-prefix new-prefix:!",
+	"admin":     "/admin ban target:@SpammerSteve reason:Spamming /image",
 	"feedback":  "/feedback category:Bug report details:[describe what went wrong]",
 }
 
