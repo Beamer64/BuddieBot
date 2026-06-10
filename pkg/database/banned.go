@@ -19,26 +19,28 @@ type BannedUser struct {
 	BannedBy      sql.NullString `db:"BannedBy"`
 }
 
-// IsUserBanned reports whether the given Discord user ID has an active ban.
-// Runs in the dispatch hot path (every slash + prefix invocation), so keep
-// the query single-row and indexed (Discord_UserID is UNIQUE → automatic
-// index). Empty input short-circuits to false without a DB round trip.
-func (db *DB) IsUserBanned(ctx context.Context, discordUserID string) (bool, error) {
+// IsUserBanned reports whether the given Discord user ID has an active ban,
+// along with the recorded reason ("" when the ban has none — reasons are
+// optional, e.g. pre-emptive bans). Runs in the dispatch hot path (every
+// slash + prefix invocation), so keep the query single-row and indexed
+// (Discord_UserID is UNIQUE → automatic index). Empty input short-circuits
+// to (false, "", nil) without a DB round trip.
+func (db *DB) IsUserBanned(ctx context.Context, discordUserID string) (banned bool, reason string, err error) {
 	if discordUserID == "" {
-		return false, nil
+		return false, "", nil
 	}
-	var one int
-	err := db.GetContext(ctx, &one,
-		`SELECT 1 FROM BannedUser WHERE Discord_UserID = ? LIMIT 1`,
+	var r sql.NullString
+	err = db.GetContext(ctx, &r,
+		`SELECT Reason FROM BannedUser WHERE Discord_UserID = ? LIMIT 1`,
 		discordUserID,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
+		return false, "", nil
 	}
 	if err != nil {
-		return false, fmt.Errorf("is user banned %s: %w", discordUserID, err)
+		return false, "", fmt.Errorf("is user banned %s: %w", discordUserID, err)
 	}
-	return true, nil
+	return true, r.String, nil
 }
 
 // BanUser inserts or updates a ban row. Returns (true, nil) when a new ban

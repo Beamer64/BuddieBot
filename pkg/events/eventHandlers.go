@@ -137,18 +137,22 @@ func (c *CommandHandler) CommandHandler(s *discordgo.Session, i *discordgo.Inter
 	// we'd rather serve a banned user than lock everyone out.
 	if invokerID != "" && c.cfg.DB != nil {
 		banCtx, banCancel := context.WithTimeout(context.Background(), 2*time.Second)
-		banned, err := c.cfg.DB.IsUserBanned(banCtx, invokerID)
+		banned, reason, err := c.cfg.DB.IsUserBanned(banCtx, invokerID)
 		banCancel()
 		if err != nil {
 			log.Printf("ban check for %s: %v", invokerID, err)
 		}
 		if banned {
+			content := "Your access to BuddieBot has been revoked, 🫵 HaHa."
+			if reason != "" {
+				content += "\nReason: " + reason
+			}
 			_ = s.InteractionRespond(
 				i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Flags:   discordgo.MessageFlagsEphemeral,
-						Content: "Your access to BuddieBot has been revoked, 🫵 HaHa.",
+						Content: content,
 					},
 				},
 			)

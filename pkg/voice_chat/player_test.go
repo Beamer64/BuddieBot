@@ -112,7 +112,7 @@ func TestFormatPlayResult_SingleTrack(t *testing.T) {
 	})
 	t.Run("now playing includes url", func(t *testing.T) {
 		got := FormatPlayResult(PlayResult{Title: "Song A", AudioUrl: "https://youtu.be/abc"}, "$resume-queue")
-		want := "Now playing: Song A <https://youtu.be/abc>"
+		want := "Now playing: Song A\n<https://youtu.be/abc>"
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
 		}
@@ -154,7 +154,7 @@ func TestFormatPlayResult_Playlist(t *testing.T) {
 			Playlist: &PlaylistInfo{Name: "My Mix", TotalTracks: 10, QueuedTracks: 9},
 		}
 		got := FormatPlayResult(r, "$resume-queue")
-		if !strings.HasPrefix(got, "Now playing: Track 1 <https://youtu.be/t1>") {
+		if !strings.HasPrefix(got, "Now playing: Track 1\n<https://youtu.be/t1>") {
 			t.Errorf("expected now-playing line to carry the first track's url, got %q", got)
 		}
 		// The "Queued N more" line must not sprout a second link.
@@ -263,7 +263,7 @@ func TestLinkSuffix(t *testing.T) {
 		want string
 	}{
 		{"empty stays empty", "", ""},
-		{"wraps url in angle brackets to suppress preview", "https://youtu.be/abc", " <https://youtu.be/abc>"},
+		{"wraps url in angle brackets on its own line", "https://youtu.be/abc", "\n<https://youtu.be/abc>"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

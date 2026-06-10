@@ -115,7 +115,7 @@ func FormatPlayResult(r PlayResult, resumeCmd string) string {
 				r.Playlist.QueuedTracks, name, r.Position,
 			)
 		} else {
-			fmt.Fprintf(&b, "Now playing: %s\n%s", r.Title, LinkSuffix(r.AudioUrl))
+			fmt.Fprintf(&b, "Now playing: %s%s", r.Title, LinkSuffix(r.AudioUrl))
 			if r.Playlist.QueuedTracks > 0 {
 				fmt.Fprintf(&b, "\nQueued %d more from %s", r.Playlist.QueuedTracks, name)
 			}
@@ -132,7 +132,7 @@ func FormatPlayResult(r PlayResult, resumeCmd string) string {
 	} else if r.Queued {
 		fmt.Fprintf(&b, "Added to queue: %s (position %d)", r.Title, r.Position)
 	} else {
-		fmt.Fprintf(&b, "Now playing: %s\n%s", r.Title, LinkSuffix(r.AudioUrl))
+		fmt.Fprintf(&b, "Now playing: %s%s", r.Title, LinkSuffix(r.AudioUrl))
 	}
 	if r.WhileStopped {
 		fmt.Fprintf(&b, ". Use %s to start playback.", resumeCmd)
@@ -140,15 +140,16 @@ func FormatPlayResult(r PlayResult, resumeCmd string) string {
 	return b.String()
 }
 
-// LinkSuffix renders url as a leading-space, non-unfurling <link> to append
-// after a track title — or "" when url is empty. The angle brackets stop
-// Discord from posting a preview card beneath every "Now playing" line, which
-// would otherwise pile up as the queue auto-advances.
+// LinkSuffix renders url on its own line as a non-unfurling <link>, ready to
+// append after a track title — or "" when url is empty (so there's no dangling
+// blank line). The angle brackets stop Discord from posting a preview card
+// beneath every "Now playing" line, which would otherwise pile up as the queue
+// auto-advances.
 func LinkSuffix(url string) string {
 	if url == "" {
 		return ""
 	}
-	return " <" + url + ">"
+	return "\n<" + url + ">"
 }
 
 // TrackURL safely reads a track's source URL ("" when the source supplied

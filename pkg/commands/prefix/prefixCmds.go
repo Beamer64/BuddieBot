@@ -53,7 +53,7 @@ func ParsePrefixCmds(s *discordgo.Session, m *discordgo.MessageCreate, cfg *conf
 	// (🚫) invites argument; the quiet drop is the lowest-friction option.
 	if m.Author != nil {
 		banCtx, banCancel := context.WithTimeout(context.Background(), 2*time.Second)
-		banned, err := cfg.DB.IsUserBanned(banCtx, m.Author.ID)
+		banned, _, err := cfg.DB.IsUserBanned(banCtx, m.Author.ID)
 		banCancel()
 		if err != nil {
 			log.Printf("ban check for %s: %v", m.Author.ID, err)

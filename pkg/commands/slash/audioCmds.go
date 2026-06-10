@@ -286,7 +286,7 @@ func audioQueue(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *confi
 	switch {
 	case snap.Current != nil:
 		msg.WriteString("Now playing: ")
-		msg.WriteString(snap.Current.Info.Title)
+		msg.WriteString(snap.Current.Info.Title + "\n")
 		msg.WriteString(voice_chat.LinkSuffix(voice_chat.TrackURL(*snap.Current)))
 		msg.WriteString("\n")
 	case snap.Paused != nil:

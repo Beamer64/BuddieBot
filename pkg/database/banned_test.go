@@ -6,27 +6,36 @@ import (
 )
 
 // TestIsUserBanned covers the hot-path read used before every command
-// dispatch: not-banned returns false cleanly, banned returns true, empty
-// input short-circuits without errors (defensive default).
+// dispatch: not-banned returns false cleanly, banned returns true with its
+// reason (empty string when the ban has none), empty input short-circuits
+// without errors (defensive default).
 func TestIsUserBanned(t *testing.T) {
 	db := newTestDB(t)
 	ctx := context.Background()
 
-	if got, err := db.IsUserBanned(ctx, "u1"); err != nil || got {
+	if got, _, err := db.IsUserBanned(ctx, "u1"); err != nil || got {
 		t.Errorf("not-yet-banned user: got %v (err=%v), want false", got, err)
 	}
 
 	if _, err := db.BanUser(ctx, "u1", "spam", "admin1"); err != nil {
 		t.Fatalf("seed ban: %v", err)
 	}
-	if got, err := db.IsUserBanned(ctx, "u1"); err != nil || !got {
-		t.Errorf("banned user: got %v (err=%v), want true", got, err)
+	if got, reason, err := db.IsUserBanned(ctx, "u1"); err != nil || !got || reason != "spam" {
+		t.Errorf("banned user: got banned=%v reason=%q (err=%v), want true / \"spam\"", got, reason, err)
+	}
+
+	// A ban with no recorded reason surfaces banned=true, reason="".
+	if _, err := db.BanUser(ctx, "u2", "", ""); err != nil {
+		t.Fatalf("seed reasonless ban: %v", err)
+	}
+	if got, reason, err := db.IsUserBanned(ctx, "u2"); err != nil || !got || reason != "" {
+		t.Errorf("reasonless ban: got banned=%v reason=%q (err=%v), want true / empty", got, reason, err)
 	}
 
 	// Empty input must NOT touch the DB — return false cleanly. Defends the
 	// dispatcher from spurious "banned" verdicts when invokerID is empty
 	// (DM context with no user data, etc.).
-	if got, err := db.IsUserBanned(ctx, ""); err != nil || got {
+	if got, _, err := db.IsUserBanned(ctx, ""); err != nil || got {
 		t.Errorf("empty userID: got %v (err=%v), want false", got, err)
 	}
 }
@@ -107,7 +116,7 @@ func TestUnbanUser(t *testing.T) {
 	}
 
 	// And the ban check now returns false for that user.
-	if banned, _ := db.IsUserBanned(ctx, "u1"); banned {
+	if banned, _, _ := db.IsUserBanned(ctx, "u1"); banned {
 		t.Error("user still appears banned after unban")
 	}
 }
