@@ -21,7 +21,7 @@
 </div>
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Total%20Lines-14656-maroon.svg" alt="shield.png">
+  <img src="https://img.shields.io/badge/Total%20Lines-14749-maroon.svg" alt="shield.png">
 </div>
 
 ---

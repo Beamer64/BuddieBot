@@ -19,6 +19,43 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 )
 
+// PlayResult describes what Play did with the URL. Title/Queued/Position
+// describe the first track; Playlist (non-nil for playlist URLs) carries batch totals.
+type PlayResult struct {
+	Title    string
+	Queued   bool
+	Position int // 1-indexed queue position when Queued; 0 otherwise
+	// WhileStopped: bot was disconnected with a saved track; the queued URL won't
+	// play until the user resumes.
+	WhileStopped bool
+	Playlist     *PlaylistInfo
+	AudioUrl     string
+}
+
+// PlaylistInfo describes a playlist that Play loaded and enqueued.
+type PlaylistInfo struct {
+	Name        string // may be empty if Lavalink didn't supply one
+	TotalTracks int
+	// QueuedTracks excludes the first track in the fresh-start path (it's playing,
+	// not queued); less than TotalTracks if the queue cap was hit mid-batch.
+	QueuedTracks int
+}
+
+// Player owns the disgolink client and per-guild queue / announce-channel state.
+type Player struct {
+	link    disgolink.Client
+	session *discordgo.Session
+
+	mu               sync.Mutex
+	queues           map[snowflake.ID][]lavalink.Track
+	announceChannels map[snowflake.ID]string
+	playSignals      map[snowflake.ID]chan error
+	// pausedTracks: Stop snapshots the active track here. ResumeQueue replays it
+	// from position 0 after rejoining. Distinct from a Lavalink-side pause —
+	// the bot fully disconnects, so disgolink's player is destroyed.
+	pausedTracks map[snowflake.ID]lavalink.Track
+}
+
 var (
 	ErrNotInVoice   = errors.New("user is not in a voice channel")
 	ErrNoTrackFound = errors.New("no playable track at that URL")
@@ -73,10 +110,12 @@ func FormatPlayResult(r PlayResult, resumeCmd string) string {
 			name = "playlist"
 		}
 		if r.Queued {
-			fmt.Fprintf(&b, "Added %d tracks from %s to the queue (starting at position %d)",
-				r.Playlist.QueuedTracks, name, r.Position)
+			fmt.Fprintf(
+				&b, "Added %d tracks from %s to the queue (starting at position %d)",
+				r.Playlist.QueuedTracks, name, r.Position,
+			)
 		} else {
-			fmt.Fprintf(&b, "Now playing: %s", r.Title)
+			fmt.Fprintf(&b, "Now playing: %s\n%s", r.Title, LinkSuffix(r.AudioUrl))
 			if r.Playlist.QueuedTracks > 0 {
 				fmt.Fprintf(&b, "\nQueued %d more from %s", r.Playlist.QueuedTracks, name)
 			}
@@ -93,12 +132,33 @@ func FormatPlayResult(r PlayResult, resumeCmd string) string {
 	} else if r.Queued {
 		fmt.Fprintf(&b, "Added to queue: %s (position %d)", r.Title, r.Position)
 	} else {
-		fmt.Fprintf(&b, "Now playing: %s", r.Title)
+		fmt.Fprintf(&b, "Now playing: %s\n%s", r.Title, LinkSuffix(r.AudioUrl))
 	}
 	if r.WhileStopped {
 		fmt.Fprintf(&b, ". Use %s to start playback.", resumeCmd)
 	}
 	return b.String()
+}
+
+// LinkSuffix renders url as a leading-space, non-unfurling <link> to append
+// after a track title — or "" when url is empty. The angle brackets stop
+// Discord from posting a preview card beneath every "Now playing" line, which
+// would otherwise pile up as the queue auto-advances.
+func LinkSuffix(url string) string {
+	if url == "" {
+		return ""
+	}
+	return " <" + url + ">"
+}
+
+// TrackURL safely reads a track's source URL ("" when the source supplied
+// none). For a track loaded from a playlist this is the individual song's URL —
+// disgolink populates URI per track, never the playlist link.
+func TrackURL(t lavalink.Track) string {
+	if t.Info.URI == nil {
+		return ""
+	}
+	return *t.Info.URI
 }
 
 const (
@@ -107,42 +167,6 @@ const (
 	maxPlayAttempts     = 2
 	maxQueueSize        = 100
 )
-
-// PlayResult describes what Play did with the URL. Title/Queued/Position
-// describe the first track; Playlist (non-nil for playlist URLs) carries batch totals.
-type PlayResult struct {
-	Title    string
-	Queued   bool
-	Position int // 1-indexed queue position when Queued; 0 otherwise
-	// WhileStopped: bot was disconnected with a saved track; the queued URL won't
-	// play until the user resumes.
-	WhileStopped bool
-	Playlist     *PlaylistInfo
-}
-
-// PlaylistInfo describes a playlist that Play loaded and enqueued.
-type PlaylistInfo struct {
-	Name        string // may be empty if Lavalink didn't supply one
-	TotalTracks int
-	// QueuedTracks excludes the first track in the fresh-start path (it's playing,
-	// not queued); less than TotalTracks if the queue cap was hit mid-batch.
-	QueuedTracks int
-}
-
-// Player owns the disgolink client and per-guild queue / announce-channel state.
-type Player struct {
-	link    disgolink.Client
-	session *discordgo.Session
-
-	mu               sync.Mutex
-	queues           map[snowflake.ID][]lavalink.Track
-	announceChannels map[snowflake.ID]string
-	playSignals      map[snowflake.ID]chan error
-	// pausedTracks: Stop snapshots the active track here. ResumeQueue replays it
-	// from position 0 after rejoining. Distinct from a Lavalink-side pause —
-	// the bot fully disconnects, so disgolink's player is destroyed.
-	pausedTracks map[snowflake.ID]lavalink.Track
-}
 
 // New constructs a Player. Register OnTrackEnd and OnTrackException as
 // disgolink listeners to wire up auto-advance and failure announcements.
@@ -245,7 +269,7 @@ func (p *Player) Play(ctx context.Context, guildID, channelID, userID, url strin
 		return PlayResult{}, err
 	}
 
-	result := PlayResult{Title: firstTrack.Info.Title}
+	result := PlayResult{Title: firstTrack.Info.Title, AudioUrl: TrackURL(firstTrack)}
 
 	// Queue the remaining playlist tracks behind the one that just started.
 	if load.IsPlaylist && totalTracks > 1 {
@@ -662,7 +686,7 @@ func (p *Player) OnTrackEnd(player disgolink.Player, e lavalink.TrackEndEvent) {
 		defer cancel()
 		if err := player.Update(ctx, lavalink.WithTrack(*next)); err == nil {
 			if announceCh != "" {
-				if _, sendErr := p.session.ChannelMessageSend(announceCh, "Now playing: "+next.Info.Title); sendErr != nil {
+				if _, sendErr := p.session.ChannelMessageSend(announceCh, "Now playing: "+next.Info.Title+LinkSuffix(TrackURL(*next))); sendErr != nil {
 					log.Printf("voice_chat: announce next track in guild %s: %v", gID, sendErr)
 				}
 			}
@@ -694,28 +718,30 @@ func loadTracks(ctx context.Context, node disgolink.Node, url string) (trackLoad
 		load    trackLoad
 		loadErr error
 	)
-	node.LoadTracksHandler(ctx, url, disgolink.NewResultHandler(
-		func(t lavalink.Track) {
-			load.Tracks = []lavalink.Track{t}
-		},
-		func(pl lavalink.Playlist) {
-			load.Tracks = pl.Tracks
-			load.PlaylistName = pl.Info.Name
-			load.IsPlaylist = true
-		},
-		func(ts []lavalink.Track) {
-			// Search result (e.g. ytsearch:foo) — take the first hit.
-			if len(ts) > 0 {
-				load.Tracks = []lavalink.Track{ts[0]}
-			}
-		},
-		func() {
-			loadErr = ErrNoTrackFound
-		},
-		func(err error) {
-			loadErr = fmt.Errorf("load track: %w", err)
-		},
-	))
+	node.LoadTracksHandler(
+		ctx, url, disgolink.NewResultHandler(
+			func(t lavalink.Track) {
+				load.Tracks = []lavalink.Track{t}
+			},
+			func(pl lavalink.Playlist) {
+				load.Tracks = pl.Tracks
+				load.PlaylistName = pl.Info.Name
+				load.IsPlaylist = true
+			},
+			func(ts []lavalink.Track) {
+				// Search result (e.g. ytsearch:foo) — take the first hit.
+				if len(ts) > 0 {
+					load.Tracks = []lavalink.Track{ts[0]}
+				}
+			},
+			func() {
+				loadErr = ErrNoTrackFound
+			},
+			func(err error) {
+				loadErr = fmt.Errorf("load track: %w", err)
+			},
+		),
+	)
 	if loadErr != nil {
 		return trackLoad{}, loadErr
 	}

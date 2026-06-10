@@ -58,8 +58,7 @@ func sendAudioResponse(s *discordgo.Session, i *discordgo.InteractionCreate, cfg
 	}
 }
 
-// audioPlay dispatches to single- or batch-URL play. Empty/whitespace url
-// values are skipped so clearing an option doesn't trip validation.
+// audioPlay dispatches to single- or batch-URL play.
 func audioPlay(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config.Configs, opts []*discordgo.ApplicationCommandInteractionDataOption) error {
 	provided := map[string]string{}
 	for _, opt := range opts {
@@ -124,6 +123,7 @@ func audioPlayBatch(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *c
 
 	var (
 		playingTitle string
+		playingURL   string
 		queued       []queuedItem
 		playlists    []playlistEntry
 		failures     int
@@ -152,12 +152,14 @@ func audioPlayBatch(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *c
 				}
 				if pe.started {
 					playingTitle = result.Title
+					playingURL = result.AudioUrl
 				}
 				playlists = append(playlists, pe)
 			case result.Queued:
 				queued = append(queued, queuedItem{title: result.Title, position: result.Position})
 			default:
 				playingTitle = result.Title
+				playingURL = result.AudioUrl
 			}
 			continue
 		}
@@ -176,7 +178,7 @@ func audioPlayBatch(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *c
 
 	var msg strings.Builder
 	if playingTitle != "" {
-		fmt.Fprintf(&msg, "Now playing: **%s**\n", playingTitle)
+		fmt.Fprintf(&msg, "Now playing: **%s**%s\n", playingTitle, voice_chat.LinkSuffix(playingURL))
 	}
 	for _, pl := range playlists {
 		if pl.started {
@@ -285,6 +287,7 @@ func audioQueue(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *confi
 	case snap.Current != nil:
 		msg.WriteString("Now playing: ")
 		msg.WriteString(snap.Current.Info.Title)
+		msg.WriteString(voice_chat.LinkSuffix(voice_chat.TrackURL(*snap.Current)))
 		msg.WriteString("\n")
 	case snap.Paused != nil:
 		msg.WriteString("Stopped: ")
@@ -320,7 +323,7 @@ func audioSkip(s *discordgo.Session, i *discordgo.InteractionCreate, cfg *config
 
 	var msg string
 	if next != nil {
-		msg = fmt.Sprintf("Skipped: %s.\nNow playing: %s", skipped.Info.Title, next.Info.Title)
+		msg = fmt.Sprintf("Skipped: %s.\nNow playing: %s%s", skipped.Info.Title, next.Info.Title, voice_chat.LinkSuffix(voice_chat.TrackURL(*next)))
 	} else {
 		msg = fmt.Sprintf("Skipped: %s. Queue is empty — leaving voice.", skipped.Info.Title)
 	}

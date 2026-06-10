@@ -110,6 +110,21 @@ func TestFormatPlayResult_SingleTrack(t *testing.T) {
 			t.Errorf("got %q, want %q", got, want)
 		}
 	})
+	t.Run("now playing includes url", func(t *testing.T) {
+		got := FormatPlayResult(PlayResult{Title: "Song A", AudioUrl: "https://youtu.be/abc"}, "$resume-queue")
+		want := "Now playing: Song A <https://youtu.be/abc>"
+		if got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+	// Only the currently-playing track links; a queued track's URL is dropped.
+	t.Run("queued line omits url", func(t *testing.T) {
+		got := FormatPlayResult(PlayResult{Title: "Song A", Queued: true, Position: 2, AudioUrl: "https://youtu.be/abc"}, "$resume-queue")
+		want := "Added to queue: Song A (position 2)"
+		if got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
 
 func TestFormatPlayResult_Playlist(t *testing.T) {
@@ -129,6 +144,22 @@ func TestFormatPlayResult_Playlist(t *testing.T) {
 		}
 		if !strings.Contains(got, "Queued 9 more from My Mix") {
 			t.Errorf("expected playlist-name detail, got %q", got)
+		}
+	})
+
+	t.Run("fresh start links the now-playing track, not the queued summary", func(t *testing.T) {
+		r := PlayResult{
+			Title:    "Track 1",
+			AudioUrl: "https://youtu.be/t1",
+			Playlist: &PlaylistInfo{Name: "My Mix", TotalTracks: 10, QueuedTracks: 9},
+		}
+		got := FormatPlayResult(r, "$resume-queue")
+		if !strings.HasPrefix(got, "Now playing: Track 1 <https://youtu.be/t1>") {
+			t.Errorf("expected now-playing line to carry the first track's url, got %q", got)
+		}
+		// The "Queued N more" line must not sprout a second link.
+		if n := strings.Count(got, "<https://"); n != 1 {
+			t.Errorf("expected exactly one link (the playing track), got %d in %q", n, got)
 		}
 	})
 
@@ -223,4 +254,37 @@ func TestPlayResult_PlaylistFieldShape(t *testing.T) {
 	if tr.Info.Title != "hello" {
 		t.Fatalf("trackWithTitle plumbing broken: got %q", tr.Info.Title)
 	}
+}
+
+func TestLinkSuffix(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"empty stays empty", "", ""},
+		{"wraps url in angle brackets to suppress preview", "https://youtu.be/abc", " <https://youtu.be/abc>"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := LinkSuffix(tc.in); got != tc.want {
+				t.Errorf("LinkSuffix(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestTrackURL(t *testing.T) {
+	t.Run("present", func(t *testing.T) {
+		u := "https://youtu.be/xyz"
+		if got := TrackURL(lavalink.Track{Info: lavalink.TrackInfo{URI: &u}}); got != u {
+			t.Errorf("TrackURL = %q, want %q", got, u)
+		}
+	})
+	// Some sources (raw streams) carry no URI — must not panic, returns "".
+	t.Run("nil URI yields empty", func(t *testing.T) {
+		if got := TrackURL(lavalink.Track{Info: lavalink.TrackInfo{Title: "no uri"}}); got != "" {
+			t.Errorf("TrackURL = %q, want empty", got)
+		}
+	})
 }

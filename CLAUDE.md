@@ -59,7 +59,7 @@ Conventions: PascalCase columns, `ID INTEGER PRIMARY KEY` on every table, `Disco
 
 `db.WelcomeNeeded(ctx, discordGuildID)` reads the prior state and returns a bool. **Call order matters**: `WelcomeNeeded` must run BEFORE `MarkGuildJoined`, since the latter clears `LeftAt` and would destroy the rejoin signal. The handler does both inside a single 5-second context.
 
-The welcome embed lives in `pkg/events/welcome.go` — `welcomeEmbed(guildName, botUser)` builds it; `sendWelcomeMessage(s, e)` picks a channel via `pickWelcomeChannel` and posts. The channel picker prefers `Guild.SystemChannelID` (Discord's designated join/leave/boost channel), falls back to the first text channel the bot can write in, and returns `""` when nothing works (caller logs and skips rather than spamming random channels). Layout uses zero-width-space spacer fields to force a 3-rows-of-2 inline grid — Discord otherwise auto-fits 3 inline per row.
+The welcome embed lives in `pkg/events/welcome.go` — `welcomeEmbed(guildName, botUser)` builds it; `sendWelcomeMessage(s, e)` picks a channel via `pickWelcomeChannel` and posts. The channel picker prefers `Guild.SystemChannelID` (Discord's designated join/leave/boost channel), falls back to the first text channel the bot can write in, and returns `""` when nothing works (caller logs and skips rather than spamming random channels). Layout: 6 inline feature fields (Discord auto-arranges as 2 rows of 3 at typical widths) followed by 3 full-width fields (Getting Started, Privacy, Feedback).
 
 ## Per-server settings
 
@@ -142,7 +142,7 @@ Common pattern for ownership: encode the invoker's Discord ID in the custom ID, 
 | `/txt …` | `txtCmds.go` | Text-transformation effects |
 | `/user profile|forget-me` | `userCmds.go` | Profile shows Recent Ratings corner, Dosh, Day-One badge, BB User Since, plus a Commands field with total invocations + most-used. forget-me is button-confirmed and hard-deletes across every guild. |
 
-**Prefix commands** (`PrefCmdsList` in `prefixCmds.go`): `$release`, `$weast`, `$palindrome`, `$romans`, `$goodboy`. `$release` and `$weast` are listed in `NoShowCmds` and hidden from `/tuuck`. `$goodboy` posts a random image from `bb_data/buddie`.
+**Prefix commands** (`PrefCmdsList` in `prefixCmds.go`): `$release`, `$test`, `$weast`, `$palindrome`, `$romans`, `$goodboy`. `$release`, `$test`, and `$weast` are in `NoShowCmds` and hidden from `/tuuck`. `$release` and `$test` are additionally **bot-owner gated** (test-guild-only) via `helper.IsBotOwner(authorID, cfg.DiscordIDs.BotOwnerIDs)` — `$release` broadcasts release notes to every guild; `$test` is the in-progress-feature sandbox. `$goodboy` posts a random image from `bb_data/buddie`.
 
 ## Image command organization (`/image`)
 
@@ -255,6 +255,7 @@ For prefix commands, the equivalent is `discordgo.MessageSend{ Embed: ..., Files
 - `imgCmdLimiter` (in `imgCmds.go`) — 5s per-user cooldown on `/image *`
 - `landsatLimiter` (in `generateCmds.go`) — 30s per-user cooldown on `/generate type:landsat`
 - `landsatSem` (in `generateCmds.go`) — 2-permit semaphore around the headless-Chrome work
+- `feedbackLimiter` (in `utilityCmds.go`) — 30 min per (user, category) on `/feedback`; the composite key lets the same user fire off one of each category back-to-back
 
 To add a new limiter: `helper.NewRateLimiter(cooldown)` at package scope, call `.Allow(userID)` *before* the defer so the rate-limit message can use the immediate response slot.
 
@@ -293,10 +294,14 @@ Invariant-style tests worth knowing about:
 - **`TestSplitPrefixCommand`** (same file) — the parser's contract across prefix styles (tight `$`, trailing-space `plz `, edge cases). Add a case if you change parsing.
 - **`TestCommandHandlers_AllNonNil`**, **`TestComponentHandlers_AllNonNil`**, **`TestCommands_AllHaveDescriptions`** ([handlers_test.go](pkg/commands/slash/handlers_test.go)) — catches nil-handler entries and missing spec descriptions (which Discord rejects at registration).
 - **`TestEnsureUserSeedsRatingsOnCreate`** + **`TestUserRatingFKCascadeOnUserDelete`** ([pkg/database/user_rating_test.go](pkg/database/user_rating_test.go)) — locks in "fresh user gets N seeded ratings" + "forget-me deletes ratings via FK cascade."
-- **`TestIncrementUserCommandUsageNoOpForUnknownUser`** ([pkg/database/user_command_usage_test.go](pkg/database/user_command_usage_test.go)) — the privacy-stance test: tracking never materializes a User row by itself.
+- **`TestIncrementUserCommandUsageSafeWhenUserMissing`** ([pkg/database/user_command_usage_test.go](pkg/database/user_command_usage_test.go)) — defense-in-depth: the bare-increment SQL is no-op-safe even if upstream skips `EnsureUser`. (The pre-first-command-materialization version of this asserted the opposite privacy contract; the rename reflects the policy shift.)
 - **`TestDetectJournalPermissionIssue`** ([scripts/pull-deploy/main_test.go](scripts/pull-deploy/main_test.go)) — catches the journal-permission misconfig early instead of letting it time out as a misleading health-check failure.
 - **`TestFlexStringUnmarshal`** ([generateCmds_test.go](pkg/commands/slash/generateCmds_test.go)) — randomuser.me's postcode is sometimes int, sometimes string; this guards the custom unmarshaler that handles both.
 - **`TestMemberSinceDisplay`** ([userCmds_test.go](pkg/commands/slash/userCmds_test.go)) — three accepted timestamp formats; same-instant inputs must produce identical rendering.
+- **`TestWelcomeNeeded`** ([pkg/database/database_test.go](pkg/database/database_test.go)) — locks in the 3-state guild-lifecycle contract (no row / `LeftAt` set / `LeftAt` null) that drives whether the welcome message fires.
+- **`TestUnbanPreservesUserData`** ([pkg/database/banned_test.go](pkg/database/banned_test.go)) — locks in "ban/unban cycle preserves the user's profile, ratings, and command counts so they resume where they left off."
+- **`TestListBannedUsersInGuild`** (same file) — locks in the per-guild filter on `/admin banned-list` — bans from other guilds and pre-emptive bans without User rows are excluded.
+- **`TestIsBotOwner`** ([pkg/helper/discord_test.go](pkg/helper/discord_test.go)) — covers the owner-ID gate for `$release` / `$test`: matching ID true, non-match false, empty ID/slice false (safe-by-default for unpopulated config).
 
 The voice_chat package has pure-function tests for `FormatPlayResult`, `FriendlyPlayError`, `IsUserFacingError`, `briefExceptionReason`. The stateful methods (`Play`, `Stop`, `ResumeQueue`, `Skip`, `Queue`) are untested — they'd need interface extraction for `disgolink.Client` and `*discordgo.Session` to be mockable.
 
